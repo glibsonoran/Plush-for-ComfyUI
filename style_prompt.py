@@ -100,13 +100,52 @@ class Enhancer:
           #build the prompt from user input
         if self.eFig.instruction.count("{}") >= 2:
             instruc = self.eFig.instruction.format(style, elements)
+        elif self.eFig.instruction.count("{}") == 1:
+            instruc - self.eFig.instruction.format(style)
         else:
             instruc = self.eFig.instruction
 
         if artist:
             instruc = instruc + "  Include an artist who works in the specifed artistic style by placing the artist's name at the end of the sentence prefaced by 'style of'.  "
-        
         return(instruc)
+    
+
+    def cgptRequest(self, GPTmodel, client, creative_latitude, tokens, instruction, example, prompt):
+        #Requet a prompt or backgrounder from ChatGPT
+        print(f"Talking to model: {GPTmodel}")
+        try:
+            #call the ChatGPT API with the user selections, instruction, example and prompt
+            chat_completion = client.chat.completions.create(
+                model = GPTmodel,
+                temperature = creative_latitude,
+                max_tokens = tokens,
+                stream = False,
+            messages = [
+                {"role": "system", "content": instruction},
+                {"role": "assistant", "content": example},
+                {"role": "user", "content": prompt,},
+                ],
+            )
+        except openai.APIConnectionError as e:
+            print("Server connection error: {e.__cause__}")  # from httpx.
+            raise
+        except openai.RateLimitError as e:
+            print(f"OpenAI RATE LIMIT error {e.status_code}: (e.response)")
+            raise
+        except openai.APIStatusError as e:
+            print(f"OpenAI STATUS error {e.status_code}: (e.response)")
+            raise
+        except openai.BadRequestError as e:
+            print(f"OpenAI BAD REQUEST error {e.status_code}: (e.response)")
+            raise
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
+            raise   
+
+        #First of choices [0] content is the generated prompt 
+        CGPT_prompt = chat_completion.choices[0].message.content
+        
+        return(CGPT_prompt)
         
     
     @classmethod
@@ -115,19 +154,20 @@ class Enhancer:
 
         return {
             "required": {
-                "GPTmodel": (["gpt-3.5-turbo","gpt-4"], ),
+                "GPTmodel": (["gpt-3.5-turbo","gpt-4"],{"default": "gpt-4"} ),
                 "creative_latitude" : ("FLOAT", {"max": 1.2, "min": 0.1, "step": 0.1, "display": "number", "default": 0.7}),
-                "tokens" : ("INT", {"max": 8000, "min": 100, "step": 10, "default": 2000, "display": "number"}),
+                "tokens" : ("INT", {"max": 8000, "min": 50, "step": 10, "default": 2000, "display": "number"}),
                 "prompt": ("STRING",{"multiline": True, "forceInput": True}),
                 "example" : ("STRING", {"forceInput": True, "multiline": True}),
                 "style": (iFig.style,{"default": "Photograph"}),
-                "artist" : ("BOOLEAN", {"default": False}),
-                "max_elements" : ("INT", {"max": 20, "min": 3, "step": 1, "default": 10, "display": "number"}),                
+                "artist" : ("BOOLEAN", {"default": True}),
+                "max_elements" : ("INT", {"max": 20, "min": 3, "step": 1, "default": 10, "display": "number"}),
+                "style_info" : ("BOOLEAN", {"default": False})                
             },
         } 
 
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("CGPTprompt", "CGPTinstruction")
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("CGPTprompt", "CGPTinstruction","Style Info")
 
     FUNCTION = "gogo"
 
@@ -136,7 +176,7 @@ class Enhancer:
     CATEGORY = "Plush"
  
 
-    def gogo(self, GPTmodel, creative_latitude, tokens, example, prompt, style, artist, max_elements):
+    def gogo(self, GPTmodel, creative_latitude, tokens, example, prompt, style, artist, max_elements, style_info):
         
         #If no example text was provided by the user, use my default
         if not example:
@@ -148,9 +188,22 @@ class Enhancer:
 
         enH = Enhancer()
         #build instruction based on user input
-        instruction = enH.build_instruction(style, max_elements, artist)
+        instruction = enH.build_instruction(style, max_elements, artist)  
 
-        print(f"Talking to model: {GPTmodel}")
+        CGPT_styleInfo = ""
+
+        if style_info:
+            #User has request information about the art style.  GPT will provide it
+            sty_prompt = "Give an 150 word backgrounder on the art style: {}.  Starting with describing what it is, include information about its history and which artists represent the style."
+            sty_prompt = sty_prompt.format(style)
+            sty_instruction = ""
+            sty_example = ""
+
+            CGPT_styleInfo = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, sty_instruction, sty_example, sty_prompt)
+
+        CGPT_prompt = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, instruction, example, prompt)
+
+        """ print(f"Talking to model: {GPTmodel}")
         try:
             #call the ChatGPT API with the user selections, instruction, example and prompt
             chat_completion = client.chat.completions.create(
@@ -181,21 +234,23 @@ class Enhancer:
             raise
 
        #get the prompt as item[0] from the completion object
-        CGPT_prompt = chat_completion.choices[0].message.content
-        print("Tokens: " + str(tokens))
-        print("Creativity: " + str(creative_latitude))
+        CGPT_prompt = chat_completion.choices[0].message.content """
+       # *****************************************
+       # print("Tokens: " + str(tokens))
+       # print("Creativity: " + str(creative_latitude))
         #print("Prompt: " + CGPT_prompt)
         #print("Instruction: " + instruction)
     
-        return (CGPT_prompt, instruction)
+        return (CGPT_prompt, instruction, CGPT_styleInfo)
 
  
 
 #debug testing 
 """ Enh = Enhancer()
 Enh.INPUT_TYPES()
-Enh.gogo("gpt-4", 0.7, 2000, "", "A beautiful eagle soaring above a verdant forest", "Photograph", True, 10)
- """
+test_resp = Enh.gogo("gpt-4", 0.7, 2000, "", "A beautiful eagle soaring above a verdant forest", "Biomorphic Abstraction", True, 10,True)
+print (test_resp[2]) """
+
 class DalleImage:
 #Accept a user prompt and parameters to produce a Dall_e generated image
 
