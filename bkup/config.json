@@ -1,5 +1,5 @@
 {
-   "key":"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",
+   "key":"sk###########",
    "instruction":"Act as a creative agent who generates a terse but highly creative image prompt derived from the prompt I send you.  Include descriptive visual elements of the subject, lighting and surroundings.  Specify {} as the artistic style at beginning of the sentence follwed by 'of', use descriptive elements that pertain to this artistic style.  Include no more than {} elements presented as discrete descriptors in one long sentence without story.  Put the most important descriptive elements at the beginning of the sentence. ",
    "example":"Female warrior dressed in animal skins, stormy skies, blood-smeared face, wild flowing hair, gripping a sharp spear",
    "style":[
