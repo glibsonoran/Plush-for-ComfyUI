@@ -76,13 +76,18 @@ There’s another config.json in the ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup
 
 *Style_info (default false)*:  If this is set to true, Style Prompt will send a second request to ChatGPT to provide a description of the chosen style, historical information about it, and information on some of the most influential artists in that style.  
 
-Examples:
 
+
+Examples:
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/aec4ce84-e5a8-4a43-966c-23b65262fb18 "Fish Eye Lens Photograph")
 
 Style: Fish Eye Lens Photograph
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/cdadbd7d-9f48-4f7b-bafa-c9ce69b0f0ea "High Key Photograph")
 
 Style: High Key Photograph
+
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/0c59872e-9c6b-489c-88b7-9e379a21e40a "Semi Realistic Cyberpunk")
 
 
 Style: Semi Realistic Cyberpunk
