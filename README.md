@@ -27,16 +27,22 @@ You should then have a new folder ComfyUI/custom_nodes/Plush-for-ComfyUI.
 
 * You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
 
-* Plush requires the OpenAI Python library version 1.3.5 or later.  If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library in which case you’ll need to upgrade it.  You can upgrade by typing the command:   **>pip install openai --upgrade**  in a directory *where it will apply to the installation of Python that ComfyUI is using.*  
+* Plush requires the OpenAI Python library version 1.3.5 or later.  If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library in which case you’ll need to upgrade it.  You can upgrade by typing the command:
+* >pip install openai --upgrade
+
+  in a directory *where it will be applied to the installation of Python that ComfyUI is using.*  
 
 * Be aware that the new OpenAI API is not backward compatible and apps that use the older library may break after this upgrade.
 ****
 
 ### Usage:
  
-Before you launch ComfUI, you’ll need to give Plush access to your OpenAI API key.  Navigate to the ComfyUI/custom_nodes/Plush-for-ComfyUI directory and open the configuration JSON:  config.json. You’ll see the word “key” and next to it a placeholder for you API key “jk-######”.  Replace the placeholder with your API key and close the file.  
+Before you launch ComfUI, you’ll need to give Plush access to your OpenAI API key.  Navigate to the **ComfyUI/custom_nodes/Plush-for-ComfyUI** directory and open the configuration JSON:  *config.json*. You’ll look for the word “key” and next to it a placeholder for your API key “jk-######”.  Replace the placeholder with your API key and save then close the file.  
 
-There’s another config.json in the ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup directory.  This file gets copied to the main directory if the main config.json is missing or corrupted.  It’s a good idea to enter your API key in this file too.
+There’s another config.json in the **ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup** directory.  This file gets copied to the main directory if the main config.json is missing or corrupted.  It’s a good idea to enter your API key in this file too.
+
+I reccommend starting off using Style Prompt with a full SDXL Base and Refiner model, these models have the depth and labeling of art styles and artists that works well with this node.  You'll find a Workflow image in the **custom_nodes/Plush-for-ComfyUI/Example_workflows** directory if you want a quick setup.  Style Prompt doesn't work well with quick print/turbo workflows like LCM that rely on low cfg values.  Stable Diffusion has to implement the whole (or most) of a fairly detailed prompt in order to get the right style effect, and these workflows just don't pick everything up.  At least initially I recommend you use the more basic workflows and models
+
 ***
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/32debc23-3da0-4a65-a3f2-6cf803bde741 "Style Prompt Node")
 
@@ -48,7 +54,7 @@ There’s another config.json in the ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup
 *prompt*:  Your prompt, it doesn’t need to be wordy or complex, simpler prompts work better.
 
 
-*example (optional)*:  A text example of how you want ChatGPT’s prompt to look.  There’s a default example in Style Prompt that works well, you can override it if you like by using this input.  Examples are for writing style, it doesn’t matter if they pertain to the same subject as your prompt.
+*example (optional)*:  A text example of how you want ChatGPT’s prompt to look.  There’s a default example in Style Prompt that works well, but you can override it if you like by using this input.  Examples are mostly for writing style, it doesn’t matter if they pertain to the same subject as your prompt.
 
 
 **Outputs**: 
@@ -72,7 +78,7 @@ There’s another config.json in the ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup
 
 *Artist (default True): Whether to include a “style of” statement with the name of an artist that exemplifies the style you’ve chosen.  Style Prompt is better at depicting the chosen style if this is set to True.
 
-*Max_elements (default 10)*:  The maximum number of descriptive elements for ChatGPT to include in its generated prompt.  Stable Diffusion gives the highest weighting to text at the beginning of the prompt, and the weighting falls off from there.  There’s definitely a point where long wordy SD prompts result in diminishing returns.  The range here is from 3 to 20.  I think 6 to 10 works about the best.
+*Max_elements (default 10)*:  The maximum number of descriptive elements for ChatGPT to include in its generated prompt.  Stable Diffusion gives the highest weighting to text at the beginning of the prompt, and the weighting falls off from there.  There’s definitely a point where long wordy SD prompts result in diminishing returns.  This input lets you limit the length of your prompt.  The range here is from 3 to 20.  I think 6 to 10 works about the best.
 
 *Style_info (default false)*:  If this is set to true, Style Prompt will send a second request to ChatGPT to provide a description of the chosen style, historical information about it, and information on some of the most influential artists in that style.  
 
@@ -107,12 +113,14 @@ Style: Origami
 
 Style: Fashion Art
 
+****
+### OAI Dall_e Image
 
-OAI Dall_e Image
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/03ecaa31-6a2c-4426-baa1-5dad5b41b36e "OAI Dall_e Node")
 
 
 
-I’m not going to go into detail about this node.  The main thing is that it takes your prompt and outputs an image.  Right now it’s only setup to use dall_e3 as the required input values are too different for me to include dall_e2.  3 produces better images so I just didn’t think accommodating 2 was worth it. 
+I’m not going to go into detail about this node.  The main thing is that it takes your prompt and outputs an image.  Right now it’s only setup to use dall_e3 as the required input values are too different for me to include dall_e2.  Dalle_e3 produces better images so I just didn’t think accommodating Dall_e2 was worth it. 
 
 You should be aware that in the API implementation Dall_e completely rewrites your prompt in an attempt to control misuse.  The text of that rewritten prompt is what is produced by the Dall_e_prompt output in this node. This can create some odd results, and some prompts will generate a ComfyUI error as Dall_e reports that the prompt violates their policies.  This can happen even with very benign subject matter.  Right now I think the Dall_e engine built into the Edge browser gives better results than the API, but every once in a while this will produce a winner.
 
