@@ -10,7 +10,7 @@
 *****
 ### Installation:
 
-Follow the link to the [Plush for ComfyUI Github page](https://github.com/glibsonoran/Plush-for-ComfyUI "Plush Github Page").  
+Follow the link to the [Plush for ComfyUI Github page](https://github.com/glibsonoran/Plush-for-ComfyUI "Plush Github Page") if you're not already here.  
 
 Click on the green Code button at the top right of the page.  When the tab drops down, click to the right of the url to copy it.
 
