@@ -78,7 +78,7 @@ There’s another config.json in the ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup
 
 
 
-Examples:
+### Examples:
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/aec4ce84-e5a8-4a43-966c-23b65262fb18 "Fish Eye Lens Photograph")
 
 Style: Fish Eye Lens Photograph
@@ -89,18 +89,21 @@ Style: High Key Photograph
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/0c59872e-9c6b-489c-88b7-9e379a21e40a "Semi Realistic Cyberpunk")
 
-
 Style: Semi Realistic Cyberpunk
+
 ![Alt Text1](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/15d48cf0-32de-4b82-932b-365094e36254 "Low Key Photograph")
 
 Style: Low Key Photograph
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/e0246439-7c56-4498-ab4b-2358baa96bc0 "Art Deco")
 
 Style: Art Deco
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/e51f9c1f-07a0-4410-8e09-c04019c2714d "Origami Art")
 
 Style: Origami
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/cee0724c-cabd-425c-b3df-1361f37285f9 "Fashion Art")
 
 Style: Fashion Art
 
