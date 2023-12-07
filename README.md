@@ -16,10 +16,10 @@ Click on the green Code button at the top right of the page.  When the tab drops
 
 ![alt text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/c9277b63-7307-4fbd-86e6-b772db4165af "Copy Url")
 
-Then navigate, in the command window on your computer, to the ComfyUI/custom_nodes folder and type:
+Then navigate, in the command window on your computer, to the **ComfyUI/custom_nodes** folder and enter the command by typing *git clone* and pasting the url you copied after it:
  >git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
 
-You should then have a new folder ComfyUI/custom_nodes/Plush-for-ComfyUI.
+You should then have a new folder **ComfyUI/custom_nodes/Plush-for-ComfyUI**.
 ****
 ### Requirements: 
 
@@ -41,7 +41,7 @@ Before you launch ComfUI, you’ll need to give Plush access to your OpenAI API 
 
 There’s another config.json in the **ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup** directory.  This file gets copied to the main directory if the main config.json is missing or corrupted.  It’s a good idea to enter your API key in this file too.
 
-I reccommend starting off using Style Prompt with a full SDXL Base and Refiner model, these models have the depth and labeling of art styles and artists that works well with this node.  You'll find a Workflow image in the **custom_nodes/Plush-for-ComfyUI/Example_workflows** directory if you want a quick setup.  Style Prompt doesn't work well with quick print/turbo workflows like LCM that rely on low cfg values.  Stable Diffusion has to implement the whole (or most) of a fairly detailed prompt in order to get the right style effect, and these workflows just don't pick everything up.  At least initially I recommend you use the more basic workflows and models
+I reccommend starting off using Style Prompt with a full SDXL Base and Refiner model, these models have the depth and labeling of art styles and artists that works well with this node.  You'll find a Workflow image in the **custom_nodes/Plush-for-ComfyUI/Example_workflows** directory if you want a quick setup.  Style Prompt doesn't work well with quick print/turbo workflows like LCM that rely on low cfg values.  Stable Diffusion has to implement the whole (or most) of a fairly detailed prompt in order to get the right style effect, and these workflows just don't pick everything up.  At least initially I recommend you use the more basic SDXL workflows and models
 
 ***
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/32debc23-3da0-4a65-a3f2-6cf803bde741 "Style Prompt Node")
@@ -63,7 +63,7 @@ I reccommend starting off using Style Prompt with a full SDXL Base and Refiner m
 
 *CGPTInstruction (optional)*: This will show you the instruction that was sent to ChatGPT along with the prompt.  The instruction tells ChatGPT how to treat the prompt.  It’s pretty much the same every time so typically it’s not worth hooking up after you’ve seen a couple.
 
-*Style Info (optional)*:  If the style_info UI control is set to “true”, this will output a brief backgrounder on the art style you’ve chosen:  What it is, its history and the names of some artists who have been influential in that style.  This will require connecting it to a text display box if you’re going to use it.
+*Style Info (optional)*:  If the style_info UI control is set to “true”, this will output a brief backgrounder on the art style you’ve chosen:  This will display important characteristics of the style, its history and the names of some artists who have been influential in that style.  This will require connecting it to a text display box if you’re going to use it.
 
 
 **UI inputs**:
