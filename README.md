@@ -1,8 +1,5 @@
 # Plush-for-ComfyUI
-## Custom node for ComfyUI/Stable Diffustion!!!
-
-### Plush for ComfyUI
-
+****
 ### Plush contains two OpenAI enabled nodes: 
 
 
@@ -10,29 +7,32 @@
 
 
 **OAI Dall_e 3**:  Takes your prompt and parameters and produces a Dall_e3 image in ComfyUI.
-
+*****
 ### Installation:
 
 Follow the link to the [Plush for ComfyUI Github page](https://github.com/glibsonoran/Plush-for-ComfyUI "Plush Github Page").  
 
 Click on the green Code button at the top right of the page.  When the tab drops down, click to the right of the url to copy it.
+
+![alt text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/c9277b63-7307-4fbd-86e6-b772db4165af "Copy Url")
+
 Then navigate, in the command window on your computer, to the ComfyUI/custom_nodes folder and type:
  >git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
+
 You should then have a new folder ComfyUI/custom_nodes/Plush-for-ComfyUI.
+****
+### Requirements: 
 
-Requirements: 
+* You’ll need to have ComfyUI installed and it’s recommended that you have the Base and Refiner SDXL models as those are the models this node was designed for and tested on.  The Style Prompt node relies on having a model that has a broad set of images that have been carefully labeled with art style and artist.  I think the SDXL base and refiner are best suited to this.
 
-You’ll need to have ComfyUI installed and it’s recommended that you have the Base and Refiner SDXL models as those are the models this node was designed for and tested on.  The Style Prompt node relies on having a model that has a broad set of images that have been carefully labeled with art style and artist.  I think the SDXL base and refiner are best suited to this.
+* You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
 
-You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
+* Plush requires the OpenAI Python library version 1.3.5 or later.  If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library in which case you’ll need to upgrade it.  You can upgrade by typing the command:   **>pip install openai --upgrade**  in a directory *where it will apply to the installation of Python that ComfyUI is using.*  
 
-Plush requires the OpenAI Python library version 1.3.5 or later.  If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library in which case you’ll need to upgrade it.  You can upgrade by typing the command >pip install openai --upgrade  in a directory where it will apply to the installation of Python that ComfyUI is using.  
+* Be aware that the new OpenAI API is not backward compatible and apps that use the older library may break after this upgrade.
+****
 
-
-Be aware that the new OpenAI API is not backward compatible and apps that use the older library may break after this upgrade.
-
-
-Usage:
+### Usage:
  
 Before you launch ComfUI, you’ll need to give Plush access to your OpenAI API key.  Navigate to the ComfyUI/custom_nodes/Plush-for-ComfyUI directory and open the configuration JSON:  config.json. You’ll see the word “key” and next to it a placeholder for you API key “jk-######”.  Replace the placeholder with your API key and close the file.  
 
