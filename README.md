@@ -37,42 +37,44 @@ You should then have a new folder ComfyUI/custom_nodes/Plush-for-ComfyUI.
 Before you launch ComfUI, you’ll need to give Plush access to your OpenAI API key.  Navigate to the ComfyUI/custom_nodes/Plush-for-ComfyUI directory and open the configuration JSON:  config.json. You’ll see the word “key” and next to it a placeholder for you API key “jk-######”.  Replace the placeholder with your API key and close the file.  
 
 There’s another config.json in the ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup directory.  This file gets copied to the main directory if the main config.json is missing or corrupted.  It’s a good idea to enter your API key in this file too.
+***
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/32debc23-3da0-4a65-a3f2-6cf803bde741 "Style Prompt Node")
 
-Style Prompt:
-
-
-Inputs:
-
-prompt:  Your prompt, it doesn’t need to be wordy or complex, simpler prompts work better.
+#### Style Prompt:
 
 
-example (optional):  A text example of how you want ChatGPT’s prompt to look.  There’s a default example in Style Prompt that works well, you can override it if you like by using this input.  Examples are for writing style, it doesn’t matter if they pertain to the same subject as your prompt.
+**Inputs**:
+
+*prompt*:  Your prompt, it doesn’t need to be wordy or complex, simpler prompts work better.
 
 
-Outputs: 
-
-CGPTprompt:  The prompt ChatGPT generates for your image, this should connect to the CLIP node. Alternatively you can have a text display node either in-line between Style Prompt and the CLIP node, or as a separate branch off this output.  In either case a text display node will show you the ChatGPT generated prompt.
-
-CGPTInstruction (optional): This will show you the instruction that was sent to ChatGPT along with the prompt.  The instruction tells ChatGPT how to treat the prompt.  It’s pretty much the same every time so typically it’s not worth hooking up after you’ve seen a couple.
-
-Style Info (optional):  If the style_info UI control is set to “true”, this will output a brief backgrounder on the art style you’ve chosen:  What it is, its history and the names of some artists who have been influential in that style.  This will require connecting it to a text display box if you’re going to use it.
+*example (optional)*:  A text example of how you want ChatGPT’s prompt to look.  There’s a default example in Style Prompt that works well, you can override it if you like by using this input.  Examples are for writing style, it doesn’t matter if they pertain to the same subject as your prompt.
 
 
-UI inputs:
+**Outputs**: 
 
-GPTModel (default gpt-4):  The ChatGPT model that’s going to generate the prompt. GPT-4 works better than GPT-3.5 turbo, but 3.5 is slightly cheaper to use.
+*CGPTprompt*:  The prompt ChatGPT generates for your image, this should connect to the CLIP node. Alternatively you can have a text display node either in-line between Style Prompt and the CLIP node, or as a separate branch off this output.  In either case a text display node will show you the ChatGPT generated prompt.
 
-Creative_lattitude (default 0.7):  This is very similar to cfg in the KSampler.  It’s how much freedom the AI model has to creatively interpret your prompt, example and instruction.  Small numbers make the model stick closely to your input, larger ones give it more freedom to improvise.  The actual range is from 0.1 to 2.0, but I’ve found that anything above 1.1 or 1.2 is just disjointed word salad. So I’ve limited the range to 1.2, and even then I don’t go above 0.9.
+*CGPTInstruction (optional)*: This will show you the instruction that was sent to ChatGPT along with the prompt.  The instruction tells ChatGPT how to treat the prompt.  It’s pretty much the same every time so typically it’s not worth hooking up after you’ve seen a couple.
 
-Tokens (default 2000):  A limit on how many tokens ChatGPT can use in providing your prompt.  Paid use of the API is based on the number of tokens used.  This isn’t how many ChatGPT will use, it’s a limit on how many it can use.  If you want to strictly control costs you can play around with the minimum number of tokens that will get you a good prompt.  I just leave it at 2000.
+*Style Info (optional)*:  If the style_info UI control is set to “true”, this will output a brief backgrounder on the art style you’ve chosen:  What it is, its history and the names of some artists who have been influential in that style.  This will require connecting it to a text display box if you’re going to use it.
 
-Style (default Photograph):  This is the heart of Style Prompt.  I’ve included a list of dozens of art styles to choose from and my instructions tell ChatGPT to build the prompt in a way that pertains to the chosen style.  It’s ChatGPT’s interpretation of the art style, knowledge of artists that work in that style, and what descriptive elements best relate to that style that makes the node effective at depicting the various styles.
 
-Artist (default True): Whether to include a “style of” statement with the name of an artist that exemplifies the style you’ve chosen.  Style Prompt is better at depicting the chosen style if this is set to True.
+**UI inputs**:
 
-Max_elements (default 10):  The maximum number of descriptive elements for ChatGPT to include in its generated prompt.  Stable Diffusion gives the highest weighting to text at the beginning of the prompt, and the weighting falls off from there.  There’s definitely a point where long wordy SD prompts result in diminishing returns.  The range here is from 3 to 20.  I think 6 to 10 works about the best.
+*GPTModel (default gpt-4)*:  The ChatGPT model that’s going to generate the prompt. GPT-4 works better than GPT-3.5 turbo, but 3.5 is slightly cheaper to use.
 
-Style_info (default false):  If this is set to true, Style Prompt will send a second request to ChatGPT to provide a description of the chosen style, historical information about it, and information on some of the most influential artists in that style.  
+*Creative_lattitude (default 0.7)*:  This is very similar to cfg in the KSampler.  It’s how much freedom the AI model has to creatively interpret your prompt, example and instruction.  Small numbers make the model stick closely to your input, larger ones give it more freedom to improvise.  The actual range is from 0.1 to 2.0, but I’ve found that anything above 1.1 or 1.2 is just disjointed word salad. So I’ve limited the range to 1.2, and even then I don’t go above 0.9.
+
+*Tokens (default 2000)*:  A limit on how many tokens ChatGPT can use in providing your prompt.  Paid use of the API is based on the number of tokens used.  This isn’t how many ChatGPT will use, it’s a limit on how many it can use.  If you want to strictly control costs you can play around with the minimum number of tokens that will get you a good prompt.  I just leave it at 2000.
+
+*Style (default Photograph)*:  This is the heart of Style Prompt.  I’ve included a list of dozens of art styles to choose from and my instructions tell ChatGPT to build the prompt in a way that pertains to the chosen style.  It’s ChatGPT’s interpretation of the art style, knowledge of artists that work in that style, and what descriptive elements best relate to that style that makes the node effective at depicting the various styles.
+
+*Artist (default True): Whether to include a “style of” statement with the name of an artist that exemplifies the style you’ve chosen.  Style Prompt is better at depicting the chosen style if this is set to True.
+
+*Max_elements (default 10)*:  The maximum number of descriptive elements for ChatGPT to include in its generated prompt.  Stable Diffusion gives the highest weighting to text at the beginning of the prompt, and the weighting falls off from there.  There’s definitely a point where long wordy SD prompts result in diminishing returns.  The range here is from 3 to 20.  I think 6 to 10 works about the best.
+
+*Style_info (default false)*:  If this is set to true, Style Prompt will send a second request to ChatGPT to provide a description of the chosen style, historical information about it, and information on some of the most influential artists in that style.  
 
 Examples:
 
