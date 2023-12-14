@@ -110,7 +110,7 @@ class Enhancer:
         return(instruc)
     
 
-    def cgptRequest(self, GPTmodel, client, creative_latitude, tokens, instruction, example, prompt):
+    def cgptRequest(self, GPTmodel, client, creative_latitude, tokens, prompt, instruction="", example=""):
         #Requet a prompt or backgrounder from ChatGPT
         print(f"Talking to model: {GPTmodel}")
         try:
@@ -196,45 +196,12 @@ class Enhancer:
             #User has request information about the art style.  GPT will provide it
             sty_prompt = "Give an 150 word backgrounder on the art style: {}.  Starting with describing what it is, include information about its history and which artists represent the style."
             sty_prompt = sty_prompt.format(style)
-            sty_instruction = ""
-            sty_example = ""
+ 
+            CGPT_styleInfo = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, sty_prompt )
 
-            CGPT_styleInfo = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, sty_instruction, sty_example, sty_prompt)
+        CGPT_prompt = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, prompt, instruction, example)
 
-        CGPT_prompt = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, instruction, example, prompt)
-
-        """ print(f"Talking to model: {GPTmodel}")
-        try:
-            #call the ChatGPT API with the user selections, instruction, example and prompt
-            chat_completion = client.chat.completions.create(
-                model = GPTmodel,
-                temperature = creative_latitude,
-                max_tokens = tokens,
-                stream = False,
-            messages = [
-                {"role": "system", "content": instruction},
-                {"role": "assistant", "content": example},
-                {"role": "user", "content": prompt,},
-                ],
-            )
-        except openai.APIConnectionError as e:
-            print("Server connection error: {e.__cause__}")  # from httpx.
-            raise
-        except openai.RateLimitError as e:
-            print(f"OpenAI RATE LIMIT error {e.status_code}: (e.response)")
-            raise
-        except openai.APIStatusError as e:
-            print(f"OpenAI STATUS error {e.status_code}: (e.response)")
-            raise
-        except openai.BadRequestError as e:
-            print(f"OpenAI BAD REQUEST error {e.status_code}: (e.response)")
-            raise
-        except Exception as e:
-            print(f"An unexpected error occurred: {e}")
-            raise
-
-       #get the prompt as item[0] from the completion object
-        CGPT_prompt = chat_completion.choices[0].message.content """
+        
        # *****************************************
        # print("Tokens: " + str(tokens))
        # print("Creativity: " + str(creative_latitude))
@@ -334,7 +301,8 @@ class DalleImage:
 
         # Convert the image to a PyTorch tensor
         #png_image = np.transpose(png_image, (2, 0, 1))
-        png_image = torch.from_numpy(png_image).unsqueeze(0).permute(0, 1, 2, 3)
+        png_image = torch.from_numpy(png_image).unsqueeze(0)
+        #.permute(0, 1, 2, 3)
 
         # Check if the image has an alpha channel
     
