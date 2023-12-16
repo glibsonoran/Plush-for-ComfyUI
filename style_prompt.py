@@ -97,7 +97,7 @@ class Enhancer:
         self.eFig = cFigSingleton()
         
     def build_instruction(self, style, elements, artist):
-          #build the prompt from user input
+          #build the instruction from user input
         if self.eFig.instruction.count("{}") >= 2:
             instruc = self.eFig.instruction.format(style, elements)
         elif self.eFig.instruction.count("{}") == 1:
@@ -105,8 +105,10 @@ class Enhancer:
         else:
             instruc = self.eFig.instruction
 
-        if artist:
-            instruc = instruc + "  Include an artist who works in the specifed artistic style by placing the artist's name at the end of the sentence prefaced by 'style of'.  "
+        if artist >= 1:
+            art_instruc = "  Include {} artist(s) who works in the specifed artistic style by placing the artists' name(s) at the end of the sentence prefaced by 'style of'."
+            instruc = instruc + art_instruc.format(str(artist))
+
         return(instruc)
     
 
@@ -126,6 +128,7 @@ class Enhancer:
                 {"role": "user", "content": prompt,},
                 ],
             )
+
         except openai.APIConnectionError as e:
             print("Server connection error: {e.__cause__}")  # from httpx.
             raise
@@ -142,6 +145,7 @@ class Enhancer:
             print(f"An unexpected error occurred: {e}")
             raise   
 
+
         #First of choices [0] content is the generated prompt 
         CGPT_prompt = chat_completion.choices[0].message.content
         
@@ -154,13 +158,13 @@ class Enhancer:
 
         return {
             "required": {
-                "GPTmodel": (["gpt-3.5-turbo","gpt-4"],{"default": "gpt-4"} ),
+                "GPTmodel": (["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview"],{"default": "gpt-4"} ),
                 "creative_latitude" : ("FLOAT", {"max": 1.2, "min": 0.1, "step": 0.1, "display": "number", "default": 0.7}),
                 "tokens" : ("INT", {"max": 8000, "min": 50, "step": 10, "default": 2000, "display": "number"}),
                 "prompt": ("STRING",{"multiline": True, "forceInput": True}),
                 "example" : ("STRING", {"forceInput": True, "multiline": True}),
                 "style": (iFig.style,{"default": "Photograph"}),
-                "artist" : ("BOOLEAN", {"default": True}),
+                "artist" : ("INT", {"max": 3, "min": 0, "step": 1, "default": 1, "display": "number"}),
                 "max_elements" : ("INT", {"max": 20, "min": 3, "step": 1, "default": 10, "display": "number"}),
                 "style_info" : ("BOOLEAN", {"default": False})                
             },
@@ -201,12 +205,6 @@ class Enhancer:
 
         CGPT_prompt = self.cgptRequest(GPTmodel, client, creative_latitude, tokens, prompt, instruction, example)
 
-        
-       # *****************************************
-       # print("Tokens: " + str(tokens))
-       # print("Creativity: " + str(creative_latitude))
-        #print("Prompt: " + CGPT_prompt)
-        #print("Instruction: " + instruction)
     
         return (CGPT_prompt, instruction, CGPT_styleInfo)
 
@@ -215,7 +213,7 @@ class Enhancer:
 #debug testing 
 """ Enh = Enhancer()
 Enh.INPUT_TYPES()
-test_resp = Enh.gogo("gpt-4", 0.7, 2000, "", "A beautiful eagle soaring above a verdant forest", "Biomorphic Abstraction", True, 10,True)
+test_resp = Enh.gogo("gpt-4", 0.7, 2000, "", "A beautiful eagle soaring above a verdant forest", "Biomorphic Abstraction", 3, 10,True)
 print (test_resp[2]) """
 
 class DalleImage:

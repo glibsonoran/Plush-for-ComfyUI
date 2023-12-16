@@ -5,7 +5,7 @@ import sys
 #new
 import shutil
 import json
-__version__ ="0.985"
+__version__ ="0.995"
 
 
 config_file_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")
