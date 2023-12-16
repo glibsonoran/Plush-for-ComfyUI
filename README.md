@@ -68,7 +68,7 @@ I reccommend starting off using Style Prompt with a full SDXL Base and Refiner m
 
 **UI inputs**:
 
-*GPTModel (default gpt-4)*:  The ChatGPT model that’s going to generate the prompt. GPT-4 works better than GPT-3.5 turbo, but 3.5 is slightly cheaper to use.
+*GPTModel (default gpt-4)*:  The ChatGPT model that’s going to generate the prompt. GPT-4 works better than GPT-3.5 turbo, but 3.5 is slightly cheaper to use.  The new GPT-4Turbo is now included as: "gpt-4-1106-preview"
 
 *Creative_lattitude (default 0.7)*:  This is very similar to cfg in the KSampler.  It’s how much freedom the AI model has to creatively interpret your prompt, example and instruction.  Small numbers make the model stick closely to your input, larger ones give it more freedom to improvise.  The actual range is from 0.1 to 2.0, but I’ve found that anything above 1.1 or 1.2 is just disjointed word salad. So I’ve limited the range to 1.2, and even then I don’t go above 0.9.
 
@@ -76,7 +76,7 @@ I reccommend starting off using Style Prompt with a full SDXL Base and Refiner m
 
 *Style (default Photograph)*:  This is the heart of Style Prompt.  I’ve included a list of dozens of art styles to choose from and my instructions tell ChatGPT to build the prompt in a way that pertains to the chosen style.  It’s ChatGPT’s interpretation of the art style, knowledge of artists that work in that style, and what descriptive elements best relate to that style that makes the node effective at depicting the various styles.
 
-*Artist (default True)*: Whether to include a “style of” statement with the name of an artist that exemplifies the style you’ve chosen.  Style Prompt is better at depicting the chosen style if this is set to True.
+*Artist (default 1, range: 0 - 3)*: Whether to include a “style of” statement with the name of 1 to 3 artisst that exemplify the style you’ve chosen.  Style Prompt is better at depicting the chosen style if this is set to >= 1.  If you don't want to include an artist, set this to 0.
 
 *Max_elements (default 10)*:  The maximum number of descriptive elements for ChatGPT to include in its generated prompt.  Stable Diffusion gives the highest weighting to text at the beginning of the prompt, and the weighting falls off from there.  There’s definitely a point where long wordy SD prompts result in diminishing returns.  This input lets you limit the length of your prompt.  The range here is from 3 to 20.  I think 6 to 10 works about the best.
 
