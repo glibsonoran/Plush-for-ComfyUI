@@ -32,7 +32,7 @@ You should then have a new folder **ComfyUI/custom_nodes/Plush-for-ComfyUI**.
 
   in a directory *where it will be applied to the installation of Python that ComfyUI is using.*  
 
-* Be aware that the new OpenAI API is not backward compatible and apps that use the older library may break after this upgrade.
+* Be aware that in some instances the new OpenAI API is not backward compatible and apps that use the older library may break after this upgrade.
 ****
 
 ### Usage:
