@@ -10,6 +10,10 @@
 *****
 ### Installation:
 
+Install through the ComfyUI manager:  Start the Manager. Click on Install Custom Nodes, search for "Plush", find "Plush-for-ComfyUI". Click Install.
+************
+Manual install:
+
 Follow the link to the [Plush for ComfyUI Github page](https://github.com/glibsonoran/Plush-for-ComfyUI "Plush Github Page") if you're not already here.  
 
 Click on the green Code button at the top right of the page.  When the tab drops down, click to the right of the url to copy it.
@@ -17,9 +21,11 @@ Click on the green Code button at the top right of the page.  When the tab drops
 ![alt text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/c9277b63-7307-4fbd-86e6-b772db4165af "Copy Url")
 
 Then navigate, in the command window on your computer, to the **ComfyUI/custom_nodes** folder and enter the command by typing *git clone* and pasting the url you copied after it:
- >git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
 
-You should then have a new folder **ComfyUI/custom_nodes/Plush-for-ComfyUI**.
+ >git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
+ >cd Plush-for-ComfyUI/
+ >python -m pip install -r requirements.txt
+>
 ****
 ### Requirements: 
 
