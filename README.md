@@ -40,7 +40,7 @@ Then navigate, in the command window on your computer, to the **ComfyUI/custom_n
 
 * You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
 
-* Plush requires the OpenAI Python library version 1.3.5 or later.  If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library in which case you’ll need to upgrade it.  You can upgrade by typing the command:
+* Plush requires the OpenAI Python library version 1.3.5 or later.  This should be handled by the "requirements.txt" file included in this package. If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library.  If for some reason installing the Plush nodes doesn't upgrade this libarary, you can upgrade it manually by typing the command:
 * >pip install openai --upgrade
 
   in a directory *where it will be applied to the installation of Python that ComfyUI is using.*  
