@@ -22,9 +22,9 @@ Click on the green Code button at the top right of the page.  When the tab drops
 
 Then navigate, in the command window on your computer, to the **ComfyUI/custom_nodes** folder and enter the command by typing *git clone* and pasting the url you copied after it:
 
- >git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.<
- >cd Plush-for-ComfyUI/
- >python -m pip install -r requirements.txt
+  >  git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
+ >  cd Plush-for-ComfyUI/
+ >  python -m pip install -r requirements.txt
 >
 ****
 ### Requirements: 
