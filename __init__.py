@@ -5,6 +5,11 @@ import sys
 #new
 import shutil
 import json
+
+#Diagnostic version print to detect incompatible openai versions
+import openai
+print("Plush - Current Openai Version: ", openai.__version__)
+
 __version__ ="0.995"
 
 
