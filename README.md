@@ -10,7 +10,12 @@
 *****
 ### Installation:
 
-Install through the ComfyUI manager:  Start the Manager. Click on Install Custom Nodes, search for "Plush", find "Plush-for-ComfyUI". Click Install.
+Install through the ComfyUI manager:  
+  *  Start the Manager.
+  *  Click on Install Custom Nodes
+  *  Search for "Plush"
+  *  Find "Plush-for-ComfyUI"
+  *  Click Install.
 ************
 Manual install:
 
