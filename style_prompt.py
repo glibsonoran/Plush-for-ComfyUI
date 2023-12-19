@@ -156,10 +156,11 @@ class Enhancer:
     def INPUT_TYPES(cls):
         iFig=cFigSingleton()
 
+        #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
                 "GPTmodel": (["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview"],{"default": "gpt-4"} ),
-                "creative_latitude" : ("FLOAT", {"max": 1.2, "min": 0.1, "step": 0.1, "display": "number", "default": 0.7}),
+                "creative_latitude" : ("FLOAT", {"max": 1.201, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),
                 "tokens" : ("INT", {"max": 8000, "min": 50, "step": 10, "default": 2000, "display": "number"}),
                 "prompt": ("STRING",{"multiline": True, "forceInput": True}),
                 "example" : ("STRING", {"forceInput": True, "multiline": True}),
