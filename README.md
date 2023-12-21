@@ -38,7 +38,7 @@ Then navigate, in the command window on your computer, to the **ComfyUI/custom_n
 
 * You’ll need to have ComfyUI installed and it’s recommended that you have the Base and Refiner SDXL models as those are the models this node was designed for and tested on.  The Style Prompt node relies on having a model that has a broad set of images that have been carefully labeled with art style and artist.  I think the SDXL base and refiner are best suited to this.
 
-* You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
+* You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.  Since you're going to be keeping your key in a plain text file on your computer, I reccomend you set a dollar limit on your OpenAI API account.  That way if you get hacked the amount you can be charged for illicit use will be limited.
 
 * Plush requires the OpenAI Python library version 1.3.5 or later.  This should be handled by the "requirements.txt" file included in this package. If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library.  If for some reason installing *Plush* doesn't upgrade this library, you can upgrade it manually by typing the command:
 * >pip install openai --upgrade
