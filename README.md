@@ -42,8 +42,8 @@ python -m pip install -r requirements.txt
    ********
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
   *********
-   *  **Installation and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a comprimised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
-   *  You'll need to create a new Environment Variable to store the API key called: "OAI_KEY".  See the following instructions on creating the Environment Variable and setting its value        to your API key:
+   *  **Installation and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a compromised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
+   *  You'll need to create a new Environment Variable to store the API key called: "OAI_KEY".  See the following instructions on creating the Environment Variable and setting its value to your API key:
 
 ##  Use Environment Variables in place of your API key
 
