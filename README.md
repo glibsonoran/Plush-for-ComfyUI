@@ -113,10 +113,6 @@ Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 ****
 
 ### Usage:
- 
-Before you launch ComfUI, you’ll need to give Plush access to your OpenAI API key.  Navigate to the **ComfyUI/custom_nodes/Plush-for-ComfyUI** directory and open the configuration JSON:  *config.json*. You’ll look for the word “key” and next to it a placeholder for your API key “jk-######”.  Replace the placeholder with your API key and save then close the file.  
-
-There’s another config.json in the **ComfyUI/custom_nodes/Plush-for-ComfyUI/bkup** directory.  This file gets copied to the main directory if the main config.json is missing or corrupted.  It’s a good idea to enter your API key in this file too.
 
 I reccommend starting off using Style Prompt with a full SDXL Base and Refiner model, these models have the depth and labeling of art styles and artists that works well with this node.  You'll find a Workflow image in the **custom_nodes/Plush-for-ComfyUI/Example_workflows** directory.  If you want a quick setup, drag this image directly onto your ComfyUI workspace in your browser, it will automatically load the graph.  Style Prompt doesn't work well with quick print/turbo workflows like LCM that rely on low cfg values.  Stable Diffusion has to implement the whole (or most) of a fairly detailed prompt in order to get the right style effect, and these workflows just don't pick everything up.  At least initially I recommend you use the more basic SDXL workflows and models
 
