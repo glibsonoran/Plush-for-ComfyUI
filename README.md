@@ -95,7 +95,7 @@ The value of your API key will be the resulting output.
 
 Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 
-##NOTE: Initially Plush-for-ComfyUI used the config.json file to store the OpenAI API key.  I will be transitioning all installations over to Enviroment Variable only with a deadline sometime in Jan. 2024.
+##  NOTE: Initially Plush-for-ComfyUI used the config.json file to store the OpenAI API key.  I will be transitioning all installations over to Enviroment Variable only with a deadline sometime in Jan. 2024.
 
  You’re all set! Now Plush can load your key when you startup ComfyUI.
 
