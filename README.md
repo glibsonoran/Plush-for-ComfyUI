@@ -86,7 +86,7 @@ Variable value: (yourkey)
 
 3. Confirm that you have set your environment variable using the following command. 
 
-```echo $OPENAI_API_KEY```
+```echo $OAI_KEY```
 
 The value of your API key will be the resulting output.
 
