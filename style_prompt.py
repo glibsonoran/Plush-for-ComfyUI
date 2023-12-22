@@ -27,6 +27,7 @@ class cFigSingleton:
             cls._instance.get_file()
         return cls._instance
     
+   
 
     
     def get_file(self):
@@ -64,7 +65,13 @@ class cFigSingleton:
             raise
         
         #set property variables
-        self.figKey = config_data['key']
+        # Try getting API key from environment variable
+        self.figKey = os.getenv('OAI_KEY')
+
+        if not self.figKey:
+            # Fallback to getting the key from JSON
+            self.figKey = config_data['key']
+     
         self.figInstruction = config_data['instruction']
         self.figExample = config_data['example']
         self.figStyle = config_data['style']
@@ -226,6 +233,8 @@ class DalleImage:
     @classmethod
     def INPUT_TYPES(cls):
         #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
+        #                 "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"})
+        # Possible future implentation of batch_sizes greater than one.
         return {
             "required": {
                 "GPTmodel": (["dall-e-3",], ),
@@ -318,9 +327,7 @@ class DalleImage:
         png_image = png_image.float()
 
         mask = mask.float()
-        #Image.fromarray(np.clip(255. * png_image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
-        #may need this if sizing doesn't work
-        #resized_image = transforms.functional.resize(png_image, (1, 3, 1024, 1024))
+
         
         return (png_image, mask.unsqueeze(0), revised_prompt)
     
