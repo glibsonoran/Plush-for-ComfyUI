@@ -26,12 +26,13 @@ Click on the green Code button at the top right of the page.  When the tab drops
 ![alt text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/c9277b63-7307-4fbd-86e6-b772db4165af "Copy Url")
 
 Then navigate, in the command window on your computer, to the **ComfyUI/custom_nodes** folder and enter the command by typing *git clone* and pasting the url you copied after it:
+```
+git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
 
-  >  git clone https://github.com/glibsonoran/Plush-for-ComfyUI.git.
+cd Plush-for-ComfyUI/
 
- >  cd Plush-for-ComfyUI/
-
- >  python -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
+```
 >
 ****
 ### Requirements: 
@@ -53,11 +54,11 @@ An environment variable is a variable that is set on your operating system, rath
 
 Run the following in the cmd prompt, replacing <yourkey> with your API key:
 
-```setx OAI_KEY “<yourkey>”```
+```setx OAI_KEY “(your key)"```
 
 You can validate that this variable has been set by opening a new cmd prompt window and typing in 
 
->>  echo %OAI_KEY%
+```echo %OAI_KEY%```
 
 **Option 2**: Set your ‘OAI_KEY’ Environment Variable through the Control Panel
 
@@ -65,10 +66,10 @@ You can validate that this variable has been set by opening a new cmd prompt win
 
 2. Select Environment Variables...
 
-3. Select New… from the User variables section(top). Add your name/key value pair ('OAI_KEY/'jk-####'), replacing <yourkey> with your API key.
+3. Select New… from the User variables section(top). Add your name/key value pair ('OAI_KEY/'jk-####'), replacing (yourkey) with your API key.
 
 Variable name: OAI_KEY
-Variable value: <yourkey>
+Variable value: (yourkey)
 
 
 ##  Linux / MacOS Set-up
@@ -77,15 +78,15 @@ Variable value: <yourkey>
 
 1. Run the following command in your terminal, replacing yourkey with your API key. 
 
->>  echo "export OAI_KEY='yourkey'" >> ~/.zshrc
+```echo "export OAI_KEY='yourkey'" >> ~/.zshrc```
 
 2. Update the shell with the new variable:
 
->>  source ~/.zshrc
+```source ~/.zshrc```
 
 3. Confirm that you have set your environment variable using the following command. 
 
->>  echo $OPENAI_API_KEY
+```echo $OPENAI_API_KEY```
 
 The value of your API key will be the resulting output.
 
@@ -94,7 +95,8 @@ The value of your API key will be the resulting output.
 
 Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 
- You’re all set! Now Plush can load your key when you startup ComfyUI:
+ You’re all set! Now Plush can load your key when you startup ComfyUI.
+
 ******************************
 ###  More Requirements:
 
