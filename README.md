@@ -35,10 +35,68 @@ Then navigate, in the command window on your computer, to the **ComfyUI/custom_n
 >
 ****
 ### Requirements: 
+##  Your OpenAI API Key:
+* You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
+   *  **You should set a reasonale Dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the           OpenAI website.
+   *  **Installatioh and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a comprimised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
+   *  You'll need to create a new Environment Variable to store the API key called: "OAI_KEY".  See the following instructions on creating the Environment Variable and setting its value        to your API key:
+
+##  Use Environment Variables in place of your API key
+
+An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value.We recommend that you set the name of the variable to OPENAI_API_KEY. By keeping this variable name consistent across your team, you can commit and share your code without the risk of exposing your API key.
+
+##  Windows Set-up
+
+**Option 1**: Set your ‘OPENAI_API_KEY’ Environment Variable via the cmd prompt
+
+Run the following in the cmd prompt, replacing <yourkey> with your API key:
+
+>>  setx OAI_KEY “<yourkey>”
+
+You can validate that this variable has been set by opening a new cmd prompt window and typing in 
+
+>>  echo %OAI_KEY%
+
+**Option 2**: Set your ‘OAI_KEY’ Environment Variable through the Control Panel
+
+1. Open System properties and select Advanced system settings
+
+2. Select Environment Variables...
+
+3. Select New… from the User variables section(top). Add your name/key value pair ('OAI_KEY/'jk-####'), replacing <yourkey> with your API key.
+
+Variable name: OAI_KEY
+Variable value: <yourkey>
+
+
+##  Linux / MacOS Set-up
+
+**Option 1**: Set your ‘OAI_KEY’ Environment Variable using zsh
+
+1. Run the following command in your terminal, replacing yourkey with your API key. 
+
+>>  echo "export OAI_KEY='yourkey'" >> ~/.zshrc
+
+2. Update the shell with the new variable:
+
+>>  source ~/.zshrc
+
+3. Confirm that you have set your environment variable using the following command. 
+
+>>  echo $OPENAI_API_KEY
+
+The value of your API key will be the resulting output.
+
+
+**Option 2**: Set your ‘OAI_KEY’ Environment Variable using bash
+
+Follow the directions in Option 1, replacing .zshrc with .bash_profile.
+
+ You’re all set! Now Plush can load your key when you startup ComfyUI:
+******************************
+###  More Requirements:
 
 * You’ll need to have ComfyUI installed and it’s recommended that you have the Base and Refiner SDXL models as those are the models this node was designed for and tested on.  The Style Prompt node relies on having a model that has a broad set of images that have been carefully labeled with art style and artist.  I think the SDXL base and refiner are best suited to this.
-
-* You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.  **Since you're going to be keeping your key in a plain text file on your computer, I reccomend you set a reasonable dollar limit on your OpenAI API account.  That way if you get hacked the amount you can be charged for illicit use will be limited.  By using this node and placing your key in config.json, you're accepting responsibility for any loss you might incur if your key is compromised.**
 
 * Plush requires the OpenAI Python library version 1.3.5 or later.  This should be handled by the "requirements.txt" file included in this package. If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library.  If for some reason installing *Plush* doesn't upgrade this library, you can upgrade it manually by typing the command:
 * >pip install openai --upgrade
