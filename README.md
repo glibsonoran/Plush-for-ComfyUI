@@ -37,17 +37,16 @@ Then navigate, in the command window on your computer, to the **ComfyUI/custom_n
 ### Requirements: 
 ##  Your OpenAI API Key:
 * You’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
-   *  **You should set a reasonale Dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the           OpenAI website.
-   *  **Installatioh and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a comprimised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
+   *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the           OpenAI website.
+   *  **Installation and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a comprimised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
    *  You'll need to create a new Environment Variable to store the API key called: "OAI_KEY".  See the following instructions on creating the Environment Variable and setting its value        to your API key:
 
 ##  Use Environment Variables in place of your API key
 
-An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value.We recommend that you set the name of the variable to OPENAI_API_KEY. By keeping this variable name consistent across your team, you can commit and share your code without the risk of exposing your API key.
-
+An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value.We recommend that you set the name of the variable to OAI_KEY.
 ##  Windows Set-up
 
-**Option 1**: Set your ‘OPENAI_API_KEY’ Environment Variable via the cmd prompt
+**Option 1**: Set your ‘OAI_KEY’ Environment Variable via the cmd prompt
 
 Run the following in the cmd prompt, replacing <yourkey> with your API key:
 
