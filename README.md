@@ -106,7 +106,7 @@ Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 
 * Plush requires the OpenAI Python library version 1.3.5 or later.  This should be handled by the "requirements.txt" file included in this package. If you have used earlier nodes that communicate with ChatGPT you may have an early version of this library.  If for some reason installing *Plush* doesn't upgrade this library, you can upgrade it manually by typing the command:
   
-```pip install --upgrade openai```
+*  ```pip install --upgrade openai```
 
   in a directory or virtual environment *where it will be applied to the installation of Python that ComfyUI is using.*  
 
