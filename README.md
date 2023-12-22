@@ -51,7 +51,7 @@ An environment variable is a variable that is set on your operating system, rath
 
 Run the following in the cmd prompt, replacing <yourkey> with your API key:
 
->>  setx OAI_KEY “<yourkey>”
+```setx OAI_KEY “<yourkey>”```
 
 You can validate that this variable has been set by opening a new cmd prompt window and typing in 
 
