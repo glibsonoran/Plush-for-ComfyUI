@@ -197,4 +197,6 @@ I’m not going to go into detail about this node.  The main thing is that it ta
 
 You should be aware that in the API implementation Dall_e completely rewrites your prompt in an attempt to control misuse.  The text of that rewritten prompt is what is produced by the Dall_e_prompt output in this node. This can create some odd results, and some prompts will generate a ComfyUI error as Dall_e reports that the prompt violates their policies.  This can happen even with very benign subject matter.  Right now I think the Dall_e engine built into the Edge browser gives better results than the API, but every once in a while this will produce a winner.
 
+My next project with this node will be to allow the user to select a batch size so you can screen multiple images per run to find the one you like.
+
 
