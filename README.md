@@ -62,7 +62,7 @@ You can validate that this variable has been set by opening a new cmd prompt win
 
 **Option 2**: Set your ‘OAI_KEY’ Environment Variable through the Control Panel
 
-1. Open System properties and select Advanced system settings
+1. Open System properties by right clicking the windows startup button and selecting "System". Then select Advanced system settings
 
 2. Select Environment Variables...
 
