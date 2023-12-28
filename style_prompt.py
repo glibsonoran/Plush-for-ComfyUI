@@ -2,17 +2,14 @@
 import openai
 from openai import OpenAI
 import os
-import json
 import base64
 from io import BytesIO
-from PIL import Image 
+from PIL import Image, ImageOps
 import numpy as np
 import torch
 import sys
-import shutil
+from .mng_json import json_manager
 
-#debug
-print(f"Python system path {sys.path}")
 #pip install pillow
 #pip install bytesio
 
@@ -31,46 +28,31 @@ class cFigSingleton:
 
     
     def get_file(self):
+
+
         #Get script working directory
-        
-        NODE_FILE = os.path.abspath(__file__)
-        #Get script directory (the location of config.json)
-        SUITE_DIR = os.path.dirname(NODE_FILE)
-        PARENT_DIR = os.path.normpath(os.path.join(SUITE_DIR, '..'))     
-        CUR_DIR = os.path.basename(SUITE_DIR)      
-        #If we're running as a package in ComfyUI_plus, use the parent directory for config.json. 
-        #Otherwise use the current (SUITE_DIR) directory.
-        if CUR_DIR == 'src':
-            config_file_path = os.path.join(PARENT_DIR, 'config.json') 
-        else:
-            config_file_path = os.path.join(SUITE_DIR, 'config.json')
+        j_mngr = json_manager()
 
-        #print("Enhancer json path:" + config_file_path)
+        # Error handling is in the load_json method
+        # Errors will be raised since is_critical is set to True
+        config_data = j_mngr.load_json(j_mngr.config_file, True)
 
-         #Open and read config.json       
-
-        try:
-            with open(config_file_path, 'r') as config_file:
-                #check if file is empty
-                if os.stat(config_file_path).st_size == 0:
-                    raise ValueError("Error: config.json is empty")
-                
-                config_data =  json.load(config_file)
-                if not config_data:
-                    raise ValueError("Error: config.json contains no valid JSON data")
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Error config.json not found in {config_file_path}.")
-        except json.JSONDecodeError as e:
-            print(f"Error decoding JSON in {config_file_path}: {e}")
-            raise
+        #check if file is empty
+        if not config_data:
+            raise ValueError("Plush - Error: config.json contains no valid JSON data")
         
         #set property variables
-        # Try getting API key from environment variable
+        # Try getting API key from Plush environment variable
         self.figKey = os.getenv('OAI_KEY')
-
+        # Try the openAI recommended Env Variable.
         if not self.figKey:
-            # Fallback to getting the key from JSON
+            self.figKey = os.getenv("OPENAI_API_KEY")
+        # Temporary: Lastly get the API key from config.json
+        if not self.figKey:
             self.figKey = config_data['key']
+        # Final check to ensure an API key is set
+        if not self.figKey:
+            raise ValueError("Plush - Error: OpenAI API key not found. Please set it as an environment variable (See the Plush ReadMe).")
      
         self.figInstruction = config_data['instruction']
         self.figExample = config_data['example']
@@ -202,8 +184,6 @@ class Enhancer:
         #build instruction based on user input
         instruction = enH.build_instruction(style, max_elements, artist)  
 
-        CGPT_styleInfo = ""
-
         if style_info:
             #User has request information about the art style.  GPT will provide it
             sty_prompt = "Give an 150 word backgrounder on the art style: {}.  Starting with describing what it is, include information about its history and which artists represent the style."
@@ -230,11 +210,90 @@ class DalleImage:
     def __init__(self):
         self.eFig = cFigSingleton()
 
+        
+    def b64_to_tensor(self, b64_image: str) -> torch.Tensor:
+
+        """
+        Converts a base64-encoded image to a torch.Tensor.
+
+        Note: ComfyUI expects the image tensor in the [N, H, W, C] format.  
+        For example with the shape torch.Size([1, 1024, 1024, 3])
+
+        Args:
+            b64_image (str): The b64 image to convert.
+
+        Returns:
+            torch.Tensor: an image Tensor.
+        """        
+        # Decode the base64 string
+        image_data = base64.b64decode(b64_image)
+        
+        # Open the image with PIL and handle EXIF orientation
+        image = Image.open(BytesIO(image_data))
+        image = ImageOps.exif_transpose(image)
+        
+        # Convert to RGB and normalize
+        image = image.convert("RGB")
+        image_np = np.array(image).astype(np.float32) / 255.0
+        
+        # Convert to PyTorch tensor
+        tensor_image = torch.from_numpy(image_np)
+
+        # Check shape and permute if necessary
+        #if tensor_image.shape[-1] in [3, 4]:
+            #tensor_image = tensor_image.permute(2, 0, 1)  # Convert to [C, H, W]  
+  
+        # Create a mask if there's an alpha channel
+        if tensor_image.ndim == 3:  # If the tensor is [C, H, W]
+            mask = torch.zeros_like(tensor_image[0, :, :], dtype=torch.float32)
+        elif tensor_image.ndim == 4:  # If the tensor is [N, C, H, W]
+            mask = torch.zeros_like(tensor_image[0, 0, :, :], dtype=torch.float32)
+
+        if tensor_image.shape[1] == 4:  # Assuming channels are in the first dimension after unsqueeze
+            mask = 1.0 - tensor_image[:, 3, :, :] / 255.0
+        
+        tensor_image = tensor_image.float()
+        mask = mask.float()
+
+        return tensor_image.unsqueeze(0), mask
+    
+
+    
+    def tensor_to_base64(self, tensor: torch.Tensor) -> str:
+        """
+        Converts a PyTorch tensor to a base64-encoded image.
+
+        Note: ComfyUI provides the image tensor in the [N, H, W, C] format.  
+        For example with the shape torch.Size([1, 1024, 1024, 3])
+
+        Args:
+            tensor (torch.Tensor): The image tensor to convert.
+
+        Returns:
+            str: Base64-encoded image string.
+        """
+    # Convert tensor to PIL Image
+        if tensor.ndim == 4:
+            tensor = tensor.squeeze(0)  # Remove batch dimension if present
+        pil_image = Image.fromarray((tensor.numpy() * 255).astype('uint8'))
+
+        # Save PIL Image to a buffer
+        buffer = BytesIO()
+        pil_image.save(buffer, format="PNG")  # Can change to PNG if preferred
+        buffer.seek(0)
+
+        # Encode buffer to base64
+        base64_image = base64.b64encode(buffer.read()).decode('utf-8')
+
+        return base64_image
+
+
     @classmethod
     def INPUT_TYPES(cls):
         #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
         #                 "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"})
         # Possible future implentation of batch_sizes greater than one.
+        #                "image" : ("IMAGE", {"forceInput": True}),
         return {
             "required": {
                 "GPTmodel": (["dall-e-3",], ),
@@ -290,43 +349,15 @@ class DalleImage:
             raise
 
  
-      #Covert b64 JSON to .png file
+      # Get the revised_prompt
         revised_prompt = response.data[0].revised_prompt
+
+        #Convert the b64 json to a pytorch tensor
+
         b64Json = response.data[0].b64_json
-        png_data = base64.b64decode(b64Json)
+
+        png_image, mask = self.b64_to_tensor(b64Json)
         
-        png_image = Image.open(BytesIO(png_data))
-       
-        #This saves the .png as a file
-        #os.makedirs("test_image", exist_ok=True)
-        #png_image.save("test_image/testDall_eImage2.png")
-        #*************************************************
-
-        # Convert the image to RGB format
-        png_image = png_image.convert("RGB")
-        png_image = np.array(png_image)
-        png_image = png_image.astype(np.float32) / 255.0
-
-        # Convert the image to a PyTorch tensor
-        #png_image = np.transpose(png_image, (2, 0, 1))
-        png_image = torch.from_numpy(png_image).unsqueeze(0)
-        #.permute(0, 1, 2, 3)
-
-        # Check if the image has an alpha channel
-    
-        if png_image.shape[3] == 4:  # Assuming channels are in the third dimension
-            # Extract and normalize the alpha channel
-            mask = png_image[:, 3, :, :].clone() / 255.0
-            mask = 1. - mask
-        else:
-            # Create a default mask if there's no alpha channel
-            mask = torch.zeros_like(png_image[:, 0, :, :], dtype=torch.float32)
-        
-        #png_image = png_image * 0.9529
-
-        png_image = png_image.float()
-
-        mask = mask.float()
 
         
         return (png_image, mask.unsqueeze(0), revised_prompt)
