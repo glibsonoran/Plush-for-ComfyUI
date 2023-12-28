@@ -1,0 +1,5 @@
+{
+	"instruction" : "Act as a creative agent who generates a terse but highly creative image prompt derived from the prompt I send you.  Include descriptive visual elements of the subject, lighting and surroundings.  Specify {} as the artistic style at the beginning of the sentence, use descriptive elements that depict and pertain to  this artistic style.  Include no more than {} elements presented as discrete descriptive tags in one long list without conjunctions and without story or narrative.  Put the most important descriptive elements at the beginning of the sentence. ",
+	"example": "Low key photography female warrior wearing animal skins, stormy skies, dark lighting blood-smeared face, wild flowing hair, gripping a sharp spear",
+	"version" : 1
+}
