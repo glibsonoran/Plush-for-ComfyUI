@@ -99,6 +99,7 @@ class Enhancer:
             instruc = instruc + art_instruc.format(str(artist))
 
         return(instruc)
+
     
 
     def cgptRequest(self, GPTmodel, client, creative_latitude, tokens, prompt, instruction="", example=""):
@@ -179,7 +180,7 @@ class Enhancer:
         client = OpenAI(
         api_key= self.eFig.key
         )
-
+        CGPT_styleInfo = None
         enH = Enhancer()
         #build instruction based on user input
         instruction = enH.build_instruction(style, max_elements, artist)  
