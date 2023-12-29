@@ -46,7 +46,7 @@ python -m pip install -r requirements.txt
 
    *  You can choose to create a new Environment Variable to store the API key called: "OAI_KEY", or you can use the OpenAI standard environment variable: OPENAI_API_KEY if you prefer.
 
-   *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the OAI_KEY variable will allow you to generate a separate key for Plush and track those costs separately from the other OpeanAI API apps you might use.  Either way you'll need to have one of the two enviroment variables defined with a valid active key.
+   *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the OAI_KEY variable will allow you to generate a separate key for Plush and track those costs separately if your other OpenAI API are using the standard variable.  Either way you'll need to have one of the two enviroment variables defined with a valid active key.
 
    *  If you need to make a new environment variable, see the following instructions on how to create it and set its value to your API key:
 
