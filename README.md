@@ -43,9 +43,12 @@ python -m pip install -r requirements.txt
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
   *********
    *  **Installation and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a compromised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
-   *  You can choose to create a new Environment Variable to store the API key called: "OAI_KEY", or you can use the OpenAI standard environment variable: OPENAI_API_KEY if you prefer, or if you already have it installed.
+
+   *  You can choose to create a new Environment Variable to store the API key called: "OAI_KEY", or you can use the OpenAI standard environment variable: OPENAI_API_KEY if you prefer.
+
    *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the OAI_KEY variable will allow you to generate a separate key for Plush and track those costs separately from the other OpeanAI API apps you might use.  Either way you'll need to have one of the two enviroment variables defined with a valid active key.
-   *  If you choose to make a new environment variable, see the following instructions on creating the Environment Variable and setting its value to your API key:
+
+   *  If you need to make a new environment variable, see the following instructions on creating the Environment Variable and setting its value to your API key:
 
 ##  Use Environment Variables in place of your API key
 
