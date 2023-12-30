@@ -2,7 +2,7 @@
 ****
 ### Plush contains two OpenAI enabled nodes: 
 
-##### **New feature: **as of 12/29/23:4:24pm PST:  Plush-for-ComfyUI style_prompt can now use image files to generate text prompts.  Image files can be used alone, or with a text prompt.  ChatGPT will interpret the image or image + prompt and generate a text prompt based on its evaluation of the input.  This is not exif extraction, it will not recreate the original prompt that produced the image, it's ChatGPT's interpretation of the image or image + prompt.
+##### *New feature:* as of 12/29/23:4:24pm PST:  Plush-for-ComfyUI style_prompt can now use image files to generate text prompts.  Image files can be used alone, or with a text prompt.  ChatGPT will interpret the image or image + prompt and generate a text prompt based on its evaluation of the input.  This is not exif extraction, it will not recreate the original prompt that produced the image, it's ChatGPT's interpretation of the image or image + prompt.
 
 
 **Style Prompt**: Takes your prompt and the art style you specify and generates a prompt from ChatGPT3 or 4 that Stable Diffusion can use to generate an image in that style.
