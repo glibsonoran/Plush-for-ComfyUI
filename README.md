@@ -125,8 +125,17 @@ Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 
 I reccommend starting off using Style Prompt with a full SDXL Base and Refiner model, these models have the depth and labeling of art styles and artists that works well with this node.  You'll find a Workflow image in the **custom_nodes/Plush-for-ComfyUI/Example_workflows** directory.  If you want a quick setup, drag this image directly onto your ComfyUI workspace in your browser, it will automatically load the graph.  The new [OpenDalle model](https://huggingface.co/dataautogpt3/OpenDalleV1.1) model is also reccomended. Style Prompt doesn't work well with quick print/turbo workflows like LCM that rely on low cfg values.  Stable Diffusion has to implement the whole (or most) of a fairly detailed prompt in order to get the right style effect, and these workflows just don't pick everything up.  At least initially I recommend you use the more basic SDXL workflows and models
 
+
+New to Style Prompt is the ability to interpret images and convert them into Stable Diffusion prompts using the new ChatGPT vision model. *You will be using the "gpt-4-vision-preview" model if you decide to use an image in your input, regardless of your GPTmodel selection.  It's the only model that can handle image input*.  
+You can use this feature to:
+* get prompt ideas from an image you like 
+* To iterate on an image theme by selecting differnt art styles to apply to the image intepretation 
+* By adding your own text prompt to the image to compose an image similar to your input image but with added visual elements.
+* Or, of course, any other creative process you can think of
+
 ***
-![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/32debc23-3da0-4a65-a3f2-6cf803bde741 "Style Prompt Node")
+![ImgStylePmt](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/7f975898-1305-4ac8-8990-c43019b3f086 "Style_prompt")
+=======
 
 #### Style Prompt:
 
@@ -135,6 +144,9 @@ I reccommend starting off using Style Prompt with a full SDXL Base and Refiner m
 
 *prompt*:  Your prompt, it doesn’t need to be wordy or complex, simpler prompts work better.
 
+
+*image (optional)*:  Attach a "load image" or other node with an image output here.  The image will be interpreted by ChatGPT and formulated into a prompt for Stable Diffusion.  You can include an image alone, or an image + prompt. In the latter case both the prompt and image will be interprted by ChatGPT. When an image is included for interpretation, Style Prompt will automatically use the OpenAI "Vision" model (gpt-4-vision-preview) instead of the model selected in the "GPTmodel" field. This is because it's the only ChatGPT model that will accept image input.
+=======
 
 *example (optional)*:  A text example of how you want ChatGPT’s prompt to look.  There’s a default example in Style Prompt that works well, but you can override it if you like by using this input.  Examples are mostly for writing style, it doesn’t matter if they pertain to the same subject as your prompt.
 
@@ -195,6 +207,13 @@ Style: Origami
 
 Style: Fashion Art
 
+
+![SPImagePlusPrompt](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/9e960755-168e-4c4d-959a-e9d5e1cedb41 "Photograph, Image Plus Prompt")
+
+Style: Photograh, Example of Image +Prompt Input
+
+=======
+
 ****
 ### OAI Dall_e Image
 
@@ -206,6 +225,8 @@ I’m not going to go into detail about this node.  The main thing is that it ta
 
 You should be aware that in the API implementation Dall_e completely rewrites your prompt in an attempt to control misuse.  The text of that rewritten prompt is what is produced by the Dall_e_prompt output in this node. This can create some odd results, and some prompts will generate a ComfyUI error as Dall_e reports that the prompt violates their policies.  This can happen even with very benign subject matter.  Right now I think the Dall_e engine built into the Edge browser gives better results than the API, but every once in a while this will produce a winner.
 
-My next project with this node will be to allow the user to select a batch size so you can screen multiple images per run to find the one you like.
+
+=======
+
 
 
