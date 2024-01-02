@@ -125,7 +125,6 @@ Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 
 I reccommend starting off using Style Prompt with a full SDXL Base and Refiner model, these models have the depth and labeling of art styles and artists that works well with this node.  You'll find a Workflow image in the **custom_nodes/Plush-for-ComfyUI/Example_workflows** directory.  If you want a quick setup, drag this image directly onto your ComfyUI workspace in your browser, it will automatically load the graph.  The new [OpenDalle model](https://huggingface.co/dataautogpt3/OpenDalleV1.1) model is also reccomended. Style Prompt doesn't work well with quick print/turbo workflows like LCM that rely on low cfg values.  Stable Diffusion has to implement the whole (or most) of a fairly detailed prompt in order to get the right style effect, and these workflows just don't pick everything up.  At least initially I recommend you use the more basic SDXL workflows and models
 
-
 New to Style Prompt is the ability to interpret images and convert them into Stable Diffusion prompts using the new ChatGPT vision model. *You will be using the "gpt-4-vision-preview" model if you decide to use an image in your input, regardless of your GPTmodel selection.  It's the only model that can handle image input*.  
 You can use this feature to:
 * get prompt ideas from an image you like 
@@ -143,9 +142,7 @@ You can use this feature to:
 **Inputs**:
 
 *prompt*:  Your prompt, it doesn’t need to be wordy or complex, simpler prompts work better.
-
-
-*image (optional)*:  Attach a "load image" or other node with an image output here.  The image will be interpreted by ChatGPT and formulated into a prompt for Stable Diffusion.  You can include an image alone, or an image + prompt. In the latter case both the prompt and image will be interprted by ChatGPT. When an image is included for interpretation, Style Prompt will automatically use the OpenAI "Vision" model (gpt-4-vision-preview) instead of the model selected in the "GPTmodel" field. This is because it's the only ChatGPT model that will accept image input.
+test this is a test
 =======
 
 *example (optional)*:  A text example of how you want ChatGPT’s prompt to look.  There’s a default example in Style Prompt that works well, but you can override it if you like by using this input.  Examples are mostly for writing style, it doesn’t matter if they pertain to the same subject as your prompt.
