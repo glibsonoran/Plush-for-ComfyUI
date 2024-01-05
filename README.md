@@ -2,7 +2,7 @@
 ****
 ### Updates:
 1/5/23 @12:02pm PST: *Version 1.10*
-*  **Plush-for-ComfyUI will no longer load your API key from the .json file**  You must now store you OpenAI API key in an environment variable.  [See instructions below:](#your-openai-api-key)
+*  **Plush-for-ComfyUI will no longer load your API key from the .json file**  You must now store your OpenAI API key in an environment variable.  [See instructions below:](#your-openai-api-key)
 *  **A new example workflow .png has been added to the "Example Workflows" directory.** This workflow reflects the new features in the Style Prompt node.
 **************
 12/29/23 @4:24pm PST:
