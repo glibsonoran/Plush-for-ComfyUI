@@ -48,15 +48,10 @@ class cFigSingleton:
         
         #set property variables
         # Try getting API key from Plush environment variable
-        self.figKey = os.getenv('OAI_KEY')
+        self._figKey = os.getenv('OAI_KEY') or os.getenv('OPENAI_API_KEY')
         # Try the openAI recommended Env Variable.
-        if not self.figKey:
-            self.figKey = os.getenv("OPENAI_API_KEY")
-        # Temporary: Lastly get the API key from config.json
-        if not self.figKey:
-            self.figKey = config_data['key']
-        # Final check to ensure an API key is set
-        if not self.figKey:
+        
+        if not self._figKey:
             raise ValueError("Plush - Error: OpenAI API key not found. Please set it as an environment variable (See the Plush ReadMe).")
      
         self.figInstruction = config_data['instruction']
@@ -65,14 +60,14 @@ class cFigSingleton:
         self.figImgInstruction = config_data['img_instruction']
         self.figImgPromptInstruction = config_data['img_prompt_instruction']
         try:
-         self.figOAIClient = OpenAI(api_key= self.figKey)
+         self.figOAIClient = OpenAI(api_key= self._figKey)
         except Exception as e:
             print (f"Invalid OpenAI API key: {e}")
             raise
 
     @property
     def key(self)-> str:
-        return self.figKey
+        return self._figKey
 
     @property
     def instruction(self):
