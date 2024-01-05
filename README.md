@@ -2,7 +2,7 @@
 ****
 ### Updates:
 1/5/23 @12:02pm PST: 
-*  **Plush-for-ComfyUI will no longer get API key from .json file**  You must now store you OpenAI API key in an environment variable.  [See instructions below:](#your-openai-api-key)
+*  **Plush-for-ComfyUI will no longer get your API key from the .json file**  You must now store you OpenAI API key in an environment variable.  [See instructions below:](#your-openai-api-key)
 
 12/29/23 @4:24pm PST:
 *  **New feature:**  Plush-for-ComfyUI style_prompt can now use image files to generate text prompts.  Image files can be used alone, or with a text prompt.  ChatGPT will interpret the image or image + prompt and generate a text prompt based on its evaluation of the input.  This is not exif extraction, it will not recreate the original prompt that produced the image, it's ChatGPT's interpretation of the image or image + prompt.
