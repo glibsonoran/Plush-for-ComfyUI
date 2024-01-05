@@ -11,12 +11,12 @@ print("Plush - Current Openai Version: ", openai.__version__)
 
 jmanager = json_manager()
 
-if jmanager.update_config(True):
+if jmanager.update_config(False):
     print('Plush - config.json updated')
 else:
     print('Plush - config.json no update')
 
-__version__ ="1.01"
+__version__ ="1.10"
 print('Plush - Version:', __version__)
 
 

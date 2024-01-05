@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import bisect
 
 class json_manager:
 
@@ -84,12 +85,32 @@ class json_manager:
         Args:
             config_data (dict): The original configuration data.
             update_data (dict): Data containing potential new keys and values.
+        Note: 
+            Handle the 'style' list differently from the rest of the fields
+            it will have individual list items added or removed in alpha order.
+            upd_data style[] items that start with '-' will be removed
 
         Returns:
             dict: The updated configuration data.
         """
         for key, value in upd_data.items():
-            cfg_data[key] = value
+            if key != 'style':
+                cfg_data[key] = value
+
+        if 'style' in upd_data:
+            for item in upd_data['style']:
+                if item.startswith('-'):
+                    #Remove item (strip the "-" prefix before removing item[1:])
+                    remove_item = item[1:]
+                    if remove_item in cfg_data['style']:
+                        cfg_data['style'].remove(remove_item)
+                else:
+                    #Add item(s) in alpha sort order
+                    position = bisect.bisect_left(cfg_data['style'], item)
+                    #check if the postion for the new item is not beyond eof, and that's it's not a duplicate
+                    if position >= len(cfg_data['style']) or cfg_data['style'][position] != item:
+                        cfg_data['style'].insert(position, item)
+
 
         return cfg_data
 
