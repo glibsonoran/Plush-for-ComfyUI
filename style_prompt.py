@@ -254,7 +254,7 @@ class Enhancer:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush"
+    CATEGORY = "Plush/OpenAI"
  
 
     def gogo(self, GPTmodel, creative_latitude, tokens, example, style, artist, max_elements, style_info, prompt, image=None):
@@ -401,7 +401,7 @@ class DalleImage:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush"
+    CATEGORY = "Plush/OpenAI"
 
     def gogo(self, GPTmodel, prompt, image_size, image_quality, style):
                 
@@ -447,6 +447,7 @@ class DalleImage:
         return (png_image, mask.unsqueeze(0), revised_prompt)
     
 
+
 # A dictionary that contains all nodes you want to export with their names
 # NOTE: names should be globally unique
 NODE_CLASS_MAPPINGS = {
@@ -459,8 +460,14 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Enhancer": "Style Prompt",
     "DalleImage": "OAI Dall_e Image"
 }
-    
-
+#***************TESTING****************************    
+#debug testing mTextSwitch
+""" mTs = mulTextSwitch()
+ddict = mTs.INPUT_TYPES()
+print(ddict)
+tst = ""
+tst = mTs.gogo(2, "String 1 is a long string", "String 2 is a long string", "String 3 is a long string")
+print(tst) """
 
 #debug testing  DalleImage
 """ Di = DalleImage()
