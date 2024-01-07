@@ -21,10 +21,12 @@ print('Plush - Version:', __version__)
 
 
 #********************************************************************************
-from . import style_prompt 
+from .style_prompt import NODE_CLASS_MAPPINGS as styClassMappings, NODE_DISPLAY_NAME_MAPPINGS as styDisplay
+from .UtilNodes import NODE_CLASS_MAPPINGS as utilClassMappings, NODE_DISPLAY_NAME_MAPPINGS as utilDisplay
+# ** unpacks the dicts into a new dict
+NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings}
 
-NODE_CLASS_MAPPINGS = style_prompt.NODE_CLASS_MAPPINGS
-NODE_DISPLAY_NAME_MAPPINGS = style_prompt.NODE_DISPLAY_NAME_MAPPINGS
+NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay}
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
 
