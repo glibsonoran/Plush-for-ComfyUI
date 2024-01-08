@@ -16,7 +16,7 @@ if jmanager.update_config(False):
 else:
     print('Plush - config.json no update')
 
-__version__ ="1.10"
+__version__ ="1.12"
 print('Plush - Version:', __version__)
 
 
