@@ -1,6 +1,11 @@
 # Plush-for-ComfyUI
 ****
 ### Updates:
+1/8/23 @6:00pm PST
+*  **Version 1.15, adds a new UI field: 'prompt_style'.  Also a 'Help' output has been added**
+*  'prompt_style' lets you choose between:
+*   'Narrative' - A prompt style that is long form creative writing with grammatically correct sentences.  This is the preferred form for Dall_e
+*   'Tags' - A prompt style that is terse, a stripped down list of visual elements without conjunctions or grammatical phrasing.  This is the preferred form for Stable Diffusion and Midjourney.
 1/7/23 @4:07 PST
 *  **Two new switch utility nodes added** Both switches allow you to use text primitives in their multiline configuration.  One is a 3 => 1 output switch for multiline text, the other a 3 => 1 output for multiline text and image.
 *********
