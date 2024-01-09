@@ -4,8 +4,8 @@
 1/8/23 @6:00pm PST
 *  **Version 1.15, adds a new UI field: 'prompt_style'.  Also a 'Help' output has been added**
 *  'prompt_style' lets you choose between:
-  *  'Narrative' - A prompt style that is long form creative writing with grammatically correct sentences.  This is the preferred form for Dall_e
-  *  'Tags' - A prompt style that is terse, a stripped down list of visual elements without conjunctions or grammatical phrasing.  This is the preferred form for Stable Diffusion and Midjourney.
+  1  'Narrative' - A prompt style that is long form creative writing with grammatically correct sentences.  This is the preferred form for Dall_e
+  2  'Tags' - A prompt style that is terse, a stripped down list of visual elements without conjunctions or grammatical phrasing.  This is the preferred form for Stable Diffusion and Midjourney.
 *  'Help': Attach a text input node to get explanations of the various UI fields in style-prompt  
 *********************
 1/7/23 @4:07 PST
