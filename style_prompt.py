@@ -54,11 +54,16 @@ class cFigSingleton:
         if not self._figKey:
             raise ValueError("Plush - Error: OpenAI API key not found. Please set it as an environment variable (See the Plush ReadMe).")
      
-        self.figInstruction = config_data['instruction']
-        self.figExample = config_data['example']
-        self.figStyle = config_data['style']
-        self.figImgInstruction = config_data['img_instruction']
-        self.figImgPromptInstruction = config_data['img_prompt_instruction']
+        self.figInstruction = config_data.get('instruction', "")
+        self.figExample = config_data.get('example', "")
+        self.figStyle = config_data.get('style', "")
+        self.figImgInstruction = config_data.get('img_instruction', "")
+        self.figImgPromptInstruction = config_data.get('img_prompt_instruction', "")
+        self.fig_n_Instruction = config_data.get('n_instruction', "")
+        self.fig_n_ImgPromptInstruction = config_data.get('n_img_prompt_instruction', "")
+        self.fig_n_ImgInstruction = config_data.get('n_img_instruction', "")
+        self.fig_n_Example = config_data.get('n_example', "")
+        self.fig_sp_help = config_data.get('sp_help', "")
         try:
          self.figOAIClient = OpenAI(api_key= self._figKey)
         except Exception as e:
@@ -81,6 +86,8 @@ class cFigSingleton:
     def style(self):
         #make sure the designated default value is present in the list
         if "Photograph" not in self.figStyle:
+            if not isinstance(self.figStyle, list):
+                self.figStyle = []
             self.figStyle.append("Photograph")
 
         return self.figStyle
@@ -90,8 +97,27 @@ class cFigSingleton:
         return self.figImgInstruction
     
     @property
-    def ImgPropmptInstruction(self):
+    def ImgPromptInstruction(self):
         return self.figImgPromptInstruction
+    
+    @property
+    def n_Instruction(self):
+        return self.fig_n_Instruction
+    
+    @property
+    def n_ImgPromptInstruction(self):
+        return self.fig_n_ImgPromptInstruction
+    
+    @property
+    def n_ImgInstruction(self):
+        return self.fig_n_ImgInstruction
+    
+    @property
+    def n_Example(self):
+        return self.fig_n_Example
+    @property
+    def sp_help(self):
+        return self.fig_sp_help
     
     @property
     def openaiClient(self)-> openai.OpenAI:
@@ -104,20 +130,35 @@ class Enhancer:
     def __init__(self):
         self.cFig = cFigSingleton()
 
-    def build_instruction(self, mode, style, elements, artist):
+    def build_instruction(self, mode, style, prompt_style, elements, artist):
           #build the instruction from user input
         instruc = ""
-        if mode == InputMode.PROMPT_ONLY:
-            if self.cFig.instruction:
-                instruc = self.cFig.instruction
-            
-        elif mode == InputMode.IMAGE_ONLY:
-            if self.cFig.ImgInstruction:
-                instruc = self.cFig.ImgInstruction
-            
-        elif mode == InputMode.IMAGE_PROMPT:
-            if self.cFig.ImgPropmptInstruction:
-                instruc = self.cFig.ImgPropmptInstruction
+
+        if prompt_style == "Narrative":
+            if mode == InputMode.PROMPT_ONLY:
+                if self.cFig.n_Instruction:
+                    instruc = self.cFig.n_Instruction
+                
+            elif mode == InputMode.IMAGE_ONLY:
+                if self.cFig.n_ImgInstruction:
+                    instruc = self.cFig.n_ImgInstruction
+                
+            elif mode == InputMode.IMAGE_PROMPT:
+                if self.cFig.n_ImgPromptInstruction:
+                    instruc = self.cFig.n_ImgPromptInstruction
+
+        else:      #Prompt_style is Tags
+            if mode == InputMode.PROMPT_ONLY:
+                if self.cFig.instruction:
+                    instruc = self.cFig.instruction
+                
+            elif mode == InputMode.IMAGE_ONLY:
+                if self.cFig.ImgInstruction:
+                    instruc = self.cFig.ImgInstruction
+                
+            elif mode == InputMode.IMAGE_PROMPT:
+                if self.cFig.ImgPromptInstruction:
+                    instruc = self.cFig.ImgPromptInstruction
 
         if instruc.count("{}") >= 2:
             instruc = instruc.format(style, elements)
@@ -238,6 +279,7 @@ class Enhancer:
                 "example" : ("STRING", {"forceInput": True, "multiline": True}),
                 "style": (iFig.style,{"default": "Photograph"}),
                 "artist" : ("INT", {"max": 3, "min": 0, "step": 1, "default": 1, "display": "number"}),
+                "prompt_style": (["Tags", "Narrative"],{"default": "Tags"}),
                 "max_elements" : ("INT", {"max": 25, "min": 3, "step": 1, "default": 10, "display": "number"}),
                 "style_info" : ("BOOLEAN", {"default": False}),
                 "prompt": ("STRING",{"multiline": True})                                
@@ -247,8 +289,8 @@ class Enhancer:
             }
         } 
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("CGPTprompt", "CGPTinstruction","Style Info")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("CGPTprompt", "CGPTinstruction","Style Info", "Help")
 
     FUNCTION = "gogo"
 
@@ -257,11 +299,17 @@ class Enhancer:
     CATEGORY = "Plush/OpenAI"
  
 
-    def gogo(self, GPTmodel, creative_latitude, tokens, example, style, artist, max_elements, style_info, prompt, image=None):
+    def gogo(self, GPTmodel, creative_latitude, tokens, example, style, artist, prompt_style, max_elements, style_info, prompt="", image=None):
         
         #If no example text was provided by the user, use my default
+   
         if not example:
-            example = self.cFig.example
+            if prompt_style == "Narrative":
+                example = self.cFig.n_Example
+            else:
+                example = self.cFig.example
+        
+        help = self.cFig.sp_help
             
         CGPT_styleInfo = None
 
@@ -279,7 +327,7 @@ class Enhancer:
         elif prompt:
             mode = InputMode.PROMPT_ONLY
 
-        instruction = self.build_instruction(mode, style, max_elements, artist)  
+        instruction = self.build_instruction(mode, style, prompt_style, max_elements, artist)  
 
         if style_info:
             #User has request information about the art style.  GPT will provide it
@@ -291,7 +339,7 @@ class Enhancer:
         CGPT_prompt = self.icgptRequest(GPTmodel, creative_latitude, tokens, prompt, instruction, example, image)
 
     
-        return (CGPT_prompt, instruction, CGPT_styleInfo)
+        return (CGPT_prompt, instruction, CGPT_styleInfo, help)
 
 
 class DalleImage:
@@ -486,9 +534,9 @@ with open(image_path, "rb") as image_file:
 tensor_image, mask = img_convert.b64_to_tensor(image_file)
 tensor_image = None 
 #*************End Image File****************************
-#image_file = None
 
 Enh = Enhancer()
 Enh.INPUT_TYPES()
-test_resp = Enh.gogo("gpt-4", 0.7, 2000, "", None, "Shallow Depth of Field Photograph", 2, 10,False, tensor_image)
-print (test_resp[0])"""
+test_resp = Enh.gogo("gpt-4", 0.7, 500, "", "Shallow Depth of Field Photograph", 2, "Tags", 10, False, "using a cane", tensor_image)
+print (test_resp[0])
+print (test_resp[3]) """
