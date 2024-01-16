@@ -152,7 +152,7 @@ You can use this feature to:
 * Or, of course, any other creative process you can think of
 
 ***
-![ImgStylePmt](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/7f975898-1305-4ac8-8990-c43019b3f086 "Style_prompt")
+![StylePrompt](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/fc601470-5b4a-4332-ae55-434cd7b76a0d)
 =======
 
 #### Style Prompt:
