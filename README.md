@@ -3,6 +3,7 @@
 ### Updates:
 1/16/23 @1:00PM PST *Version 1.16*
 *  **Version 1.16, Fixes to unconnected inputs and the "undefined" values they generate, and an additional set of examples to send in the prompt request to ChatGPT.  This will facilitate "few shot" learning for generating prompts**
+*  **A new example workflow has been addded**: *StylePromptBaseOnly.png, a StylePrompt workflow that uses one KSampler, no Refiner.
 ********************
 1/8/23 @6:00pm PST *Version 1.15*
 *  **Version 1.15, adds a new UI field: 'prompt_style' and a 'Help' output to the style_prompt node**
