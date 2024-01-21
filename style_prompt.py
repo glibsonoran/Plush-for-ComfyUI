@@ -256,7 +256,9 @@ class Enhancer:
             }
 
             response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
+
             response_json = response.json()
+            print(f"Plush - Using model: {response_json['model']}")
             CPTG_response = self.clean_response_text(response_json['choices'][0]['message']['content'] )
 
             return CPTG_response
@@ -307,7 +309,8 @@ class Enhancer:
         except Exception as e:
             print(f"An unexpected error occurred: {e}")
             raise   
-        
+
+        print(f"Plush - Using model: {response.model}")
         CPTG_response = response.choices[0].message.content
         return CPTG_response
         
@@ -319,7 +322,7 @@ class Enhancer:
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
-                "GPTmodel": (["gpt-3.5-turbo","gpt-4","gpt-4 Turbo"],{"default": "gpt-4"} ),
+                "GPTmodel": (["gpt-3.5-turbo","gpt-4","gpt-4-1106-preview"],{"default": "gpt-4"} ),
                 "creative_latitude" : ("FLOAT", {"max": 1.201, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}),                
                 "style": (iFig.style,{"default": "Photograph"}),
