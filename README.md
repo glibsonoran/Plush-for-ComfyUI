@@ -1,6 +1,9 @@
 # Plush-for-ComfyUI
 ****
 ### Updates:
+1/21/23 @7:09PM PST *Revert some of the changes in Version 1.16*
+*  **The addition of 2 sets of examples to facilitate "few shot" learning was too confusing for ChatGPT, I had revert back to no examples.**  Few shot learning consists of providing the LLM an instruction and several examples of the desired response.  But style prompt's instruction is too complex to mix with examples. When I tried that ChatGPT completely lost the plot. So this has been reverted to no examples.  
+*******************
 1/16/23 @1:00PM PST *Version 1.16*
 *  **Version 1.16, Fixes to unconnected inputs and the "undefined" values they generate, and an additional set of examples to send in the prompt request to ChatGPT.  This will facilitate "few shot" learning for generating prompts**
 *  **A new example workflow has been addded**: *StylePromptBaseOnly.png* in the *Example_Workflows* directory, it's a StylePrompt workflow that uses one KSampler, no Refiner.
