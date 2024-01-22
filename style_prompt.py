@@ -82,11 +82,13 @@ class cFigSingleton:
     
     @property
     def example(self):
-        return self.figExample
+        #return self.figExample
+        return ""
     
     @property
     def example2(self):
-        return self.figExample2
+        #return self.figExample2
+        return ""
     
     @property
     def style(self):
@@ -120,11 +122,13 @@ class cFigSingleton:
     
     @property
     def n_Example(self):
-        return self.fig_n_Example
+        #return self.fig_n_Example
+        return ""
     
     @property
     def n_example2(self):
-        return self.fig_n_Example2
+        #return self.fig_n_Example2
+        return ""
     
     @property
     def sp_help(self):
@@ -232,7 +236,7 @@ class Enhancer:
             # Append the user message
             user_content = []
             if prompt:
-                prompt = "PROMPT: " + prompt
+                #prompt = "PROMPT: " + prompt
                 user_content.append({"type": "text", "text": prompt})
 
             user_content.append({"type": "image_url", "image_url": {"url": image_url}})
@@ -361,7 +365,7 @@ class Enhancer:
         # unconnected UI elements get passed in as the string "undefined" by ComfyUI
         example = self.undefined_to_none(example)
         image = self.undefined_to_none(image)
-        prompt = self.undefined_to_none(prompt)
+        prompt = 'PROMPT: ' + self.undefined_to_none(prompt)
         #Translate any friendly model names
         GPTmodel = self.translateModelName(GPTmodel)
         
