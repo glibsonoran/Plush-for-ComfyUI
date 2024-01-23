@@ -57,14 +57,16 @@ class cFigSingleton:
         self.figInstruction = config_data.get('instruction', "")
         self.figExample = config_data.get('example', "")
         self.figExample2 = config_data.get('example2', "")
+        self.fig_n_Example = config_data.get('n_example', "")
+        self.fig_n_Example2 = config_data.get('n_example2', "")
+        self._use_examples = False
         self.figStyle = config_data.get('style', "")
         self.figImgInstruction = config_data.get('img_instruction', "")
         self.figImgPromptInstruction = config_data.get('img_prompt_instruction', "")
         self.fig_n_Instruction = config_data.get('n_instruction', "")
         self.fig_n_ImgPromptInstruction = config_data.get('n_img_prompt_instruction', "")
         self.fig_n_ImgInstruction = config_data.get('n_img_instruction', "")
-        self.fig_n_Example = config_data.get('n_example', "")
-        self.fig_n_Example2 = config_data.get('n_example2', "")
+        # Help output text
         self.fig_sp_help = config_data.get('sp_help', "")
         try:
          self.figOAIClient = OpenAI(api_key= self._figKey)
@@ -72,6 +74,17 @@ class cFigSingleton:
             print (f"Invalid OpenAI API key: {e}")
             raise
 
+
+    @property
+    def use_examples(self)->bool:
+        return self._use_examples
+
+
+    @use_examples.setter        
+    def use_examples(self, use_examples: bool):
+        #Write-only, sets internal flag
+        self._use_examples = use_examples    
+    
     @property
     def key(self)-> str:
         return self._figKey
@@ -82,14 +95,28 @@ class cFigSingleton:
     
     @property
     def example(self):
-        #return self.figExample
+        if self._use_examples:
+            return self.figExample
         return ""
     
     @property
     def example2(self):
-        #return self.figExample2
+        if self._use_examples:
+            return self.figExample2
         return ""
     
+    @property
+    def n_Example(self):
+        if self._use_examples:
+            return self.fig_n_Example
+        return ""
+    
+    @property
+    def n_example2(self):
+        if self._use_examples:
+            return self.fig_n_Example2
+        return ""
+
     @property
     def style(self):
         #make sure the designated default value is present in the list
@@ -119,17 +146,7 @@ class cFigSingleton:
     @property
     def n_ImgInstruction(self):
         return self.fig_n_ImgInstruction
-    
-    @property
-    def n_Example(self):
-        #return self.fig_n_Example
-        return ""
-    
-    @property
-    def n_example2(self):
-        #return self.fig_n_Example2
-        return ""
-    
+     
     @property
     def sp_help(self):
         return self.fig_sp_help
@@ -213,10 +230,13 @@ class Enhancer:
         return None if sus_var == "undefined" else sus_var
  
 
-    def icgptRequest(self, GPTmodel, creative_latitude, tokens,  prompt="", prompt_style="", instruction="", example="", image=None,) :
+    def icgptRequest(self, GPTmodel, creative_latitude, tokens,  prompt="", prompt_style="", instruction="", image=None,) :
 
         client = self.cFig.openaiClient
+        #These will be empty strings unless cFig.use_examples is set to True
+        example = self.cFig.example
         example2 = self.cFig.example2
+        n_example = self.cFig.n_Example
         n_example2 = self.cFig.n_example2
         # There's an image
         if image:
@@ -247,15 +267,16 @@ class Enhancer:
                 messages.append({"role": "system", "content": instruction})
             # Append the example in the assistant role
             # But only if it's not in image + prompt mode, this mode works better with just the instruction
-            # Examples seem to make it difficult for the model to integrate the prompt and image
-            if not prompt:  
-                if example:
-                    messages.append({"role": "assistant", "content": example})
-                
+            # Examples seem to make it difficult for the model to integrate the prompt and imag
+            if self.cFig.use_examples:
                 if prompt_style == "Narrative":
+                    if n_example:
+                        messages.append({"role": "assistant", "content": n_example})
                     if n_example2:
                         messages.append({"role": "assistant", "content": n_example2})
                 else:
+                    if example:
+                        messages.append({"role": "assistant", "content": example})
                     if example2:
                         messages.append({"role": "assistant", "content": example2})
 
@@ -286,16 +307,19 @@ class Enhancer:
             # User has provided no prompt or image
             response = "empty box with 'NOTHING' printed on its side bold letters small flying moths, dingy, gloomy, dim light rundown warehouse"
             return response
-        if example:
-            messages.append({"role": "assistant", "content": example})   
 
-        if prompt_style == "Narrative":
-            if n_example2:
-                messages.append({"role": "assistant", "content": n_example2})
-        else:
-            if example2:
-                messages.append({"role": "assistant", "content": example2})
-        
+        if self.cFig.use_examples:
+            if prompt_style == "Narrative":
+                if n_example:
+                        messages.append({"role": "assistant", "content": n_example})
+                if n_example2:
+                        messages.append({"role": "assistant", "content": n_example2})
+            else:
+                if example:
+                        messages.append({"role": "assistant", "content": example})
+                if example2:
+                        messages.append({"role": "assistant", "content": example2})
+            
 
         try:
             response = client.chat.completions.create(
@@ -340,11 +364,9 @@ class Enhancer:
                 "artist" : ("INT", {"max": 3, "min": 0, "step": 1, "default": 1, "display": "number"}),
                 "prompt_style": (["Tags", "Narrative"],{"default": "Tags"}),
                 "max_elements" : ("INT", {"max": 25, "min": 3, "step": 1, "default": 10, "display": "number"}),
-                "style_info" : ("BOOLEAN", {"default": False}),
-                "prompt": ("STRING",{"multiline": True})                                
+                "style_info" : ("BOOLEAN", {"default": False})                               
             },
             "optional": {  
-                "example" : ("STRING", {"multiline": True, "forceInput": True}), 
                 "prompt": ("STRING",{"multiline": True, "default": ""}),          
                 "image" : ("IMAGE", {"default": None})
             }
@@ -360,22 +382,13 @@ class Enhancer:
     CATEGORY = "Plush/OpenAI"
  
 
-    def gogo(self, GPTmodel, creative_latitude, tokens, style, artist, prompt_style, max_elements, style_info, example=None, prompt="", image=None):
+    def gogo(self, GPTmodel, creative_latitude, tokens, style, artist, prompt_style, max_elements, style_info, prompt="", image=None):
 
         # unconnected UI elements get passed in as the string "undefined" by ComfyUI
-        example = self.undefined_to_none(example)
         image = self.undefined_to_none(image)
-        prompt = 'PROMPT: ' + self.undefined_to_none(prompt)
+        prompt = self.undefined_to_none(prompt)
         #Translate any friendly model names
         GPTmodel = self.translateModelName(GPTmodel)
-        
-        #If no example text was provided by the user, use my default
-   
-        if not example:
-            if prompt_style == "Narrative":
-                example = self.cFig.n_Example
-            else:
-                example = self.cFig.example
         
         help = self.cFig.sp_help
             
@@ -404,7 +417,7 @@ class Enhancer:
  
             CGPT_styleInfo = self.icgptRequest(GPTmodel, creative_latitude, tokens, sty_prompt )
 
-        CGPT_prompt = self.icgptRequest(GPTmodel, creative_latitude, tokens, prompt, prompt_style, instruction, example, image)
+        CGPT_prompt = self.icgptRequest(GPTmodel, creative_latitude, tokens, prompt, prompt_style, instruction, image)
 
     
         return (CGPT_prompt, instruction, CGPT_styleInfo, help)
