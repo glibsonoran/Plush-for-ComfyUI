@@ -1,24 +1,27 @@
 # Plush-for-ComfyUI
 ****
 ### Updates:
-1/21/23 @7:09PM PST *Revert some of the changes in Version 1.16*
+2/13/24 @4:40PM PST *Version 1.20*
+*   **A new node, Plush Exif Wrangler:**  Exif Wrangler will extract Exif and/or AI generation workflow metadata from .jpg (.jpeg) and .png images.  .jpg photographs can be queried for their camera settings.  ComfyUI's .png files will yield certain values from their workflow including the prompt, model, seed etc.  Images from other AI generators may or may not yield data depending on where they store their metadata. For instance Auto 1111 .jpg's will yield their workflow information that's stored in their Exif comment.
+*******************
+1/21/24 @7:09PM PST *Revert some of the changes in Version 1.16*
 *  **The addition of 2 sets of examples to facilitate "few shot" learning was too confusing for ChatGPT, I had to revert back to no examples.**  Few shot learning consists of providing the LLM an instruction and several examples of the desired response.  But style prompt's instruction is too complex to mix with examples. When I tried that ChatGPT completely lost the plot. So this has been reverted to no examples.  
 *******************
-1/16/23 @1:00PM PST *Version 1.16*
+1/16/24 @1:00PM PST *Version 1.16*
 *  **Version 1.16, Fixes to unconnected inputs and the "undefined" values they generate, and an additional set of examples to send in the prompt request to ChatGPT.  This will facilitate "few shot" learning for generating prompts**
 *  **A new example workflow has been addded**: *StylePromptBaseOnly.png* in the *Example_Workflows* directory, it's a StylePrompt workflow that uses one KSampler, no Refiner.
 ********************
-1/8/23 @6:00pm PST *Version 1.15*
+1/8/24 @6:00pm PST *Version 1.15*
 *  **Version 1.15, adds a new UI field: 'prompt_style' and a 'Help' output to the style_prompt node**
 * **prompt_style**: lets you choose between:
     * **Narrative**: A prompt style that is long form creative writing with grammatically correct sentences.  This is the preferred form for Dall_e
     * **Tags**: A prompt style that is terse, a stripped down list of visual elements without conjunctions or grammatical phrasing.  This is the preferred form for Stable Diffusion and Midjourney.
 *  **Help**: Attach a text input display node to get explanations of the various UI fields in style-prompt  
 *********************
-1/7/23 @4:07 PST
+1/7/24 @4:07 PST
 *  **Two new switch utility nodes added** Both switches allow you to use text primitives in their multiline configuration.  One is a 3 => 1 output switch for multiline text, the other a 3 => 1 output for multiline text and image.
 *********
-1/5/23 @12:02pm PST: *Version 1.10*
+1/5/24 @12:02pm PST: *Version 1.10*
 *  **Plush-for-ComfyUI will no longer load your API key from the .json file**  You must now store your OpenAI API key in an environment variable.  [See instructions below:](#your-openai-api-key)
 *  **A new example workflow .png has been added to the "Example Workflows" directory.** This workflow reflects the new features in the Style Prompt node.
 **************
