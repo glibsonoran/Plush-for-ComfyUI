@@ -4,7 +4,7 @@
 2/13/24 @4:40PM PST *Version 1.20*
 *   **A new node, Plush Exif Wrangler:**  Exif Wrangler will extract Exif and/or AI generation workflow metadata from .jpg (.jpeg) and .png images.  .jpg photographs can be queried for their camera settings.  ComfyUI's .png files will yield certain values from their workflow including the prompt, model, seed etc.  Images from other AI generators may or may not yield data depending on where they store their metadata. For instance Auto 1111 .jpg's will yield their workflow information that's stored in their Exif comment.
 *   **Plush nodes now include a *troublshooting* output:**  This output will display any INFO/WARNING/ERROR data that's caputured by the logging function in a text display node.  Logging begins when you press the *Queue* button and pertains only to the individual Plush node.
-*   **Plush now creats and maintains a log file: *Plush-Events.log*.  It's in the *..ComfyUI/custom_nodes/Plush-for-ComfyUI/logs* directory.
+*   **Plush now creats and maintains a log file:** *Plush-Events.log*.  It's in the *..ComfyUI/custom_nodes/Plush-for-ComfyUI/logs* directory.
 *   **Exif Wrangler offers the option to save your AI Generation or Exif information to a file:** The file is kept in *..ComfyUI/output/PlushFiles*
 *******************
 1/21/24 @7:09PM PST *Revert some of the changes in Version 1.16*
