@@ -7,6 +7,7 @@
 *   **The Exif Wrangler node can be used without an OpenAI API key.**
 *   **Plush nodes now include a *troubleshooting* output:**  This output will display INFO/WARNING/ERROR data that's caputured by Plush's logging function in a text display node.  Logging begins when you press the *Queue* button and pertains only to the individual Plush node.
 *   **Plush now creates and maintains a log file:** *Plush-Events.log*.  It's in the *..ComfyUI/custom_nodes/Plush-for-ComfyUI/logs* directory.  The directory will be created when you first run this version.
+*   **A new set of example workflows replaces the older ones in the Example Workflows directory, plus the addition of an example workflow for Exif Wrangler.**  
 *******************
 1/21/24 @7:09PM PST *Revert some of the changes in Version 1.16*
 *  **The addition of 2 sets of examples to facilitate "few shot" learning was too confusing for ChatGPT, I had to revert back to no examples.**  Few shot learning consists of providing the LLM an instruction and several examples of the desired response.  But style prompt's instruction is too complex to mix with examples. When I tried that ChatGPT completely lost the plot. So this has been reverted to no examples.  
