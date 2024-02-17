@@ -6,7 +6,6 @@ import base64
 from io import BytesIO
 from PIL import Image, ImageOps, TiffImagePlugin, UnidentifiedImageError
 from PIL.ExifTags import TAGS
-import pyexiv2
 import folder_paths
 import numpy as np
 import re
@@ -46,6 +45,16 @@ class cFigSingleton:
         # Error handling is in the load_json method
         # Errors will be raised since is_critical is set to True
         config_data = j_mngr.load_json(j_mngr.config_file, True)
+
+        #Pyexiv2 seems to have trouble loading with some Python versions (it's misreading the vesrion number)
+        #So I'll open it in a try block so as not to stop the whole suite from loading
+        try:
+            import pyexiv2
+            self._pyexiv2 = pyexiv2
+        except Exception as e:
+            self._pyexiv2 = None
+            j_mngr.log_events(f"The Pyexiv2 library failed to load with Error: {e} ",
+                              TroubleSgltn.Severity.ERROR)
 
         #check if file is empty
         if not config_data:
@@ -161,10 +170,12 @@ class cFigSingleton:
     def n_ImgInstruction(self):
         return self.fig_n_ImgInstruction
      
-    """@property
-    def sp_help(self):
-        return self.fig_sp_help
-    """
+
+    @property
+    def pyexiv2(self)-> Optional[object]:
+        return self._pyexiv2
+
+        
     @property
     def openaiClient(self)-> Optional[openai.OpenAI]:
         if self._figKey:
@@ -341,7 +352,7 @@ class Enhancer:
             response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
 
             response_json = response.json()
-            if not 'error' in response_json:
+            if not 'error' in response_json and response:
                 j_mngr.log_events(f"Using OpenAI model: {response_json['model']}",
                                     is_trouble= True)
                 CGPT_response = Enhancer.clean_response_text(response_json['choices'][0]['message']['content'] )
@@ -407,7 +418,7 @@ class Enhancer:
                                     True)
 
 
-        if not 'error' in response:
+        if not 'error' in response and response:
             j_mngr.log_events(f"Using OpenAI model: {response.model}",
                                is_trouble=True)
             CGPT_response = response.choices[0].message.content
@@ -653,7 +664,7 @@ class DalleImage:
                                     True)
 
       # Get the revised_prompt
-        if not 'error' in response:
+        if not 'error' in response and response:
             revised_prompt = response.data[0].revised_prompt
 
             #Convert the b64 json to a pytorch tensor
@@ -742,6 +753,15 @@ class ImageInfoExtractor:
         output = "Unable to process request"
         fatal = False
         exiv_comment = {}
+
+        #Make sure the pyexiv2 supporting library was able to load.  Otherwise exit gogo
+        if not self.cFig.pyexiv2:
+            self.j_mngr.log_events("Unable to load supporting library 'pyexiv2'.  This node is not functional.",
+                                   TroubleSgltn.Severity.ERROR,
+                                   True)
+            return(output, help, self.trbl.get_troubles())
+        else:
+            pyexiv2 = self.cFig.pyexiv2
 
         #Var to save a raw copy of working_meta_data for debug.
         #Leave as False except when in debug mode.

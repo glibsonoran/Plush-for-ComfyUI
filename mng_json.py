@@ -4,7 +4,7 @@ import os
 import shutil
 from enum import Enum
 import bisect
-import datetime
+from datetime import datetime, timedelta
 import re
 import math
 import time
@@ -180,7 +180,7 @@ class json_manager:
         if is_trouble:
             self.trbl.log_trouble(event, severity)
 
-        date_time = datetime.datetime.now()
+        date_time = datetime.now()
         timestamp = date_time.strftime("%Y-%m-%d %I:%M:%S %p") #YYYY/MM/DD, 12 hour AM/PM
 
         # Construct event data as a string in key/value format
@@ -320,47 +320,31 @@ class json_manager:
 
         return all_deletions_successful
     
-    def delete_logentries_by_age(self, file_name: Path, max_age_days: int) -> tuple[bool, list]:
-        """
-        Deletes log entries older than a specified age.
+   
+    def remove_log_entries_by_age(self, log_file_path, days_allowed):
+        timestamp_format = "%Y-%m-%d %I:%M:%S %p"
+        cutoff_time = datetime.now() - timedelta(days=days_allowed)
 
-        Args:
-        - file_name (Path): The path to the log file.
-        - max_age_days (int): Maximum age of log entries to keep.
-
-        Returns:
-            tuple: A tuple containing a boolean indicating the operation's success, 
-                   and a list of log messages.
-        """
-        current_time = time.time()
-        new_log_entries = []
-        log_messages = []
-
+        updated_entries = []
         try:
-            # Read and filter the log file
-            with file_name.open('r', encoding='utf-8') as file:
+            with open(log_file_path, "r", encoding='utf-8') as file:
                 for line in file:
-                    try:
-                        log_entry = json.loads(line)
-                        log_entry_time = time.mktime(time.strptime(log_entry["timestamp"], "%Y-%m-%d %I:%M:%S %p"))
-                        
-                        if (current_time - log_entry_time) / (24 * 3600) <= max_age_days:
-                            new_log_entries.append(line)
-                    except json.JSONDecodeError:
-                        log_messages.append(f"Invalid JSON in log file: {line}")
-                    except KeyError:
-                        log_messages.append(f"Missing timestamp in log entry: {line}")
-
-            # Write back the filtered log entries
-            with file_name.open('w', encoding='utf-8') as file:
-                file.writelines(new_log_entries)
-
-            log_messages.append("Performed log cleanup.")
-            return True, log_messages
-
+                    log_entry = json.loads(line)
+                    entry_time = datetime.strptime(log_entry["timestamp"], timestamp_format)
+                    if entry_time > cutoff_time:
+                        updated_entries.append(json.dumps(log_entry))
         except Exception as e:
-            log_messages.append(f"Error processing log file: {e}")
-            return False, log_messages
+            self.log_events(f"Error reading log file: {log_file_path}: {e}",
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+        
+        # Use write_string_to_file to write updated entries back
+        updated_content = "\n".join(updated_entries)
+        success = self.write_string_to_file(updated_content, log_file_path)
+        if not success:
+            self.log_events(f"Failed to write updated log entries back to file: {log_file_path}",
+                            TroubleSgltn.Severity.ERROR,
+                            True)
 
     
     def generate_unique_filename(self, extension: str, base: str="")->str:
@@ -378,7 +362,7 @@ class json_manager:
 
         """
         # Get current date and time
-        current_datetime = datetime.datetime.now()
+        current_datetime = datetime.now()
         # Format the date and time in a specific format, e.g., YYYYMMDD_HHMMSS
         datetime_str = current_datetime.strftime("%Y%m%d_%H%M%S")
         # Append this string to your base file name
