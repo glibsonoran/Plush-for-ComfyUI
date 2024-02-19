@@ -8,6 +8,7 @@ from PIL import Image, ImageOps, TiffImagePlugin, UnidentifiedImageError
 from PIL.ExifTags import TAGS
 import folder_paths
 import numpy as np
+import time
 import re
 import torch
 from typing import Optional, Any,  Union
@@ -604,12 +605,14 @@ class DalleImage:
                 "prompt": ("STRING",{"multiline": True, "forceInput": True}), 
                 "image_size": (["1792x1024", "1024x1792", "1024x1024"], {"default": "1024x1024"} ),              
                 "image_quality": (["standard", "hd"], {"default": "hd"} ),
-                "style": (["vivid", "natural"], {"default": "natural"} )
+                "style": (["vivid", "natural"], {"default": "natural"} ),
+                "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff})
             },
         } 
 
-    RETURN_TYPES = ("IMAGE", "MASK", "STRING","STRING","STRING" )
-    RETURN_NAMES = ("image", "mask", "Dall_e_prompt","help","troubleshooting")
+    RETURN_TYPES = ("IMAGE", "STRING","STRING","STRING" )
+    RETURN_NAMES = ("image", "Dall_e_prompt","help","troubleshooting")
 
     FUNCTION = "gogo"
 
@@ -617,71 +620,90 @@ class DalleImage:
 
     CATEGORY = "Plush/OpenAI"
 
-    def gogo(self, GPTmodel, prompt, image_size, image_quality, style):
+    def gogo(self, GPTmodel, prompt, image_size, image_quality, style, batch_size, seed):
 
         self.trbl.reset('Dall-e Image')
-        default_shape = (1, 224, 224, 3)  # [N, H, W, C]
+        seed +=1
+        seed -=1
         # Initialize default tensors and prompt
-        png_image = torch.zeros(default_shape, dtype=torch.float32)
-        mask = torch.zeros((1, default_shape[1], default_shape[2]), dtype=torch.float32)  # [N, H, W] for mask
+        batched_images = torch.zeros(1, 1024, 1024, 3, dtype=torch.float32)
         revised_prompt = "Image and mask could not be created"  # Default prompt message
         help = self.help_data.dalle_help
+        images_list = []
 
         if not self.cFig.openaiClient:
              self.j_mngr.log_events("OpenAI API key is missing or invalid.  Key must be stored in an enviroment variable (see ReadMe).  This node is not functional.",
                                    TroubleSgltn.Severity.WARNING,
                                    True)
-             return(png_image, mask, revised_prompt, self.trbl.get_troubles())
+             return(batched_images, revised_prompt, self.trbl.get_troubles())
                 
         client = self.cFig.openaiClient
         
         self.j_mngr.log_events(f"Talking to Dalle model: {GPTmodel}",
                                is_trouble=True)
-        try:
-            response = client.images.generate(
-                model = GPTmodel,
-                prompt = prompt, 
-                size = image_size,
-                quality = image_quality,
-                style = style,
-                n=1,
-                response_format = "b64_json",
-            )
-        except openai.APIConnectionError as e: 
-            self.j_mngr.log_events("ChatGPT server connection error: {e.__cause__}",
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-            self.j_mngr.log_events(f"ChatGPT RATE LIMIT error {e}: (e.response)",
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-        except openai.APIStatusError as e:
-            self.j_mngr.log_events(f"ChatGPT STATUS error {e.status_code}: (e.response)",
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-        except Exception as e:
-            self.j_mngr.log_events(f"An unexpected error occurred with ChatGPT: {e}",
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-
-      # Get the revised_prompt
-        if not 'error' in response and response:
-            revised_prompt = response.data[0].revised_prompt
-
-            #Convert the b64 json to a pytorch tensor
-
-            b64Json = response.data[0].b64_json
-            if b64Json:
-                png_image, mask = self.b64_to_tensor(b64Json)   
-            else:
-                self.j_mngr.log_events("Dalle-e could not process image file",
-                                    TroubleSgltn.Severity.WARNING,
-                                    True)  
-        else:
-            self.j_mngr.log_events('Dall-e was not able to process your request.',
-                                   TroubleSgltn.Severity.WARNING,
-                                   True)   
         
-        return (png_image, mask, revised_prompt, help, self.trbl.get_troubles())
+        have_rev_prompt = False
+        for i in range(batch_size):
+            try:
+                response = client.images.generate(
+                    model = GPTmodel,
+                    prompt = prompt, 
+                    size = image_size,
+                    quality = image_quality,
+                    style = style,
+                    n=1,
+                    response_format = "b64_json",
+                )
+ 
+            # Get the revised_prompt
+                if not 'error' in response and response:
+                    if not have_rev_prompt:
+                        revised_prompt = response.data[0].revised_prompt
+                        have_rev_prompt = True
+                    #Convert the b64 json to a pytorch tensor
+                    b64Json = response.data[0].b64_json
+                    if b64Json:
+                        png_image, mask = self.b64_to_tensor(b64Json)
+                        images_list.append(png_image)
+                    else:
+                        self.j_mngr.log_events(f"Dalle-e could not process an image in your batch of: {batch_size} ",
+                                            TroubleSgltn.Severity.WARNING,
+                                            True)  
+                else:
+                    self.j_mngr.log_events(f"Dalle-e could not process an image in your batch of: {batch_size} ",
+                                        TroubleSgltn.Severity.WARNING,
+                                        True)   
+            except openai.APIConnectionError as e: 
+                self.j_mngr.log_events(f"ChatGPT server connection error in an image in your batch of {batch_size} Error: {e.__cause__}",
+                                        TroubleSgltn.Severity.ERROR,
+                                        True)
+            except openai.RateLimitError as e:
+                self.j_mngr.log_events(f"ChatGPT RATE LIMIT error in an image in your batch of {batch_size} Error: {e}: (e.response)",
+                                        TroubleSgltn.Severity.ERROR,
+                                        True)
+                time.sleep(0.5)
+            except openai.APIStatusError as e:
+                self.j_mngr.log_events(f"ChatGPT STATUS error in an image in your batch of {batch_size}; Error: {e.status_code}: (e.response)",
+                                        TroubleSgltn.Severity.ERROR,
+                                        True)
+            except Exception as e:
+                self.j_mngr.log_events(f"An unexpected error in an image in your batch of {batch_size}; Error:{e}",
+                                        TroubleSgltn.Severity.ERROR,
+                                        True)
+                
+        if images_list:
+            count = len(images_list)
+            self.j_mngr.log_events(f'{count} images were processed successfully in your batch of: {batch_size}',
+                                   is_trouble=True)
+            
+            batched_images = torch.cat(images_list, dim=0)
+        else:
+            self.j_mngr.log_events(f'No images were processed in your batch of: {batch_size}',
+                                   TroubleSgltn.Severity.WARNING,
+                                   is_trouble=True)
+
+
+        return (batched_images, revised_prompt, help, self.trbl.get_troubles())
     
 
 class ImageInfoExtractor:
@@ -765,7 +787,7 @@ class ImageInfoExtractor:
 
         #Var to save a raw copy of working_meta_data for debug.
         #Leave as False except when in debug mode.
-        debug_save = False
+        debug_save = True
 
         #Create path and dir for saved .txt files
         write_dir = ''
@@ -881,8 +903,8 @@ class ImageInfoExtractor:
         if debug_save:
                 debug_file_name = self.j_mngr.generate_unique_filename("json", 'debug_source_file')
                 debug_file_path = self.j_mngr.append_filename_to_path(write_dir,debug_file_name)
-                debug_json = self.j_mngr.convert_to_json_string(working_meta_data) #all data after first extraction
-                #debug_json = self.j_mngr.convert_to_json_string(info) #Raw AI Gen data pre extraction, but w/o Exif info
+                #debug_json = self.j_mngr.convert_to_json_string(working_meta_data) #all data after first extraction
+                debug_json = self.j_mngr.convert_to_json_string(info) #Raw AI Gen data pre extraction, but w/o Exif info
                 self.j_mngr.write_string_to_file(debug_json,debug_file_path,False)
         #Begin potential separate method def get_data_objects()->Tuple
         #process user intp to list
@@ -924,19 +946,24 @@ class ImageInfoExtractor:
 
         #Testing translated extraction
         translate_keys = {'widgets_values': 'Possible Prompts',
-                          'text': 'Possible Prompts',
-                          'steps': 'Steps',
-                          'cfg': 'CFG',
-                          'seed': 'Seed',
-                          'noise_seed': 'Seed',
-                          'ckpt_name': 'Models',
-                          'resolution': 'Resolution',
-                          'sampler_name': 'Sampler',
-                          'scheduler': 'Scheduler',
-                          'lora': 'Lora',
-                          'denoise': 'Denoise',
-                          'ew_file': 'Source File',
-                          'ew_id': 'Processing Application'
+                        'text': 'Possible Prompts',
+                        'steps': 'Steps',
+                        'cfg': 'CFG',
+                        'seed': 'Seed',
+                        'noise_seed': 'Seed',
+                        'ckpt_name': 'Models',
+                        'resolution': 'Image Size',
+                        'sampler_name': 'Sampler',
+                        'scheduler': 'Scheduler',
+                        'lora': 'Lora',
+                        'denoise': 'Denoise',
+                        'GPTmodel': 'OpenAI Model',
+                        'image_size': 'Image Size',
+                        'image_quality': 'Dall-e Image Quality',
+                        'style': 'Style',
+                        'batch_size': 'Batch Size',
+                        'ew_file': 'Source File',
+                        'ew_id': 'Processing Application'
                         }
         
         all_keys = {**exif_keys, **translate_keys}

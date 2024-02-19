@@ -6,17 +6,17 @@ from .mng_json import json_manager
 
 #Diagnostic version print to detect incompatible openai versions
 import openai
-print("Plush - Running on python installation:", sys.executable)
+
+print(f"Plush - Running on python installation: {sys.executable}, ver: {sys.version}")
 print("Plush - Current Openai Version: ", openai.__version__)
 
 jmanager = json_manager()
-
-if jmanager.update_config(False):
-    print('Plush - config.json updated')
+if jmanager.on_startup(False):
+    jmanager.log_events("config.json was updated")
 else:
-    print('Plush - config.json no update')
+    jmanager.log_events("config.json was not updated")
 
-__version__ ="1.20.2"
+__version__ ="1.20.3"
 print('Plush - Version:', __version__)
 
 
