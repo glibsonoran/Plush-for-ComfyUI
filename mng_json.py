@@ -183,19 +183,27 @@ class json_manager:
         date_time = datetime.now()
         timestamp = date_time.strftime("%Y-%m-%d %I:%M:%S %p") #YYYY/MM/DD, 12 hour AM/PM
 
-        # Construct event data as a string in key/value format
-        log_event = f'{{"timestamp": "{timestamp}", "severity": "{severity.name}", "event": "{event}"}}'
+       #Create a dict of the log event
+        log_event_data = {
+            "timestamp": timestamp,
+            "severity": severity.name,
+            "event": event
+        }
+        #Conver the dict to a json string using json.dumps to handle invalid chars.
+        log_event_json = self.convert_to_json_string(log_event_data, is_logger=True)
+        if log_event_json is None:
+            return False
 
         log_file_path = self.append_filename_to_path(self.log_dir, f"{file_name}.log", True)
 
         # Use the append_to_file utility to write the log event to the file
-        success = self.append_to_file(log_event, log_file_path, is_critical)
+        success = self.append_to_file(log_event_json, log_file_path, is_critical, is_logger=True)
 
         return success
 
 
 
-    def append_to_file  (self, data:str, file_path: Union[str,Path], is_critical:bool)->bool:   
+    def append_to_file  (self, data:str, file_path: Union[str,Path], is_critical:bool, is_logger:bool = False)->bool:   
         """
         Appends a text string to a file.
         Makes the file if it doesn't exist
@@ -214,9 +222,10 @@ class json_manager:
                 file.write(data + '\n')
                 return True
         except (IOError, OSError) as e:
-            self.log_events(f"Error writing data to file:  {file_path}: {e}", 
-                            TroubleSgltn.Severity.ERROR,
-                            True)
+            if not is_logger:
+                self.log_events(f"Error writing data to file:  {file_path}: {e}", 
+                                TroubleSgltn.Severity.ERROR,
+                                True)
             if is_critical:
                 raise
             return False
@@ -324,27 +333,35 @@ class json_manager:
     def remove_log_entries_by_age(self, log_file_path, days_allowed):
         timestamp_format = "%Y-%m-%d %I:%M:%S %p"
         cutoff_time = datetime.now() - timedelta(days=days_allowed)
-
+        deleted_count = 0
         updated_entries = []
         try:
             with open(log_file_path, "r", encoding='utf-8') as file:
                 for line in file:
+                    # Skip empty lines
+                    if not line.strip():
+                        continue
                     log_entry = json.loads(line)
                     entry_time = datetime.strptime(log_entry["timestamp"], timestamp_format)
                     if entry_time > cutoff_time:
                         updated_entries.append(json.dumps(log_entry))
+                    else:
+                        deleted_count += 1
         except Exception as e:
             self.log_events(f"Error reading log file: {log_file_path}: {e}",
                             TroubleSgltn.Severity.WARNING,
                             True)
+            return None
         
         # Use write_string_to_file to write updated entries back
-        updated_content = "\n".join(updated_entries)
+        updated_content = "\n".join(updated_entries) + '\n'
         success = self.write_string_to_file(updated_content, log_file_path)
         if not success:
             self.log_events(f"Failed to write updated log entries back to file: {log_file_path}",
                             TroubleSgltn.Severity.ERROR,
                             True)
+            return None
+        return(deleted_count)
 
     
     def generate_unique_filename(self, extension: str, base: str="")->str:
@@ -905,7 +922,7 @@ class json_manager:
     
     
     
-    def convert_to_json_string(self, data, pretty=False) -> Optional[str]:
+    def convert_to_json_string(self, data, pretty=False, is_logger:bool = False) -> Optional[str]:
         """
         Converts a python serializable python object: dict, etc to a JSON string
 
@@ -924,9 +941,10 @@ class json_manager:
                 jstring = json.dumps(data, default=self.custom_serializer)
             return jstring
         except TypeError as e:
-            self.log_events(f"Error converting object to JSON string{e}",
-                            TroubleSgltn.Severity.WARNING,
-                            True)
+            if not is_logger:
+                self.log_events(f"Error converting object to JSON string{e}",
+                                TroubleSgltn.Severity.WARNING,
+                                True)
 
             return None
         
@@ -1121,7 +1139,7 @@ class json_manager:
 
 
 
-    def update_config(self, keep_key: bool = True):
+    def on_startup(self, keep_key: bool = True, max_log_age: int = 32):
         """
         Updates the configuration file by applying changes from 'update.json'
 
@@ -1134,7 +1152,17 @@ class json_manager:
             bool: True if an update is queued, represents a new version, and was successful
                 False otherwise.
         """
-        delete_keys = ['key','sp_help']
+                #pare down log file
+        log_file = self.append_filename_to_path(self.log_dir,self.log_file_name + '.log')
+        num_removed = self.remove_log_entries_by_age(log_file, max_log_age)
+        if not num_removed == None:
+            self.log_events(f'{num_removed} old entries were removed from the log file: {self.log_file_name}')
+        else:
+            if os.path.exists(log_file):
+                    os.remove(log_file)
+            self.log_events(f'Log file {self.log_file_name} was unable to be processed for old entries.  File was corrupt and was deleted',
+                            TroubleSgltn.Severity.ERROR)
+            
 
         # Check for config.json
         if not os.path.exists(self.config_file):
@@ -1184,20 +1212,6 @@ class json_manager:
                                 severity=TroubleSgltn.Severity.ERROR)
                 return False
 
-        # Conditionally delete the "key" key/value pair in both the config.json and its backup file
-        # once transition to env variable is complete
-        if not keep_key:
-            try:
-                #self.remove_keys_from_dict(config_data,delete_keys)
-                """
-                self._del_keys(config_data, self.config_file)
-                bkup_data = self.load_json(self.backup_config_path)
-                self._del_keys(bkup_data, self.backup_config_path)
-                """
-            except Exception as e:
-                self.log_events(f"Error while deleting keys or updating files to remove keys: {e}")
-
-
         # Check for update.json
         if not os.path.exists(self.update_file):
             return False
@@ -1213,6 +1227,15 @@ class json_manager:
             self.log_events(f" Unexpected error occurred while opening {self.update_file}: {e}",
                             severity=TroubleSgltn.Severity.ERROR)
             return False
+        
+        # Conditionally delete the "key" key/value pair in both the config.json and its backup file
+        # once transition to env variable is complete
+        if not keep_key:
+            try:
+                self.remove_keys_from_dict(config_data,remove_keys)
+                self.remove_keys_from_dict(update_data, remove_keys)
+            except Exception as e:
+                self.log_events(f"Error while deleting keys or updating files to remove keys: {e}")
 
 
         # Version comparison and backup
@@ -1226,6 +1249,16 @@ class json_manager:
             return False
 
         if config_version < update_version:
+
+            # Conditionally delete the "key" key/value pair in both the config.json and its backup file
+            # once transition to env variable is complete
+            if not keep_key:
+                remove_keys = ['key','sp_help']
+                try:
+                    self.remove_keys_from_dict(config_data,remove_keys)
+                except Exception as e:
+                    self.log_events(f"Error while deleting keys or updating files to remove keys: {e}")
+
             # Backup current config
 
             try: 
