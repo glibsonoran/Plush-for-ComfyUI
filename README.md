@@ -4,6 +4,7 @@
 2/19/24 @12:20PM PST *Version 1.20.3*
 *   **OAI Dall-e3 node can now create batches of up to 8 images**
 *   **OAI Dalle-e3 node now has a mock 'seed' value**:  While the seed value does not affect a latent or the image, it does allow the Dall-e node to run automatically with every Queue if set to: "randomize" or "increment/decrement".  If you want to have the default behavior where it only runs once per prompt, or if its setting are changed, set seed to 'fixed'.
+********************
 2/13/24 @4:40PM PST *Version 1.20*
 *   **A new node that doesn't require the OpenAI API key, Plush Exif Wrangler:**  Exif Wrangler will extract Exif and/or AI generation workflow metadata from .jpg (.jpeg) and .png images.  .jpg photographs can be queried for their camera settings.  ComfyUI's .png files will yield certain values from their workflow including the prompt, model, seed etc.  Images from other AI generators may or may not yield data depending on where they store their metadata. For instance Auto 1111 .jpg's will yield their workflow information that's stored in their Exif comment.
 *   **Exif Wrangler offers the option to save your AI Generation or Exif information to a file:** The file is stored in *..ComfyUI/output/PlushFiles*, the directory is created when you save your first Exif file.
