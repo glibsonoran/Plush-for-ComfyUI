@@ -759,7 +759,7 @@ class ImageInfoExtractor:
                 },
         }
     
-    CATEGORY = "Plush/OpenAI"
+    CATEGORY = "Plush/Utils"
 
     RETURN_TYPES = ("STRING","STRING","STRING")
     RETURN_NAMES = ("Image_info","help","troubleshooting")
@@ -787,7 +787,7 @@ class ImageInfoExtractor:
 
         #Var to save a raw copy of working_meta_data for debug.
         #Leave as False except when in debug mode.
-        debug_save = True
+        debug_save = False
 
         #Create path and dir for saved .txt files
         write_dir = ''
