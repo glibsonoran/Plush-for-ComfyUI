@@ -1227,16 +1227,6 @@ class json_manager:
             self.log_events(f" Unexpected error occurred while opening {self.update_file}: {e}",
                             severity=TroubleSgltn.Severity.ERROR)
             return False
-        
-        # Conditionally delete the "key" key/value pair in both the config.json and its backup file
-        # once transition to env variable is complete
-        if not keep_key:
-            try:
-                self.remove_keys_from_dict(config_data,remove_keys)
-                self.remove_keys_from_dict(update_data, remove_keys)
-            except Exception as e:
-                self.log_events(f"Error while deleting keys or updating files to remove keys: {e}")
-
 
         # Version comparison and backup
         update_version = update_data.get('version', 0)
