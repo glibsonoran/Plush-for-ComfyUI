@@ -1,6 +1,6 @@
 # Plush-for-ComfyUI
 ****
-[Click here if you need to setup your OpenAI key in an evironment variable]=(#use-environment-variables-in-place-of-your-api-key)
+[**Click here if you need to setup your OpenAI key in an evironment variable**](#use-environment-variables-in-place-of-your-api-key)
 ### Updates:
 2/19/24 @12:20PM PST *Version 1.20.3*
 *   **OAI Dall-e3 node can now create batches of up to 8 images**
