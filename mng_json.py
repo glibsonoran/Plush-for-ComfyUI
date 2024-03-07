@@ -42,7 +42,7 @@ class TroubleSgltn:
     
     def set_process_header(self, process_head:str="New Process")-> None:
 
-        self._troubles += f'{self._new_lines}{self._section_bullet} Begin Log for: {process_head}:{self._new_lines}'
+        self._troubles += f'{self._section_bullet} Begin Log for: {process_head}:{self._new_lines}'
         self._header_stack.append(process_head)
 
     def pop_header(self)->bool:
@@ -111,6 +111,7 @@ class helpSgltn:
         self._style_prompt_help = ""
         self._dalle_help = ''
         self._exif_wrangler_help = ''
+        self._adv_prompt_help =''
         # Empty help text is not a critical issue for the app
         if not help_data:
             j_mmgr.log_e('Help data file is empty or missing.',
@@ -120,6 +121,7 @@ class helpSgltn:
         self._style_prompt_help = help_data.get('sp_help','')
         self._exif_wrangler_help = help_data.get('wrangler_help', '')
         self._dalle_help = help_data.get('dalle_help', '')
+        self._adv_prompt_help = help_data.get('adv_prompt_help', '')
 
     @property
     def style_prompt_help(self)->str:
@@ -132,6 +134,10 @@ class helpSgltn:
     @property
     def dalle_help(self)->str:
         return self._dalle_help
+    
+    @property
+    def adv_prompt_help(self)->str:
+        return self._adv_prompt_help
     
 
 class json_manager:
@@ -919,6 +925,43 @@ class json_manager:
         elif isinstance(dict_data, list):
             for item in dict_data:
                 self.remove_keys_from_dict(item, keys_to_remove)
+
+
+    def insert_text_into_dict(self, input_data:Union[str, list[str]], template_dict:dict, insert_key:str, delimiter:str="|"):
+        """
+        Processes input_data to create a list of dictionaries based on the template_dict. The input_data can be a
+        single string with segments separated by the delimiter, or a list of text segments. Each segment or string is
+        inserted into a copy of the template_dict at the insert_key.
+
+        Args:
+            input_text (str):  The raw delimited text presented or a list of strings
+            template_dict (dict): The dictionary template containing the static elements of the dictionary 
+                and the key which will correspond to the text segment as its value
+            insert_key (str): The key in the template_dict to which the text segment will be applied
+            delimiter (str, optional): The character(s) which define the point(s) at which the input_text block
+                will be broken up.
+            
+        Return: A list of dictionaries 
+        """
+        # Split the input text into segments based on the delimiter if not a list
+        segments = input_data.split(delimiter) if isinstance(input_data, str) else input_data
+        
+        # Create a list to hold the completed dictionaries
+        dict_list = []
+        
+        for segment in segments:
+            trimmed_segment = segment.strip(' \n') #remove spaces and new line chars
+            
+            if not trimmed_segment:
+                continue
+
+            # Copy the template dictionary to avoid altering the original
+            segment_dict = template_dict.copy()
+            segment_dict[insert_key] = trimmed_segment
+            dict_list.append(segment_dict)
+        
+        # Return the list of dictionaries directly
+        return dict_list                
     
     
     
