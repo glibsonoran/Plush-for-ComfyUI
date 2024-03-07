@@ -1,7 +1,11 @@
 # Plush-for-ComfyUI
 ****
 [**Click here if you need to setup your OpenAI key in an evironment variable**](#use-environment-variables-in-place-of-your-api-key)
+****
 ### Updates:
+3/7/2023 @11:00PM PST *Version 1.21.3*
+*    **New node: Advanced Prompt Enhancer**:  Uses ChatGPT or Open-Source LLM to produce a prompt or other generated text from your: Instruction, Prompt, Example(s), Image or any combination of these. The open-source connection works through the Opean API without requiring an OpenAI account or key.  This provides a connection to LLM aggregators like *LM Studio*.  So far this has just been tested with *LM Studio* but should work with any LLM aggregator that can accept input from the OpenAI API Object.  See the help file available from the node's *help* output for more details
+********************
 2/19/24 @12:20PM PST *Version 1.20.3*
 *   **OAI Dall-e3 node can now create batches of up to 8 images**
 *   **OAI Dalle-e3 node now has a mock 'seed' value**:  While the seed value does not affect a latent or the image, it does allow the Dall-e node to run automatically with every Queue if set to: "randomize" or "increment/decrement".  If you want to have the default behavior where it only runs once per prompt, or if its setting are changed, set seed to 'fixed'.
