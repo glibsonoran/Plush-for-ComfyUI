@@ -1,6 +1,6 @@
 # Plush-for-ComfyUI
 ****
-[**Click here if you need to setup your OpenAI key in an evironment variable**](#use-environment-variables-in-place-of-your-api-key)
+[**Click here if you need to setup your OpenAI key in an evironment variable**](#your-openai-api-key-not-required-for-exif-wrangler-or-switch-nodes)
 ****
 ### Updates:
 3/7/2023 @11:00PM PST *Version 1.21.3*
