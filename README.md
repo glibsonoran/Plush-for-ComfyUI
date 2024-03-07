@@ -43,9 +43,11 @@
 *  **New feature:**  Plush-for-ComfyUI style_prompt can now use image files to generate text prompts.  Image files can be used alone, or with a text prompt.  ChatGPT will interpret the image or image + prompt and generate a text prompt based on its evaluation of the input.  This is not exif extraction, it will not recreate the original prompt that produced the image, it's ChatGPT's interpretation of the image or image + prompt.
 ***************
 ***************
-### Plush contains two OpenAI enabled nodes.  It also contains nodes that don't require OpenAI's API: Two multiline switches and an Exif/AI metadata (prompt, seed, model, etc) extractor:
+### Plush contains three OpenAI enabled nodes.  It also contains nodes that don't require OpenAI's API: Two multiline switches, the Advanced Prompt Enhancer and an Exif/AI metadata (prompt, seed, model, etc) extractor:
 
 **Style Prompt**: Takes your: Text prompt, your image, or your text prompt and image, and the art style you specify and generates a prompt from ChatGPT3 or 4 that Stable Diffusion and/or Dall-e can use to generate an image in that style.
+
+**Advanced Prompt Enhancer**: Take your: Prompt, Instruction, image, Examples and generates text output which can be a prompt or other output (e.g. caption).  This node can be used with certain Open Source LLM aggregators (e.g. LM Studio) or with ChatGPT.
 
 **OAI Dall_e 3**:  Takes your prompt and parameters and produces a Dall_e3 image in ComfyUI.
 
