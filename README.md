@@ -31,7 +31,7 @@
 *  **Two new switch utility nodes added** Both switches allow you to use text primitives in their multiline configuration.  One is a 3 => 1 output switch for multiline text, the other a 3 => 1 output for multiline text and image.
 *********
 1/5/24 @12:02pm PST: *Version 1.10*
-*  **Plush-for-ComfyUI will no longer load your API key from the .json file**  You must now store your OpenAI API key in an environment variable.  [See instructions below:](#yYour OpenAI API Key (Not required for Exif Wrangler or switch nodes):)
+*  **Plush-for-ComfyUI will no longer load your API key from the .json file**  You must now store your OpenAI API key in an environment variable.  [See instructions below:](#Your OpenAI API Key (Not required for Exif Wrangler or switch nodes):)
 *  **A new example workflow .png has been added to the "Example Workflows" directory.** This workflow reflects the new features in the Style Prompt node.
 **************
 12/29/23 @4:24pm PST:
