@@ -83,7 +83,7 @@ python -m pip install -r requirements.txt
 >
 ****
 ### Requirements: 
-##  Your OpenAI API Key (Not required for Exif Wrangler or switch nodes):
+##  Your OpenAI API Key (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer (when used with open-source LLM's):
 * For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI, which requires a paid account.  Generate the key from their website.
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
    ********
