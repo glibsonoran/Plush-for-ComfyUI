@@ -2,7 +2,7 @@
 ****
 [**Click here if you need to setup your OpenAI key in an evironment variable**](#requirements)
 
-[**Prompt and Image examples from the Style_Prompt node**](#examples)
+[**Prompt and Image examples from the Style_Prompt and Style_Prompt _ OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
 3/7/2023 @11:00PM PST *Version 1.21.3*
