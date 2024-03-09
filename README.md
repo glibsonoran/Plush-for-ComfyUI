@@ -245,23 +245,27 @@ Prompt: Chiarosuro Art: female warrior, profile view, low key lighting, contrast
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
 
-Style: Low Key Photograph
+Prompt: Low Key Photograph of a young woman, her features highlighted by a single, dramatic light source, cradling a small dog in her arms, the dog's coat a play of shadow and sheen, against a backdrop of deep, impenetrable shadows, the surrounding space filled with soft whispers of darkness, the barest hint of a window barely discernible in the background, the light creating a stark contrast between subject and surrounding, style of Bill Henson.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/33c2f9e1-6c10-4d40-9782-dfcde2432564 "High Key Photograph")
 
-Style: High Key Photograph
+Prompt: High Key Photograph of a sun-bleached Sonoran desert landscape, the towering silhouette of a saguaro cactus against a bright, cloudless sky, crescent shaped sand dunes under harsh midday illumination, distant mountains reduced to ghostly outlines, the play of light and shadow accentuating the textures of the desert, each grain of sand aglow, all bathed in an intense, blinding light, style of Michael Frye
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/615ca38c-ecc0-4fd0-8897-ba87bde2fa9b "Fashion Sketch")
 
-Style: Fashion Sketch
+Prompt: Fashion Sketch of a statuesque model draped in a flowing grey dress, adorned with vibrant yellow accents, posed against a minimalist white background, with sharp, angular lines defining her silhouette, a dramatic contrast of shadow and light to highlight the fabric's texture, her gaze focused and intense, emanating an air of sophistication, her enigmatic smile hinting at a story untold, and a yellow hat as the final touch, style of Hayden Williams.
 
-![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/e0246439-7c56-4498-ab4b-2358baa96bc0 "Art Deco")
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/78478edd-890b-4df9-864c-258c3f3bd96a "Long Exposure Photograph")
 
-Style: Art Deco
+Prompt: Long Exposure Photograph capturing a solitary blue sailboat with its sails fully unfurled, gliding over a smooth, glass-like sea under the ethereal glow of a full moon. The image is framed to emphasize the stark contrast between the deep, velvety blues of the night sea and the subtle, shimmering silver path created by the moonlight. The sailboat is positioned slightly off-center, sailing towards the right, inviting the viewer's gaze to follow its journey. The surrounding darkness envelops the scene, with the moon's reflection acting as the main source of illumination, creating a serene yet mysterious atmosphere. The composition is minimalist, focusing on the interplay of light and shadow, the texture of the sailboat against the liquid mirror of the sea, and the infinite horizon merging sea and sky into one. Style of Michael Kenna.
+
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/07f7618f-0639-4622-92d1-0e3a3dd980f0 "Art Deco")
+
+Prompt: Art Deco of a poised young woman in a sleek, geometrically patterned dress, her sharp silhouette highlighted against a jeweled sunset, standing on the crest of a manicured grassy hill, her eyes glinting with reflected urban skylines composed of streamlined skyscrapers in the distance, her hands softly clutching an elegant sequined clutch and a feathered hat delicately perched on her bobbed hair, all under the radiant glow of a large, low-hanging moon, style of Tamara De Lempicka.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/e51f9c1f-07a0-4410-8e09-c04019c2714d "Origami Art")
 
-Style: Origami
+Prompt: Origami of a poised young woman crafted from intricate, emerald-green folds standing tall on a textured, grassy hill, with a meticulously folded skyline of a bustling city in the distance, under a sweeping blue paper sky, the sun casting long, dramatic shadows, all bathed in soft, warm light, style of Robert J. Lang.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/cee0724c-cabd-425c-b3df-1361f37285f9 "Fashion Art")
 
