@@ -234,9 +234,9 @@ Style: High Key Photograph
 
 Style: Digital Art
 
-![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/0c59872e-9c6b-489c-88b7-9e379a21e40a "Semi Realistic Cyberpunk")
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/2a4954b8-6ea7-44b5-a6e3-67baf821d227 "Fantasy Art")
 
-Style: Semi Realistic Cyberpunk
+Style: Fantasy Art
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
 
