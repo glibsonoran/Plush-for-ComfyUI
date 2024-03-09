@@ -238,6 +238,10 @@ Style: Digital Art
 
 Style: Fantasy Art
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/27f2bb3d-fb1d-47de-83c6-94a53e3ebca1 "Chiaroscuro Art")
+
+Style: Chiaroscuro Art
+
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
 
 Style: Low Key Photograph
