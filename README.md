@@ -265,7 +265,7 @@ Style: Origami
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/cee0724c-cabd-425c-b3df-1361f37285f9 "Fashion Art")
 
-Style: Fashion Art
+Prompt: Fashion Art of a sophisticated young woman standing central, adorned in an avant-garde, voluminous tulle gown cascading to the grassy hill under her feet, an ornate oversized feather hat on her head, peering into the distance with a mysterious, melancholic gaze, her body illuminated by the glowing moon, the sprawling city skyline serving as a contrasting backdrop, in the strikingly dramatic style of Alexander McQueen.
 
 
 ![SPImagePlusPrompt](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/9e960755-168e-4c4d-959a-e9d5e1cedb41 "Photograph, Image Plus Prompt")
