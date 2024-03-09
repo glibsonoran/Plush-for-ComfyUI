@@ -232,7 +232,6 @@ Prompt: Fish-Eye lens Photograph of a joyful young woman on a bustling downtown 
 
 Prompt: High Key Photography of a noir-era actress, vividly red lipstick, sparkling diamond jewelry, soft-focus background, luxurious fur stole, pearlescent lighting effects, dramatic high-contrast shadows, and mirrored reflections, style of Terry O'Neill.
 
-
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d12a36c7-6fc8-4d36-997e-f5304855fe16 "Digital Art")
 
 Prompt: Digital Art, female portrait, abstract elements, red hair, polka dots, vibrant colors, contrast, geometric shapes, surrealism, bold makeup, dripping paint effect, large eyes, stylized features, style of Patrice Murciano, style of Aya Kato.
@@ -243,7 +242,7 @@ Prompt: Fantasy Art of a radiant young woman, her eyes glowing with an ethereal 
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/27f2bb3d-fb1d-47de-83c6-94a53e3ebca1 "Chiaroscuro Art")
 
-Prompt: Chiarosuro Art: female warrior, profile view, low key lighting, contrast of shadow and light, detailed battle dress, animal skins, flowing black hair, blood smeared face, victory shine, defiant wind, exhalation pose, dark stormy sky, distant lightning, triumphant spear thrust, high heels, leather wristbands, feathered necklace, steel breastplate, war paint stripes, rusted spear, cracked shield, muddy battlefield, fallen enemies, style of Mario Testino.
+(Dall-e3 node) Prompt: Chiarosuro Art: female warrior, profile view, low key lighting, contrast of shadow and light, detailed battle dress, animal skins, flowing black hair, blood smeared face, victory shine, defiant wind, exhalation pose, dark stormy sky, distant lightning, triumphant spear thrust, high heels, leather wristbands, feathered necklace, steel breastplate, war paint stripes, rusted spear, cracked shield, muddy battlefield, fallen enemies, style of Mario Testino. 
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
 
@@ -251,7 +250,7 @@ Prompt: Low Key Photograph of a young woman, her features highlighted by a singl
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/33c2f9e1-6c10-4d40-9782-dfcde2432564 "High Key Photograph")
 
-Prompt: High Key Photograph of a sun-bleached Sonoran desert landscape, the towering silhouette of a saguaro cactus against a bright, cloudless sky, crescent shaped sand dunes under harsh midday illumination, distant mountains reduced to ghostly outlines, the play of light and shadow accentuating the textures of the desert, each grain of sand aglow, all bathed in an intense, blinding light, style of Michael Frye
+(Dall-e3 node) Prompt: High Key Photograph of a sun-bleached Sonoran desert landscape, the towering silhouette of a saguaro cactus against a bright, cloudless sky, crescent shaped sand dunes under harsh midday illumination, distant mountains reduced to ghostly outlines, the play of light and shadow accentuating the textures of the desert, each grain of sand aglow, all bathed in an intense, blinding light, style of Michael Frye
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/615ca38c-ecc0-4fd0-8897-ba87bde2fa9b "Fashion Sketch")
 
@@ -259,7 +258,7 @@ Prompt: Fashion Sketch of a statuesque model draped in a flowing grey dress, ado
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/78478edd-890b-4df9-864c-258c3f3bd96a "Long Exposure Photograph")
 
-Prompt: Long Exposure Photograph capturing a solitary blue sailboat with its sails fully unfurled, gliding over a smooth, glass-like sea under the ethereal glow of a full moon. The image is framed to emphasize the stark contrast between the deep, velvety blues of the night sea and the subtle, shimmering silver path created by the moonlight. The sailboat is positioned slightly off-center, sailing towards the right, inviting the viewer's gaze to follow its journey. The surrounding darkness envelops the scene, with the moon's reflection acting as the main source of illumination, creating a serene yet mysterious atmosphere. The composition is minimalist, focusing on the interplay of light and shadow, the texture of the sailboat against the liquid mirror of the sea, and the infinite horizon merging sea and sky into one. Style of Michael Kenna.
+(Dall-e3 node) Prompt: Long Exposure Photograph capturing a solitary blue sailboat with its sails fully unfurled, gliding over a smooth, glass-like sea under the ethereal glow of a full moon. The image is framed to emphasize the stark contrast between the deep, velvety blues of the night sea and the subtle, shimmering silver path created by the moonlight. The sailboat is positioned slightly off-center, sailing towards the right, inviting the viewer's gaze to follow its journey. The surrounding darkness envelops the scene, with the moon's reflection acting as the main source of illumination, creating a serene yet mysterious atmosphere. The composition is minimalist, focusing on the interplay of light and shadow, the texture of the sailboat against the liquid mirror of the sea, and the infinite horizon merging sea and sky into one. Style of Michael Kenna.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/07f7618f-0639-4622-92d1-0e3a3dd980f0 "Art Deco")
 
