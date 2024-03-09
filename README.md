@@ -230,11 +230,14 @@ Style: Fish Eye Lens Photograph
 
 Style: High Key Photograph
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d12a36c7-6fc8-4d36-997e-f5304855fe16 "Digital Art")
+
+Style: Digital Art
+
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/0c59872e-9c6b-489c-88b7-9e379a21e40a "Semi Realistic Cyberpunk")
 
 Style: Semi Realistic Cyberpunk
 
-![Alt Text1](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/15d48cf0-32de-4b82-932b-365094e36254 "Low Key Photograph")
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
 
 Style: Low Key Photograph
