@@ -238,7 +238,7 @@ Style: Semi Realistic Cyberpunk
 
 Style: Low Key Photograph
 
-![ComfyUI_temp_kgnku_00001_ - Copy](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/615ca38c-ecc0-4fd0-8897-ba87bde2fa9b Fashion Sketch)
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/615ca38c-ecc0-4fd0-8897-ba87bde2fa9b Fashion Sketch)
 
 Style: Fashion Sketch
 
