@@ -242,6 +242,10 @@ Style: Fantasy Art
 
 Style: Low Key Photograph
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/33c2f9e1-6c10-4d40-9782-dfcde2432564 "High Key Photograph")
+
+Style: High Key Photograph
+
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/615ca38c-ecc0-4fd0-8897-ba87bde2fa9b "Fashion Sketch")
 
 Style: Fashion Sketch
