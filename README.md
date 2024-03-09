@@ -235,6 +235,7 @@ Style: High Key Photograph
 Style: Semi Realistic Cyberpunk
 
 ![Alt Text1](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/15d48cf0-32de-4b82-932b-365094e36254 "Low Key Photograph")
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
 
 Style: Low Key Photograph
 
