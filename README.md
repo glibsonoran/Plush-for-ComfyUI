@@ -1,6 +1,8 @@
 # Plush-for-ComfyUI
 ****
 [**Click here if you need to setup your OpenAI key in an evironment variable**](#requirements)
+
+[**Prompt and Image examples from the Style_Prompt node**](
 ****
 ### Updates:
 3/7/2023 @11:00PM PST *Version 1.21.3*
