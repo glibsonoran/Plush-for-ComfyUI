@@ -224,23 +224,23 @@ You can use this feature to:
 ### Examples:
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/aec4ce84-e5a8-4a43-966c-23b65262fb18 "Fish Eye Lens Photograph")
 
-Style: Fish Eye Lens Photograph
+Prompt: Fish-Eye lens Photograph of a joyful young woman on a bustling downtown street, her smile amplified by the distorted perspective, skyscrapers curving around her in a surreal fishbowl effect, their windows reflecting the radiant midday sun, the surrounding crowd and traffic appearing as miniature figures in the margins, parked cars stretched and skewed into bizarre shapes, the blue sky overhead warped into a swirling dome, style of Justin Quinnell.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/cdadbd7d-9f48-4f7b-bafa-c9ce69b0f0ea "High Key Photograph")
 
-Style: High Key Photograph
+Prompt: High Key Photography of a noir-era actress, vividly red lipstick, sparkling diamond jewelry, soft-focus background, luxurious fur stole, pearlescent lighting effects, dramatic high-contrast shadows, and mirrored reflections, style of Terry O'Neill.
+
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d12a36c7-6fc8-4d36-997e-f5304855fe16 "Digital Art")
 
-Style: Digital Art
+Prompt: Digital Art, female portrait, abstract elements, red hair, polka dots, vibrant colors, contrast, geometric shapes, surrealism, bold makeup, dripping paint effect, large eyes, stylized features, style of Patrice Murciano, style of Aya Kato.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/2a4954b8-6ea7-44b5-a6e3-67baf821d227 "Fantasy Art")
 
-Style: Fantasy Art
+Prompt: Fantasy Art of a radiant young woman, her eyes glowing with an ethereal light, clad in a cloak of starlight, amidst a sprawling urban jungle, buildings bathed in the soft hues of twilight, with the stylized graffiti murals pulsating with arcane energy, under the watchful gaze of celestial constellations, style of Yoshitaka Amano.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/27f2bb3d-fb1d-47de-83c6-94a53e3ebca1 "Chiaroscuro Art")
 
-Style: Chiaroscuro Art -  
 Prompt: Chiarosuro Art: female warrior, profile view, low key lighting, contrast of shadow and light, detailed battle dress, animal skins, flowing black hair, blood smeared face, victory shine, defiant wind, exhalation pose, dark stormy sky, distant lightning, triumphant spear thrust, high heels, leather wristbands, feathered necklace, steel breastplate, war paint stripes, rusted spear, cracked shield, muddy battlefield, fallen enemies, style of Mario Testino.
 
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/b103d32e-8ffe-4aa9-bb25-355179263b88 "Low Key Photograph")
