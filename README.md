@@ -238,6 +238,10 @@ Style: Semi Realistic Cyberpunk
 
 Style: Low Key Photograph
 
+![ComfyUI_temp_kgnku_00001_ - Copy](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/615ca38c-ecc0-4fd0-8897-ba87bde2fa9b Fashion Sketch)
+
+Style: Fashion Sketch
+
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/e0246439-7c56-4498-ab4b-2358baa96bc0 "Art Deco")
 
 Style: Art Deco
