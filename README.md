@@ -268,6 +268,10 @@ Prompt: Biomorphic Abstraction, surreal portrait, female figure, high-contrast, 
 
 Prompt: Art Deco of a poised young woman in a sleek, geometrically patterned dress, her sharp silhouette highlighted against a jeweled sunset, standing on the crest of a manicured grassy hill, her eyes glinting with reflected urban skylines composed of streamlined skyscrapers in the distance, her hands softly clutching an elegant sequined clutch and a feathered hat delicately perched on her bobbed hair, all under the radiant glow of a large, low-hanging moon, style of Tamara De Lempicka.
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/01bdfaaf-0c9b-452a-b67d-5b1379308b1a "Zulu Urban Art")
+
+Prompt: Zulu Urban Art, detailed female portrait, half-shaved head with blonde hair, geometric patterns, bold contrasts, abstract shapes, vibrant colors, dripping paint, surreal composition, expressive eyes, red lips, polka dots, modern fashion, style of Kobra, Shepard Fairey.
+
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/e51f9c1f-07a0-4410-8e09-c04019c2714d "Origami Art")
 
 Prompt: Origami of a poised young woman crafted from intricate, emerald-green folds standing tall on a textured, grassy hill, with a meticulously folded skyline of a bustling city in the distance, under a sweeping blue paper sky, the sun casting long, dramatic shadows, all bathed in soft, warm light, style of Robert J. Lang.
