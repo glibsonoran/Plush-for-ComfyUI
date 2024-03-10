@@ -49,7 +49,7 @@
 
 **Style Prompt**: Takes your: Text prompt, your image, or your text prompt and image, and the art style you specify and generates a prompt from ChatGPT3 or 4 that Stable Diffusion and/or Dall-e can use to generate an image in that style.
 
-**Advanced Prompt Enhancer**: Take your: Prompt, Instruction, image, Examples and generates text output which can be a prompt or other output (e.g. caption).  This node can be used with certain Open Source LLM aggregators (e.g. LM Studio) or with ChatGPT.
+**Advanced Prompt Enhancer**: Take your: Prompt, Instruction, image, Examples and generates text output which can be a prompt or other output (e.g. caption).  This node can be used with certain Open Source LLM front-ends (e.g. LM Studio) or with ChatGPT.
 
 **OAI Dall_e 3**:  Takes your prompt and parameters and produces a Dall_e3 image in ComfyUI.
 
