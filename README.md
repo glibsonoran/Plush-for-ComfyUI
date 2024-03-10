@@ -256,6 +256,10 @@ Prompt: Low Key Photograph of a young woman, her features highlighted by a singl
 
 Prompt: Fashion Sketch of a statuesque model draped in a flowing grey dress, adorned with vibrant yellow accents, posed against a minimalist white background, with sharp, angular lines defining her silhouette, a dramatic contrast of shadow and light to highlight the fabric's texture, her gaze focused and intense, emanating an air of sophistication, her enigmatic smile hinting at a story untold, and a yellow hat as the final touch, style of Hayden Williams.
 
+![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/88ad1981-82ea-45e7-9bd7-e5220f753b93 "Biomorphic Abstraction")
+
+Prompt: Biomorphic Abstraction, surreal portrait, female figure, high-contrast, oversized eyes, glossy lips, polychromatic splashes, geometric shapes, dripping paint, monochromatic background, stylized features, sharp shadows, dynamic composition, style of Kandinsky, style of Joan Miró.
+
 ![Alt Text](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/78478edd-890b-4df9-864c-258c3f3bd96a "Long Exposure Photograph")
 
 (Dall-e3 node) Prompt: Long Exposure Photograph capturing a solitary blue sailboat with its sails fully unfurled, gliding over a smooth, glass-like sea under the ethereal glow of a full moon. The image is framed to emphasize the stark contrast between the deep, velvety blues of the night sea and the subtle, shimmering silver path created by the moonlight. The sailboat is positioned slightly off-center, sailing towards the right, inviting the viewer's gaze to follow its journey. The surrounding darkness envelops the scene, with the moon's reflection acting as the main source of illumination, creating a serene yet mysterious atmosphere. The composition is minimalist, focusing on the interplay of light and shadow, the texture of the sailboat against the liquid mirror of the sea, and the infinite horizon merging sea and sky into one. Style of Michael Kenna.
