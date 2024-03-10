@@ -1,6 +1,6 @@
 # Plush-for-ComfyUI
 ****
-[**Click here if you need to setup your OpenAI key in an evironment variable**](#requirements)
+[**Click here if you need to setup your OpenAI key in an Plush compatible evironment variable**](#requirements)
 
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
