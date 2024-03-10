@@ -85,7 +85,7 @@ python -m pip install -r requirements.txt
 >
 ****
 ### Requirements: 
-##  Your OpenAI API Key (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer, when used with open-source LLM's):
+##  Your OpenAI API Key (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer when used with open-source LLM's):
 * For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI. For Advanced Prompt Enhancer, you'll need a valid OpenAI API key if you're going to use it with ChatGPT models,  if you're only using it with open-source LLM's, you won't need one. The OpenAI API key requires a paid account.  Generate the key from their website.
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
    ********
