@@ -6,7 +6,7 @@
 ****
 ### Updates:
 3/7/2023 @11:00PM PST *Version 1.21.3*
-*    **New node: Advanced Prompt Enhancer, can use open-source LLM's**:  Uses Open-Source LLM (via an front-end app like *LM Studio*) or ChatGPT/ChatGPT-Vision to produce a prompt or other generated text from your: Instruction, Prompt, Example(s), Image or any combination of these. The open-source connection works through the OpenAI API without requiring an OpenAI account or key.  This provides a connection to LLM front-ends like *LM Studio*.  So far this has just been tested with *LM Studio* but should work with any LLM front-end that can accept input from the OpenAI API Object.  Using the ChatGPT models (including GPT-vision models) does require an API key. See the help file, available from the node's *help* output, for more details
+*    **New node: Advanced Prompt Enhancer, can use open-source LLM's**:  Uses Open-Source LLM (via an front-end app like *LM Studio*); or ChatGPT/ChatGPT-Vision to produce a prompt or other generated text from your: Instruction, Prompt, Example(s), Image or any combination of these. The open-source connection works through the OpenAI API without requiring an OpenAI account or key.  This provides a connection to LLM front-ends like *LM Studio*.  So far this has just been tested with *LM Studio* but should work with any LLM front-end that can accept input from the OpenAI API Object.  Using the ChatGPT models (including GPT-vision models) does require an API key. See the help file, available from the node's *help* output, for more details
 ********************
 2/19/24 @12:20PM PST *Version 1.20.3*
 *   **OAI Dall-e3 node can now create batches of up to 8 images**
