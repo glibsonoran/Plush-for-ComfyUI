@@ -112,10 +112,9 @@ class cFigSingleton:
             except Exception as e:
                 j_mngr.log_events("Invalid or missing OpenAI API key.  Please note, keys must now be kept in an environment variable (see: ReadMe)",
                                   severity=TroubleSgltn.Severity.ERROR)
-                
+                       
         self._fig_gpt_models = get_gpt_models(self._figKey)
-
-
+   
     def get_chat_models(self, sort_it:bool=False, filter:str="")->list:
         CGPT_models = []
         if self._fig_gpt_models and self._fig_gpt_models.data:
@@ -128,6 +127,8 @@ class cFigSingleton:
         
                 if sort_it:
                     CGPT_models = sorted(CGPT_models)
+        else:
+            CGPT_models.append('gpt-4-0125-preview')
 
         return(CGPT_models)
     
@@ -547,7 +548,7 @@ class Enhancer:
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
-                "GPTmodel": (cFig.get_chat_models(True, 'gpt'),{"default": "gpt-4-turbo-preview"} ),
+                "GPTmodel": (cFig.get_chat_models(True, 'gpt'),{"default": "gpt-4-0125-preview"} ),
                 "creative_latitude" : ("FLOAT", {"max": 1.201, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}),                
                 "style": (cFig.style,{"default": "Photograph"}),
@@ -958,19 +959,19 @@ class DalleImage:
     def gogo(self, GPTmodel, prompt, image_size, image_quality, style, batch_size, seed):
 
         self.trbl.reset('Dall-e Image')
-        seed +=1
-        seed -=1
+
         # Initialize default tensors and prompt
         batched_images = torch.zeros(1, 1024, 1024, 3, dtype=torch.float32)
         revised_prompt = "Image and mask could not be created"  # Default prompt message
         help = self.help_data.dalle_help
         images_list = []
 
+
         if not self.cFig.openaiClient:
              self.j_mngr.log_events("OpenAI API key is missing or invalid.  Key must be stored in an enviroment variable (see ReadMe).  This node is not functional.",
                                    TroubleSgltn.Severity.WARNING,
                                    True)
-             return(batched_images, revised_prompt, self.trbl.get_troubles())
+             return(batched_images, revised_prompt, help, self.trbl.get_troubles())
                 
         client = self.cFig.openaiClient
         
@@ -1037,7 +1038,7 @@ class DalleImage:
                                    TroubleSgltn.Severity.WARNING,
                                    is_trouble=True)
 
-
+        
         return (batched_images, revised_prompt, help, self.trbl.get_troubles())
     
 
