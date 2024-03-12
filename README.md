@@ -5,7 +5,7 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-3/11/2024 @8:38PM PST 
+3/11/2024 @8:38PM PST *Version 1.21.4*
 * **Bug fix for users that don't have an OpenAI API key**: Advanced Prompt Enhancer was throwing an error because it couldn't create its list of models unless the user had a valid paid OpenAI API key.  This error has been fixed and users without a key should be able to use their Open Source LLM's without issue.
 ******************
 3/7/2024 @11:00PM PST *Version 1.21.3*
