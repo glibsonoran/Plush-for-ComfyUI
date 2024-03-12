@@ -5,7 +5,10 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-3/7/2023 @11:00PM PST *Version 1.21.3*
+3/11/2024 @8:38PM PST 
+* **Bug fix for users that don't have an OpenAI API key**: Advanced Prompt Enhancer was throwing an error because it couldn't create its list of models unless the user had a valid paid OpenAI API key.  This error has been fixed and users without a key should be able to use their Open Source LLM's without issue.
+******************
+3/7/2024 @11:00PM PST *Version 1.21.3*
 *    **New node: Advanced Prompt Enhancer, can use open-source LLM's**:  Uses Open-Source LLM (via an front-end app like *LM Studio*); or ChatGPT/ChatGPT-Vision to produce a prompt or other generated text from your: Instruction, Prompt, Example(s), Image or any combination of these. The open-source connection works through the OpenAI API without requiring an OpenAI account or key.  This provides a connection to LLM front-ends like *LM Studio*.  So far this has just been tested with *LM Studio* but should work with any LLM front-end that can accept input from the OpenAI API Object.  Using the ChatGPT models (including GPT-vision models) does require an API key. See the help file, available from the node's *help* output, for more details.
 *    **This node was largely spec'd by Alessandro Perilli, click to see his [amazing ComfyUI all encompassing 'AP Workflow'](https://perilli.com/ai/comfyui/)**.
 ********************
