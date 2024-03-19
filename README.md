@@ -7,7 +7,7 @@
 ****
 ### Updates:
 3/19/2024 @2:36PM PST *Version 1.21.5*
-*  **Advanced Prompt Enhancer can now provide an image file as input to generate text from open source LLM's that have 'vision' capability.**  Many open source LLM front-ends are now incorporating 'vision' capable models that can interpret image files (e.g. Kobolcpp's latest update). Advanced Prompt Enhancer can now send image files to these open source models to include in the inferencing process.  You can provide instructions to the model through the 'Instruction' input as to how the model should interpret the image, and you can add additional elements to be included in the output through the 'prompt' input.
+*  **Advanced Prompt Enhancer can now provide an image file as input to generate text from open source LLM's that have 'vision' capability.**  Many open source LLM front-ends are now incorporating 'vision' capable models that can interpret image files (e.g. Koboldcpp's latest update). Advanced Prompt Enhancer can now send image files to these open source models to include in the inferencing process.  You can provide instructions to the model through the 'Instruction' input as to how the model should interpret the image, and you can add additional elements to be included in the output through the 'prompt' input.
 *  **Exif Wrangler will now extract GPS location data when available from JPG photographs.** 
 ******************
 3/11/2024 @8:38PM PST *Version 1.21.4*
