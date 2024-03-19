@@ -36,13 +36,13 @@ class TroubleSgltn:
             cls._troubles = ""  # Example attribute for storing trouble messages
             cls._section_bullet = "\n\u27a4"
             cls._bullet = "\u2726"
-            cls._new_lines = "\n"
+            cls._new_line = "\n"
             cls._header_stack = []
         return cls._instance
     
     def set_process_header(self, process_head:str="New Process")-> None:
 
-        self._troubles += f'{self._section_bullet} Begin Log for: {process_head}:{self._new_lines}'
+        self._troubles += f'{self._section_bullet} Begin Log for: {process_head}:{self._new_line}'
         self._header_stack.append(process_head)
 
     def pop_header(self)->bool:
@@ -51,13 +51,11 @@ class TroubleSgltn:
             self._header_stack.pop()
             if self._header_stack:
                 process_head = self._header_stack[-1]
-                self._troubles += f'{self._new_lines}{self._section_bullet} Begin Log for: {process_head}:{self._new_lines}'
+                self._troubles += f'{self._section_bullet} Begin Log for: {process_head}:{self._new_line}'
                 is_popped = True
         
         return is_popped
            
-            
-
 
     def log_trouble(self, message: str, severity: Severity) -> None:
         """
@@ -69,7 +67,7 @@ class TroubleSgltn:
             severity (str): The severity level of the message.
         """
         # Example implementation; customize as needed
-        trouble_message = f"{self._bullet} {severity.name}: {message}{self._new_lines}"
+        trouble_message = f"{self._bullet} {severity.name}: {message}{self._new_line}"
         self._troubles += trouble_message
 
     def reset(self, process_head:str='') -> None:
@@ -114,7 +112,7 @@ class helpSgltn:
         self._adv_prompt_help =''
         # Empty help text is not a critical issue for the app
         if not help_data:
-            j_mmgr.log_e('Help data file is empty or missing.',
+            j_mmgr.log_events('Help data file is empty or missing.',
                          TroubleSgltn.Severity.ERROR)
             return
         #Get help text
@@ -367,7 +365,7 @@ class json_manager:
                             TroubleSgltn.Severity.ERROR,
                             True)
             return None
-        return(deleted_count)
+        return deleted_count
 
     
     def generate_unique_filename(self, extension: str, base: str="")->str:
@@ -488,10 +486,43 @@ class json_manager:
 
         return False
     
+    def read_lines_of_file(self, file_path: Union[str, Path], lines:int=0, is_critical: bool = False) -> list|None:
+        """
+        Loads a specified number of lines from a text file, used for simple text file data.
+
+        Args:
+            file_path (Union[str, Path]): The path to the file from which data will be loaded.
+            lines (int): Number of lines to read from the file. A zero argument returns all lines.
+            is_critical (bool): If True, raises exceptions for errors.
+
+        Returns:
+            list or None: The loaded list of file lines, or None otherwise.
+        """
+        file_lines = []
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                line_num = 0
+                for line in file:
+                    file_lines.append(line.strip())  # Remove trailing newlines
+                    line_num += 1
+                    if 0 < lines <= line_num:
+                        break
+            return file_lines
+
+        except Exception as e:
+            self.log_events(f"Error reading from file: {file_path}: {e}",
+                            TroubleSgltn.Severity.ERROR,
+                            True,
+                            is_critical=is_critical)
+            if is_critical:
+                raise
+            return None
+        
 
     def write_string_to_file(self, data: str, file_path: Union[str,Path], is_critical: bool=False)->bool:
         """
-        Writes any string data to a file.  Including JSON strings.
+        Writes any string data to a file, makes the file if it doesn't exist.  
+        Will also write empty strings, clearing the file content.  Including JSON strings. 
 
         Args:
             data (str): The string to write to the file.
@@ -501,21 +532,20 @@ class json_manager:
         Returns:
             bool: True if the write operation was successful, False otherwise.
         """
-        if data:
-            try:
-                with open(file_path, 'w', encoding='utf-8') as file:
-                    file.write(data)
-                return True
-            except (IOError, OSError) as e:
-                self.log_events(f"Plush - An error occurred while writing to file: {file_path}: {e}",
-                                TroubleSgltn.Severity.WARNING,
-                                True)
-                if is_critical:
-                    raise
-                return False
-        else:
+
+        try:
+            with open(file_path, 'w', encoding='utf-8') as file:
+                file.write(data)
+            return True
+        except (IOError, OSError) as e:
+            self.log_events(f"Plush - An error occurred while writing to file: {file_path}: {e}",
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+            if is_critical:
+                raise
             return False
-        
+
+
 
     def update_json_data(self, upd_data: dict, cfg_data: dict):
 
@@ -572,37 +602,37 @@ class json_manager:
 
         def find_it(data, search_key, new_dict):
                     
-                    for k, v in data.items():
-                        if k == search_key:
+            for k, v in data.items():
+                if k == search_key:
 
-                            if k in new_dict: #key is a duplicate
-                                if isinstance(new_dict[k], list): #if the new item is a list
-                                    new_dict[k].append(v)#append the list with the dupe key
-                                else:
-                                    new_dict[k] = [new_dict[k], v] #Convert it to a list and append it
-                            else:
-                                new_dict[k] = v                            
-                        
-                        elif isinstance(v, str):
-                            v = v.strip()
-                            if v.startswith('{') or v.startswith('['):
-                                try:
-                                    parsed = json.loads(v)
-                                    find_it(parsed, search_key, new_dict) 
-                                except json.JSONDecodeError:
-                                    #Whoops it's not a JSON string
-                                    self.log_events(f"Attempt to convert string to dictionary failed, some data will be missing:  {v}",
-                                                    TroubleSgltn.Severity.WARNING,
-                                                    True)
-                                    continue
-                        elif isinstance(v, dict):
-                             find_it(v, search_key, new_dict)
-                        elif isinstance(v, list):                            
-                            for i in v:                                
-                                if i == search_key:                                  
-                                    new_dict[k] = v
-                                if isinstance(i, dict):
-                                     find_it(i, search_key, new_dict)
+                    if k in new_dict: #key is a duplicate
+                        if isinstance(new_dict[k], list): #if the new item is a list
+                            new_dict[k].append(v)#append the list with the dupe key
+                        else:
+                            new_dict[k] = [new_dict[k], v] #Convert it to a list and append it
+                    else:
+                        new_dict[k] = v                            
+                
+                elif isinstance(v, str):
+                    v = v.strip()
+                    if v.startswith('{') or v.startswith('['):
+                        try:
+                            parsed = json.loads(v)
+                            find_it(parsed, search_key, new_dict) 
+                        except json.JSONDecodeError:
+                            #Whoops it's not a JSON string
+                            self.log_events(f"Attempt to convert string to dictionary failed, some data will be missing:  {v}",
+                                            TroubleSgltn.Severity.WARNING,
+                                            True)
+                            continue
+                elif isinstance(v, dict):
+                    find_it(v, search_key, new_dict)
+                elif isinstance(v, list):                            
+                    for i in v:                                
+                        if i == search_key:                                  
+                            new_dict[k] = v
+                        if isinstance(i, dict):
+                            find_it(i, search_key, new_dict)
               
         new_dict = {}
         local_source = dict_data
@@ -611,7 +641,7 @@ class json_manager:
             for search_key in target:
                 find_it(local_source, search_key, new_dict)
         else:
-            self.log_events(f"'extract_from_dict', Incoming search terms were not a list object. Return empty dict.",
+            self.log_events("'extract_from_dict', Incoming search terms were not a list object. Return empty dict.",
                             TroubleSgltn.Severity.WARNING,
                             True)
         return new_dict
@@ -652,50 +682,90 @@ class json_manager:
             # Normal priority for everything else
             return (2, key)
         
-
+            
         def process_and_divide(friendly_name, value):
-            # This function takes a string and performs mathematical division and APEX translation 
-            #if the entire string matches the pattern
-            pattern = re.compile(r'^(\d+)/(\d+)$')  # Anchors added to match the entire string
-            match = pattern.match(value)
-            if match:
-                numerator, denominator = map(int, match.groups())  # Extract and convert the numbers
-                if denominator != 0:  # Avoid division by zero
-                    quotient = numerator / denominator
-                    
-                    # Apply specific logic for APEX values (e.g., Shutter Speed)
-                    if "Shutter Speed" in friendly_name:
-                        shutter_speed = 2**(-quotient)
-                        if shutter_speed < 1:
-                            # Convert to 1/x format for speeds faster than 1 second
-                            reciprocal = round(1 / shutter_speed)
-                            return f"1/{reciprocal} sec"
-                        else:
-                            # For 1 second or slower, simply round and add " sec"
-                            return f"{round(shutter_speed,2)} sec"
-                    elif "Aperture" in friendly_name:
-                        # Example for Aperture, if needed, adjust formula accordingly
-                        return f"F{math.sqrt(2**quotient):.2f}"
-                    elif "Exposure Time" in friendly_name:
-                        return(f"{str(round(quotient,5))} sec")
-                    else:
-                        # For other values, simply return the quotient rounded to two decimal places
-                        return str(round(quotient, 2))
-                else:
-                    return "0"  # Return a default string representation for zero if denominator is zero
+            # Initialize the regular expression pattern
+            pattern = None
+            processed_value = value  # Default to the original value
+
+            # GPS Latitude
+            if "Latitude" in friendly_name and "Hemisphere" not in friendly_name:
+                pattern = re.compile(r'^(\d+)/(\d+)\s+(\d+)/(\d+)\s+(\d+)/(\d+)$')
+            # GPS Longitude
+            elif "Longitude" in friendly_name and "Hemisphere" not in friendly_name:
+                pattern = re.compile(r'^(\d+)/(\d+)\s+(\d+)/(\d+)\s+(\d+)/(\d+)$')
             else:
-                return value  # Return the original value if no match is found
+                pattern = re.compile(r'^(\d+)/(\d+)$')
+            
+
+            # If a pattern was assigned, try matching it to the value
+            if pattern is not None:
+                match = pattern.match(value)
+                if match:
+                    if "Latitude" in friendly_name or "Longitude" in friendly_name:
+                        # Process as GPS coordinate
+                        degrees, degrees_div, minutes, minutes_div, seconds, seconds_div = map(int, match.groups())
+                        if degrees_div != 0 and minutes_div != 0 and seconds_div != 0:
+                            decimal_degrees = degrees / degrees_div + minutes / minutes_div / 60 + seconds / seconds_div / 3600
+                            processed_value = f"{decimal_degrees:.6f}°"
+                    elif "Altitude" in friendly_name:
+                        # Process as altitude
+                        meters, meters_div = map(int, match.groups())
+                        if meters_div != 0:
+                            feet = (meters / meters_div) * 3.28084  # Convert meters to feet
+                            processed_value = f"{feet:.2f} ft"
+                        else:
+                            processed_value = '0'
+                    elif "Shutter Speed" in friendly_name:
+                        # Process as shutter speed
+                        numerator, denominator = map(int, match.groups())
+                        if denominator != 0:
+                            quotient = numerator / denominator
+                            shutter_speed = 2**(-quotient)
+                            if shutter_speed < 1:
+                                # Convert to 1/x format for speeds faster than 1 second
+                                reciprocal = round(1 / shutter_speed)
+                                return f"1/{reciprocal} sec"
+                            else:
+                                # For 1 second or slower, simply round and add " sec"
+                                return f"{round(shutter_speed,2)} sec"
+                        else:
+                            processed_value = '0'  # Handling for zero denominator
+                    elif "Aperture" in friendly_name:
+                        # Process as aperture using the APEX standard
+                        numerator, denominator = map(int, match.groups())
+                        if denominator != 0:
+                            quotient = numerator / denominator
+                            aperture_value = math.sqrt(2**quotient)
+                            processed_value = f"F{aperture_value:.2f}"
+                        else:
+                            processed_value = '0'  # Handling for zero denominator
+                    elif "Exposure Time" in friendly_name:
+                        # Process as exposure time
+                        numerator, denominator = map(int, match.groups())
+                        if denominator != 0:
+                            quotient = numerator / denominator
+                            return f"{str(round(quotient,5))} sec"
+                        else:
+                            processed_value = '0'  # Handling for zero denominator
+                    else:
+                        numerator, denominator = map(int, match.groups())
+                        if denominator != 0:
+                            quotient = numerator / denominator
+                            return f"{str(round(quotient,2))}"
+                        else:
+                            processed_value = '0'  # Handling for zero denominator
+
+
+                # If no match found, retain the original value but no additional action required here
+            # Return the processed value or the original if no changes were made
+            return processed_value
 
         
         def filter_prompt_items(items, min_prompt_len, alpha_pct, filter_phrase):
             """Recursively filter potential prompts based on length and numeric character ratio criteria, including in nested lists."""
             filtered_items = []
             filter_phrase_lower = filter_phrase.lower()
-
-            def calculate_numeric_ratio(s: str) -> float:
-                """Calculate the ratio of numeric characters in a string to the string's total length."""
-                numeric_count = sum(c.isdigit() for c in s)
-                return numeric_count / len(s) if s else 0
             
             def calculate_prompt_char_ratio(s: str) -> float:
                 """Calculate the ratio of common prompt chars: alphabetical characters, spaces and commas to the string's total length."""
@@ -800,7 +870,7 @@ class json_manager:
             self.log_events("Improper data object passed to 'extract_with_translation', translation halted!",
                             TroubleSgltn.Severity.ERROR,
                             True)
-            return(new_dict) #Return an empty dict if passed objects are invalid
+            return new_dict #Return an empty dict if passed objects are invalid
         friendly_name = ""
         find_and_translate(dict_data, translate_keys,friendly_name)
         sorted_items = dict(sorted(new_dict.items(), key=custom_sort))
@@ -1012,7 +1082,7 @@ class json_manager:
             else:
                 # Handle data with out-of-range values
                 # For simplicity, converting each item to string, but you can adjust as needed
-                self.log_events(f"Plush - Object has integer value that's out of bounds for byte conversion, 'decode_integer_list''")
+                self.log_events("Plush - Object has integer value that's out of bounds for byte conversion.")
                 return [str(item) if not (0 <= item <= 255) else item for item in data]
             #Iterate through a list of Unicode Transformation Formats
             #testing each one against is_meaningful() until we find one that 
@@ -1052,14 +1122,12 @@ class json_manager:
             
         def is_meaningful(s, data, encoding):
             # This function assumes English Only
-            null_count = s.count("\u0000")
             data_len = len(s)
             
 
             if data_len < 1:
                 return False
 
-            null_ratio = null_count/data_len
             ascii_ratio = sum(c < '\x80' for c in s) / data_len
             printable_ratio = sum(c.isprintable() for c in s) / data_len
 
@@ -1077,7 +1145,7 @@ class json_manager:
         
         #First handle specifid object types.
         if "IFDRational" in str(type(obj)):
-            return(str(obj))
+            return str(obj)
         
         elif "exifread.utils.Ratio" in str(type(obj)):
             ratio_dict = {"numerator": obj.numerator, "denominator": obj.denominator}
@@ -1198,11 +1266,11 @@ class json_manager:
                 #pare down log file
         log_file = self.append_filename_to_path(self.log_dir,self.log_file_name + '.log')
         num_removed = self.remove_log_entries_by_age(log_file, max_log_age)
-        if not num_removed == None:
+        if not num_removed is None:
             self.log_events(f'{num_removed} old entries were removed from the log file: {self.log_file_name}')
         else:
             if os.path.exists(log_file):
-                    os.remove(log_file)
+                os.remove(log_file)
             self.log_events(f'Log file {self.log_file_name} was unable to be processed for old entries.  File was corrupt and was deleted',
                             TroubleSgltn.Severity.ERROR)
             
@@ -1297,7 +1365,7 @@ class json_manager:
             try: 
                 shutil.copy(self.config_file, os.path.join(self.backup_dir, 'old_config.json'))
             except Exception as e:
-                    self.log_events(f"Plush - Failed to create backup of old config.json file: {e}")
+                self.log_events(f"Plush - Failed to create backup of old config.json file: {e}")
 
             # Add any new fields and their values from updata_data that weren't already in config_data
             # Also update any existing keys.
@@ -1308,9 +1376,9 @@ class json_manager:
                 self.write_json(config_data, self.config_file,True)
                 self.log_events("Plush - Successfully updated config.json")
             except Exception as e:
-                    self.log_events(f"Plush - Update of config.json failed on file write: {e}",
+                self.log_events(f"Plush - Update of config.json failed on file write: {e}",
                                     severity=TroubleSgltn.Severity.ERROR)
-                    return False
+                return False
             
             #Update the config.json backup to the new data
             if not self.write_json(config_data, self.backup_config_path):
