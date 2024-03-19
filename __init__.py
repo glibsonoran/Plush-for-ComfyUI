@@ -16,17 +16,19 @@ if jmanager.on_startup(False):
 else:
     jmanager.log_events("config.json was not updated")
 
-__version__ ="1.21.4"
+__version__ ="1.21.5"
 print('Plush - Version:', __version__)
 
 
 #********************************************************************************
 from .style_prompt import NODE_CLASS_MAPPINGS as styClassMappings, NODE_DISPLAY_NAME_MAPPINGS as styDisplay
 from .UtilNodes import NODE_CLASS_MAPPINGS as utilClassMappings, NODE_DISPLAY_NAME_MAPPINGS as utilDisplay
-# ** unpacks the dicts into a new dict
-NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings}
+#from .TestNodes import NODE_CLASS_MAPPINGS as testClassMappings, NODE_DISPLAY_NAME_MAPPINGS as testDisplay
 
+NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings}
 NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay}
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+#NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings, **testClassMappings}
+#NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay, **testDisplay}
 
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
