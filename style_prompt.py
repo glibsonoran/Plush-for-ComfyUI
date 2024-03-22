@@ -245,15 +245,20 @@ class cFigSingleton:
     
     def is_lm_server_up(self):
         session = requests.Session()
-        retries = Retry(total=1, backoff_factor=0, status_forcelist=[500, 502, 503, 504])
+        retries = Retry(total=2, backoff_factor=0, status_forcelist=[500, 502, 503, 504])
         session.mount('http://', HTTPAdapter(max_retries=retries))
         try:
-            response = requests.head(self._lm_url, timeout=3)  # Use HEAD to minimize data transfer            
+            response = requests.head(self._lm_url, timeout=4)  # Use HEAD to minimize data transfer            
             if 200 <= response.status_code <= 300:
                 self.write_url(self._lm_url)
                 self.j_mngr.log_events(f"Local LLM Server is running with status code: {response.status_code}",
                               TroubleSgltn.Severity.INFO,
                               True)
+                return True
+            else:
+                self.j_mngr.log_events(f"Server returned response code: {response.status_code}",
+                                       TroubleSgltn.Severity.INFO,
+                                       True)
                 return True
 
         except requests.RequestException as e:            
