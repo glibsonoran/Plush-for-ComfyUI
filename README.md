@@ -7,7 +7,7 @@
 ****
 ### Updates:
 3/24/2024 @12:16pm PST *Version 1.21.6*
-*  **Advanced Prompt Enhancer, new connection type:** Oobabooga broke their API a couple of weeks ago when they added a new field 'user_bio', which created a 'None Type' error.  To get around this issue I've added a new Oobabooga connection type *Oobabooga API-URL* that uses an http POST connection rather than the OpenAI API Object.  Select this at the LLM selection field and provide a url that includes: */chat/completions* for example a url for this type of connection would look like >http://127.0.0.1:5000/v1/chat/completions
+*  **Advanced Prompt Enhancer, new connection type:** Oobabooga broke their API a couple of weeks ago when they added a new field 'user_bio', which created a 'None Type' error.  To get around this issue I've added a new Oobabooga connection type *Oobabooga API-URL* that uses an http POST connection rather than the OpenAI API Object.  Select this at the LLM selection field and provide a url that includes: */chat/completions* for example a url for this type of connection would look like `http://127.0.0.1:5000/v1/chat/completions
 *  
 ******************
 3/19/2024 @2:36PM PST *Version 1.21.5*
