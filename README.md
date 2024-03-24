@@ -6,6 +6,10 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+3/24/2024 @12:16pm PST *Version 1.21.6*
+*  **Advanced Prompt Enhancer, new connection type:** Oobabooga broke their API a couple of weeks ago when they added a new field 'user_bio', which created a 'None Type' error.  To get around this issue I've added a new Oobabooga connection type *Oobabooga API-URL* that uses an http POST connection rather than the OpenAI API Object.  Select this at the LLM selection field and provide a url that includes: */chat/completions* for example a url for this type of connection would look like >http://127.0.0.1:5000/v1/chat/completions
+*  
+******************
 3/19/2024 @2:36PM PST *Version 1.21.5*
 *  **Advanced Prompt Enhancer can now provide an image file as input to generate text from open source LLM's that have 'vision' capability.**  Many open source LLM front-ends are now incorporating 'vision' capable models that can interpret image files (e.g. Koboldcpp's latest update). Advanced Prompt Enhancer can now send image files to these open source models to include in the inferencing process.  You can provide instructions to the model through the 'Instruction' input as to how the model should interpret the image, and you can add additional elements to be included in the output through the 'prompt' input.
 *  **Exif Wrangler will now extract GPS location data when available from JPG photographs.** 
