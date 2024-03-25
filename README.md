@@ -99,7 +99,8 @@ python -m pip install -r requirements.txt
 ****
 ### Requirements: 
 ##  Your OpenAI API or Open Source Key [optional] (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer when used with open-source LLM's):
-* For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI. For Advanced Prompt Enhancer, you'll need a valid OpenAI API key if you're going to use it with ChatGPT models,  if you're only using it with open-source LLM's, you won't need one, however some Open-source products use a key for security and privacy so you have the option to create one if you want. The OpenAI API key requires a paid account.  Generate the key from their website.
+* For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI. For Advanced Prompt Enhancer, you'll need a valid OpenAI API key if you're going to use it with ChatGPT models,  if you're only using it with open-source LLM's, you won't need one, however some Open-source products use a key for security and privacy so you have the option to create one if you want.
+* The OpenAI API key requires a paid account, if you want to use an Open-source key they are typically free.  Generate the key from their website.
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
    ********
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
