@@ -1,7 +1,7 @@
 # Plush-for-ComfyUI
 ****
 **You don't need an OpenAI key to use Advanced Prompt Enhancer with open source LLM's.  You can use them for free.  But if you want to use it with ChatGPT then:**
-[**Click here if you need to setup your OpenAI key in an Plush compatible evironment variable**](#requirements)
+[**Click here if you need to setup your OpenAI key or an Open-source key in an Plush compatible evironment variable**](#requirements)
 
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
