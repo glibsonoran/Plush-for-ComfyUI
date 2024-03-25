@@ -104,6 +104,7 @@ python -m pip install -r requirements.txt
 * Some Open-source products use a free key for security and privacy so you have the option to create one if you want.
 * The OpenAI API key requires a paid account, if you want to use an Open-source key they are typically free.  Generate the key from their website.
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
+
    ********
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
   *********
