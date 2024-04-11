@@ -133,7 +133,7 @@ Run the following in the cmd prompt, replacing <yourkey> with your API key:
 
 You can validate that this variable has been set by opening a new cmd prompt window and typing in 
 
-```echo %OAI_KEY%```
+`echo %OAI_KEY%`
 
 **Option 2**: Set your ‘OAI_KEY’ Environment Variable through the Control Panel
 
@@ -153,7 +153,7 @@ Variable value: (yourkey)
 
 1. Run the following command in your terminal, replacing yourkey with your API key. 
 
-```echo "export OAI_KEY='yourkey'" >> ~/.zshrc```
+`echo "export OAI_KEY='yourkey'" >> ~/.zshrc`
 
 2. Update the shell with the new variable:
 
