@@ -129,7 +129,7 @@ Note that after you set your Enviroment Variable, you will have to **reboot your
 
 Run the following in the cmd prompt, replacing <yourkey> with your API key:
 
-```setx OAI_KEY "(your key)"```
+`setx OAI_KEY (your key)`
 
 You can validate that this variable has been set by opening a new cmd prompt window and typing in 
 
