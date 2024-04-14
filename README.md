@@ -6,6 +6,10 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+4/14/2024 @02:01pm PST *Version 1.21.7*
+*  **Advanced Prompt Enhancer, new connection type: 'OpenAI compatible http POST'**  A connection type that uses a web POST connection rather than the OpenAI API Object to connect to the LLM front-end's local server.
+*  **Oobabooga API connection:**   This connection now automatically formats the URL to include the /v1/chat/completions path.
+******************
 3/24/2024 @12:16pm PST *Version 1.21.6*
 *  **Advanced Prompt Enhancer, new connection type:** The Oobabooga Textgen Webui API has been broken for a couple of weeks which has been resulting in a 'None Type' errors.  To get around this issue I've added a new Oobabooga connection type *Oobabooga API-URL* that uses an http POST connection rather than the OpenAI API Object.  Select this at the *LLM* selection field and provide a url that includes the path: `/chat/completions`. For example a url for this type of connection would look like: `http://127.0.0.1:5000/v1/chat/completions`.  However when using this method of connection with Oobabooga TG it seems to only see the prompt and not the instruction or examples.
 *  **You can use a key with open source LLM products:** You can define an key in an environment variable named: `LLM_KEY` if you want to use a key with an LLM front-end, API or other product.  While these products are usually free, some use keys for security and privacy.  If you want to use a key just create the env var with your key and it will automatically be applied to any connection with LLM products other than ChatGPT.  If you have an OpenAI ChatGPT key in its own env var this will be unaffected, it will be used separately when you choose the ChatGPT connection type.
