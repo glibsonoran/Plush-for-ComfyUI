@@ -5,16 +5,15 @@ from io import BytesIO
 from PIL import Image, ImageOps, TiffImagePlugin, UnidentifiedImageError
 import folder_paths
 import numpy as np
-import time
-import re
 import torch
-from typing import Optional, Any,  Union
+from typing import Optional
 from enum import Enum
 import requests
 from requests.adapters import HTTPAdapter, Retry
 import openai
 from openai import OpenAI
 from .mng_json import json_manager, helpSgltn, TroubleSgltn
+from . import api_requests as rqst
 
 
 #pip install pillow
@@ -30,12 +29,13 @@ class RequestMode(Enum):
     OPENAI = 1
     OPENSOURCE = 2
     OOBABOOGA = 3
+    CLAUDE = 4
 
 #Get information from the config.json file
 class cFigSingleton:
     _instance = None
 
-    class LLMObject(Enum):
+    class APIObject(Enum):
         OPENAI = 1
         OTHER = 2
 
@@ -169,7 +169,7 @@ class cFigSingleton:
         return lm_models
     
     
-    def set_llm_client(self, url:str, client_type:LLMObject=LLMObject.OPENAI)-> bool:
+    def set_llm_client(self, url:str, client_type:APIObject=APIObject.OPENAI, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
         
         if not self.is_lm_server_up() or not url:
             self._lm_client = None
@@ -180,10 +180,15 @@ class cFigSingleton:
                           True)
             return False
         
-        key = "No key necessary"
+        lm_object = None
+        key = "No key necessary" #Default value used in LLM front-ends that don't require a key
         #Use the requested API
-        if client_type == cFigSingleton.LLMObject.OPENAI:
-            lm_object = OpenAI
+        if client_type == self.APIObject.OPENAI: 
+            lm_object = OpenAI 
+        elif client_type == self.APIObject.OTHER: #Potential other Library/API objects
+            pass 
+
+        if request_type in (RequestMode.OOBABOOGA, RequestMode.OPENSOURCE):
             if not self._lm_key:
                 self.j_mngr.log_events("Setting Openai client with URL, no key.",
                     is_trouble=True)
@@ -191,11 +196,13 @@ class cFigSingleton:
                 key = self._lm_key
                 self.j_mngr.log_events("Setting Openai client with URL and key.",
                     is_trouble=True)
+        elif request_type == RequestMode.CLAUDE: # Will use CLAUDE_KEY env var
+            pass
         
         try:
             lm_client = lm_object(base_url=url, api_key=key) 
             self._lm_url = url
-            self._lm_client_type = type
+            self._lm_client_type = client_type
             self._lm_client = lm_client
         except Exception as e:
             self.j_mngr.log_events(f"Unable to create LLM client object using URL. Unable to communicate with LLM: {e}",
@@ -203,6 +210,7 @@ class cFigSingleton:
                             True)
             return False
         """
+        Currently not active due to difficulties with connections times when server is not started.
         if self.is_lm_server_up():  
             try:
                 self._lm_models = lm_client.models.list()
@@ -219,8 +227,6 @@ class cFigSingleton:
 
     @property
     def lm_client(self):
-        #if not self._lm_client and self._lm_url:
-            #self.set_llm_client(self._lm_url, self.LLMObject.OPENAI)
         return self._lm_client
     
     @property
@@ -240,17 +246,17 @@ class cFigSingleton:
         return url_result
     
     @lm_url.setter
-    def lm_url(self, url: str):
+    def lm_url(self, url: str, request_mode:RequestMode=RequestMode.OPENSOURCE):
         if url != self._lm_url or not self._lm_client:  # Check if the new URL is different to avoid unnecessary operations
             self._lm_url = url
             # Reset client and models only if a new URL is provided
             self._lm_client = None
             #self._lm_models = []
             if url:  # If the new URL is not empty, update the client
-                self.set_llm_client(url, self.LLMObject.OPENAI)
+                self.set_llm_client(url, self.APIObject.OPENAI, request_mode)
     
     @property
-    def lm_client_type(self)-> LLMObject | None:
+    def lm_client_type(self)-> APIObject | None:
         return self._lm_client_type
     
     def is_lm_server_up(self):
@@ -378,6 +384,8 @@ class Enhancer:
         self.help_data = helpSgltn()
         self.j_mngr = json_manager()
         self.trbl = TroubleSgltn()
+        self.ctx = rqst.request_context()
+
 
     def build_instruction(self, mode, style, prompt_style, elements, artist):
           #build the instruction from user input
@@ -420,12 +428,7 @@ class Enhancer:
             instruc += art_instruc.format(str(artist))
 
         return instruc
-    @staticmethod
-    def clean_response_text(text: str)-> str:
-        # Replace multiple newlines or carriage returns with a single one
-        cleaned_text = re.sub(r'\n+', '\n', text).strip()
-        return cleaned_text
-    
+
     def translateModelName(self, model: str)-> str:
         #Translate friendly model names to working model names
         #Not in use right now, but new models typically go through a period where there's 
@@ -448,338 +451,8 @@ class Enhancer:
             None if the variable is set to the string "undefined" or unchanged (any) if not.
         """   
         return None if sus_var == "undefined" else sus_var
-    
-    @staticmethod
-    def oai_request_byobject(GPTmodel:str, creative_latitude:float, tokens:int, request_type:RequestMode=RequestMode.OPENAI, prompt:Union[str,None]="", prompt_style:str="", instruction:str="", image:Any=None, file:str="", example_list:list=None):
-        """
-        Accesses an OpenAI API client and uses the incoming arguments to construct a JSON that contains the request for an LLM response.
-        Sends the request via the client. Handles the OpenAI return object and extacts the model and the response from it.
-
-        Args:
-            GPTmodel (str):  The ChatGPT model to use in processing the request. Alternately this serves as a flag that the function will processing open source LLM data (GPTmodel = "LLM")
-            creative_latitude (float): A number setting the 'temperature' of the LLM
-            tokens (int): A number indicating the max number of tokens used to process the request and response
-            request_type (Enum): Specifies whether the function will be using a ChatGPT configured api object or an third party/url configured api object.
-            prompt (str): The users' request to action by the LLM
-            prompt_style (str): Determines the writing style of the return value
-            instruction (str): Text describing the conditions and specific requirements of the return value
-            image (b64 JSON/str): An image to be evaluated by the LLM in the context of the instruction
-            file (JSON/str): A text file containing information to be analysed by the LLM per the instruction
-
-        Return:
-            A string consisting of the LLM's response to the instruction and prompt in the context of any image and/or file
-        """
-        cFig = cFigSingleton()
-        j_mngr = json_manager()
-        response = None
-        CGPT_response = ""
-        file += file.strip()
-
-        if request_type == RequestMode.OPENSOURCE:
-            if cFig.lm_url:
-                j_mngr.log_events("Setting client to OpenAI Open Source LLM object",
-                                    is_trouble=True)
-                client = cFig.lm_client
-            else:
-                j_mngr.log_events("Open Source api object is not ready for use, no URL provided. Aborting",
-                                  TroubleSgltn.Severity.WARNING,
-                                    is_trouble=True)
-                return CGPT_response
-        else:
-            if cFig.key:
-                j_mngr.log_events("Setting client to OpenAI ChatGPT object",
-                                    is_trouble=True)
-                client = cFig.openaiClient
-            else:
-                j_mngr.log_events("ChatGPT api object is not ready for use, no api Key. Aborting",
-                                  TroubleSgltn.Severity.WARNING,
-                                    is_trouble=True)
-                return CGPT_response
-
-
-
-        if not client:
-            if request_type == RequestMode.OPENAI:
-                j_mngr.log_events("Invalid or missing OpenAI API key.  Keys must be stored in an environment variable (see: ReadMe). ChatGPT request aborted",
-                                        TroubleSgltn.Severity.ERROR,
-                                        True)
-                CGPT_response = "Invalid or missing OpenAI API key.  Keys must be stored in an environment variable (see: ReadMe). ChatGPT request aborted"
-
-            elif request_type == RequestMode.OPENSOURCE :
-                j_mngr.log_events("Open Source LLM client not set.  Make sure local Server is running",
-                                        TroubleSgltn.Severity.ERROR,
-                                        True)
-                CGPT_response = "Unable to process request, make sure local server is running"                
-            return CGPT_response
-
-        #These will be empty strings unless cFig.use_examples is set to True
-        example = cFig.example
-        example2 = cFig.example2
-        n_example = cFig.n_Example
-        n_example2 = cFig.n_example2
-
-        messages = []
-        user_submess = {"role": "user", "content": None }
-        user_content = []
-
-        #there's an image
-        if image:
-            # Use the user's selected vision model if it's what was chosen,
-            #otherwise use the last vision model in the list
-            #If the user is using a local LLM they're on their own to make
-            #the right model selection for handling an image
-            if request_type == RequestMode.OPENAI and not 'vision' in GPTmodel:
-                models = cFig.get_chat_models(True, 'vision')
-                GPTmodel = models[-1]
-
-            if isinstance(image, torch.Tensor):  #just to be sure
-                image = DalleImage.tensor_to_base64(image)
                 
-            if isinstance(image,str):
-                image_url = f"data:image/jpeg;base64,{image}" 
-                user_content.append({"type": "image_url", "image_url": {"url":image_url}})
-            else:
-                j_mngr.log_events("Image file is invalid.  Image will be disregarded in the generated output.",
-                                  TroubleSgltn.Severity.WARNING,
-                                  True)
-            
-        if prompt:
-            user_content.append({"type": "text", "text": f"PROMPT: {prompt}"})
-       
-        user_submess['content'] = user_content
-
-        messages.append(user_submess)
-
-        if example_list:
-            for example in example_list:
-                #append each example dict
-                messages.append(example)
-
-        if instruction:
-            messages.append({"role": "system", "content": instruction})
-
-        elif not prompt and not image:
-            # User has provided no prompt, file or image
-            response = "Photograph of an stained empty box with 'NOTHING' printed on its side in bold letters, small flying moths, dingy, gloomy, dim light rundown warehouse"
-            j_mngr.log_events("No instruction and no prompt were provided, the node was only able to provide a 'Box of Nothing'",
-                              TroubleSgltn.Severity.WARNING,
-                              True)
-            return response
-
-        if cFig.use_examples:
-            if prompt_style == "Narrative":
-                if n_example:
-                    messages.append({"role": "assistant", "content": n_example})
-                if n_example2:
-                    messages.append({"role": "assistant", "content": n_example2})
-            else:
-                if example:
-                    messages.append({"role": "assistant", "content": example})
-                if example2:
-                    messages.append({"role": "assistant", "content": example2})
-        response = None
-
-
-        params = {
-        "model": GPTmodel,
-        "messages": messages,
-        "temperature": creative_latitude,
-        "max_tokens": tokens
-        }
-
-        try:
-            response = client.chat.completions.create(**params)
-
-        except openai.APIConnectionError as e: # from httpx.
-            j_mngr.log_events(f"Server connection error: {e.__cause__}",                                   
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-            if request_type == RequestMode.OPENSOURCE:
-                j_mngr.log_events(f"Local server is not responding to the URL: {cFig.lm_url}.  Make sure your LLM Manager/Front-end app is running and its local server is live.",
-                                TroubleSgltn.Severity.WARNING,
-                                True)
-        except openai.RateLimitError as e:
-            j_mngr.log_events(f"Server RATE LIMIT error {e.status_code}: {e.response}",
-                                TroubleSgltn.Severity.ERROR,
-                                    True)
-        except openai.APIStatusError as e:
-            j_mngr.log_events(f"Server STATUS error {e.status_code}: {e.response}. File may be too large.",
-                                TroubleSgltn.Severity.ERROR,
-                                    True)
-        except Exception as e:
-            j_mngr.log_events(f"An unexpected server error occurred.: {e}",
-                                TroubleSgltn.Severity.ERROR,
-                                    True)
-
-
-        if response and 'error' not in response:
-            rpt_model = ""
-            try:
-                rpt_model = response.model
-                rpt_usage = response.usage
-            except Exception as e:
-                j_mngr.log_events(f"Unable to report some completion information, error: {e}",
-                                  TroubleSgltn.Severity.INFO,
-                                  True)
-            if rpt_model:    
-                j_mngr.log_events(f"Using LLM: {rpt_model}",                                  
-                               is_trouble=True)
-            if rpt_usage:
-                j_mngr.log_events(f"Tokens Used: {rpt_usage}",
-                                  TroubleSgltn.Severity.INFO,
-                                  True)
-            CGPT_response = response.choices[0].message.content
-            CGPT_response = Enhancer.clean_response_text(CGPT_response)
-        else:
-            CGPT_response = "Server was unable to process the request"
-            j_mngr.log_events('Server was unable to process this request.',
-                                TroubleSgltn.Severity.ERROR,
-                                True)
-        return CGPT_response
-        
-            
-    @staticmethod
-    def oai_request_byurl(GPTmodel:str, creative_latitude:float, tokens:int, url:str, request_type:RequestMode=RequestMode.OOBABOOGA, prompt:Union[str,None]="", instruction:str="", image:Union[str,None]="", example_list:list=None)->Union[str,None]:
-        """
-        Accesses an OpenAI API client and uses the incoming arguments to construct a JSON that contains the request for an LLM response.
-        Sends the request via the client. Handles the OpenAI return object and extacts the model and the response from it.
-
-        Args:
-            GPTmodel (str):  The ChatGPT model to use in processing the request. Alternately this serves as a flag that the function will processing open source LLM data (GPTmodel = "LLM")
-            creative_latitude (float): A number setting the 'temperature' of the LLM
-            tokens (int): A number indicating the max number of tokens used to process the request and response
-            url (str): The url for the server the information is being sent to
-            request_:type (Enum): Specifies whether the function will be using a ChatGPT configured api object or an third party/url configured api object.
-            prompt (str): The users' request to action by the LLM
-            instruction (str): Text describing the conditions and specific requirements of the return value
-            image (b64 JSON/str): An image to be evaluated by the LLM in the context of the instruction
-
-        Return:
-            A string consisting of the LLM's response to the instruction and prompt in the context of any image and/or file
-        """
-        cFig = cFigSingleton()
-        j_mngr = json_manager()
-
-        response = None
-        CGPT_response = ""    
-
-        #image code is here, but right now none of the tested LLM front ends can handle them 
-        #when using an http POST
-        if image:
-            image = None
-            j_mngr.log_events('Images not supported in this mode at this time.  Image not transmitted',
-                              TroubleSgltn.Severity.WARNING,
-                              True)    
-
-        if request_type == RequestMode.OPENAI:
-            headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {cFig.key}" 
-            }
-        else:
-            if not cFig.lm_key:
-                headers = {
-                    "Content-Type": "application/json"
-                }
-            else:
-                headers = {
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {cFig.lm_key}" 
-            }
-
-        # messages list
-        messages = []
-        #get examples if there are any
-        if example_list:
-            messages.extend(example_list)
-
-        # Append the user message
-        user_content = []
-        # Append the system message if instruction is present
-        if instruction:
-            messages.append({"role": "system", "content": instruction})
-        # Append the example in the assistant role
-
-        if prompt:
-            prompt = "PROMPT: " + prompt
-            user_content.append({"role": "user", "content": prompt})
-
-        if image:
-            if isinstance(image, torch.Tensor):  #just to be sure
-                image = DalleImage.tensor_to_base64(image)
-                            
-            image_url = f"data:image/jpeg;base64,{image}"  # Assuming image is base64 encoded            
-            image_dict = {"type": "image_url", "image_url": {"url": image_url}}
-            messages.append({"role": "user", "content": image_dict})
-
-
-        #messages.append({"role": "user", "content": user_content})
-        messages.extend(user_content)
-        
-        if request_type == RequestMode.OOBABOOGA:
-            j_mngr.log_events(f"Processing Oobabooga http: POST request with url: {url}",
-                              is_trouble=True)
-            params = {
-            "model": GPTmodel,
-            "messages": messages,
-            "temperature": creative_latitude,
-            "max_tokens": tokens,
-            "user_bio": "",
-            "user_name": ""
-            }
-        else:
-            params = {
-            "model": GPTmodel,
-            "messages": messages,
-            "temperature": creative_latitude,
-            "max_tokens": tokens
-            }    
-        post_success = False
-        response_json = ""
-        payload = {**params}
-        try:
-            response = requests.post(url, headers=headers, json=payload, timeout=(12,120))
-            
-            if response.status_code in range(200, 300):
-                response_json = response.json()
-                if response_json and not 'error' in response_json:
-                    CGPT_response = Enhancer.clean_response_text(response_json['choices'][0]['message']['content'] )
-                    post_success = True
-                else:
-                    error_message = response_json.get('error', 'Unknown error')
-                    j_mngr.log_events(f"Server was unable to process the response. Error: {error_message}",
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-            else:
-                CGPT_response = 'Server was unable to process this request'
-                j_mngr.log_events(f"Server was unable to process the request.  Status: {response.status_code}: {response.text}",
-                                    TroubleSgltn.Severity.ERROR,
-                                    True)
-                
-        except Exception as e:
-            j_mngr.log_events(f"Unable to send data to server.  Error: {e}",
-                              TroubleSgltn.Severity.ERROR,
-                              True)
-        if post_success:   
-            try:
-                rpt_model = response_json['model']
-                rpt_usage = response_json['usage']
-                if rpt_model:    
-                    j_mngr.log_events(f"Using LLM: {rpt_model}",                                  
-                                is_trouble=True)
-                if rpt_usage:
-                    j_mngr.log_events(f"Tokens Used: {rpt_usage}",
-                                        is_trouble=True)
-
-            except Exception as e:
-                j_mngr.log_events(f"Unable to report some completion information: model, usage.  Error: {e}",
-                                    TroubleSgltn.Severity.INFO,
-                                    True)    
-
-        return CGPT_response
-
-                
-    
+   
     @classmethod
     def INPUT_TYPES(cls):
         cFig=cFigSingleton()
@@ -827,12 +500,6 @@ class Enhancer:
         instruction = ""
         CGPT_styleInfo = ""
 
-        if not self.cFig.openaiClient:
-            self.j_mngr.log_events("OpenAI API key is missing or invalid.  Key must be stored in an enviroment variable (see ReadMe).  This node is not functional.",
-                                   TroubleSgltn.Severity.WARNING,
-                                   True)
-            return(CGPT_prompt,instruction, CGPT_styleInfo, _help, self.trbl.get_troubles())
-
         # unconnected UI elements get passed in as the string "undefined" by ComfyUI
         image = self.undefined_to_none(image)
         prompt = self.undefined_to_none(prompt)
@@ -855,18 +522,33 @@ class Enhancer:
 
         instruction = self.build_instruction(mode, style, prompt_style, max_elements, artist)  
 
+        self.ctx.request = rqst.oai_object_request()
+
         if style_info:
             self.trbl.set_process_header("Art Style Info:")
             #User has request information about the art style.  GPT will provide it
             sty_prompt = "Give an 150 word backgrounder on the art style: {}.  Starting with describing what it is, include information about its history and which artists represent the style."
             sty_prompt = sty_prompt.format(style)
- 
-            CGPT_styleInfo = Enhancer.oai_request_byobject(GPTmodel, creative_latitude, tokens, RequestMode.OPENAI, sty_prompt )
+
+            kwargs = { "model": GPTmodel,
+                "creative_latitude": creative_latitude,
+                "tokens": tokens,
+                "prompt": sty_prompt,
+                "request_type": RequestMode.OPENAI
+            }    
+            CGPT_styleInfo = self.ctx.execute_request(**kwargs)
             self.trbl.pop_header()
 
-        #CGPT_prompt = self.icgptRequest(GPTmodel, creative_latitude, tokens, prompt, prompt_style, instruction, image)
-        CGPT_prompt = self.oai_request_byobject(GPTmodel, creative_latitude, tokens, RequestMode.OPENAI, prompt, prompt_style, instruction, image) # testing oai_request_byobject()
+        kwargs = { "model": GPTmodel,
+            "creative_latitude": creative_latitude,
+            "tokens": tokens,
+            "prompt": prompt,
+            "instruction": instruction,
+            "image": image,
+            "request_type": RequestMode.OPENAI
+        }
 
+        CGPT_prompt = self.ctx.execute_request(**kwargs)
     
         return (CGPT_prompt, instruction, CGPT_styleInfo, _help, self.trbl.get_troubles())
     
@@ -880,6 +562,7 @@ class AdvPromptEnhancer:
         self.help_data = helpSgltn()
         self.j_mngr = json_manager()
         self.trbl = TroubleSgltn()
+        self.ctx = rqst.request_context()
 
     @staticmethod
     def join_punct(text: str, end_char:str=""):
@@ -978,6 +661,7 @@ class AdvPromptEnhancer:
             generated_text += AdvPromptEnhancer.join_punct(generated_text,'.') + end_text
         
         return generated_text.strip(', ')  # Ensure no leading or trailing commas 
+    
 
     @classmethod
     def INPUT_TYPES(cls):
@@ -988,7 +672,7 @@ class AdvPromptEnhancer:
         return {
             "required": {
                 
-                "LLM": (["ChatGPT", "Other LLM via URL", "Oobabooga API-URL"], {"default": "ChatGPT"}),
+                "LLM": (["ChatGPT", "Other LLM via URL", "OpenAI compatible http POST", "Oobabooga API-URL"], {"default": "ChatGPT"}),
                 "GPTmodel": (cFig.get_chat_models(True,'gpt'),{"default": "gpt-4-0125-preview"}),
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
@@ -1031,6 +715,15 @@ class AdvPromptEnhancer:
 
         _help = self.help_data.adv_prompt_help
 
+        def misc_tags(output:str, enhanced_tag_placement)-> str:
+            if enhanced_tag_placement:
+                output = AdvPromptEnhancer.enhanced_text_placement(output, Misc_tags)               
+            else:
+                output  += AdvPromptEnhancer.join_punct(output, '.') + Misc_tags
+
+            return output
+
+
         # set the value of unconnected inputs to None
         Instruction = Enhancer.undefined_to_none(Instruction)
         Prompt = Enhancer.undefined_to_none(Prompt)
@@ -1058,7 +751,16 @@ class AdvPromptEnhancer:
             examples_template = {"role": "assistant", "content":None}
             example_list = self.j_mngr.insert_text_into_dict(Examples, examples_template, "content",delimiter)
 
-      
+        kwargs = { "model": GPTmodel,
+                "creative_latitude": creative_latitude,
+                "tokens": tokens,
+                "prompt": Prompt,
+                "instruction": Instruction,
+                "url": LLM_URL,
+                "image": image,
+                "example_list": example_list,
+        }
+
         if  LLM == 'Other LLM via URL' : 
  
             if not LLM_URL:
@@ -1076,19 +778,38 @@ class AdvPromptEnhancer:
                                        True)
                 return(llm_result, _help, self.trbl.get_troubles())
         
-            GPTmodel = "LLM"
-            llm_result = ""
+            kwargs['model'] = "LLM"
+            kwargs['request_type'] = RequestMode.OPENSOURCE
 
-            llm_result = Enhancer.oai_request_byobject(GPTmodel, creative_latitude, tokens, RequestMode.OPENSOURCE, Prompt, instruction=Instruction, image=image, example_list=example_list) 
+            llm_result = ""
+            self.ctx.request = rqst.oai_object_request( )
+
+            llm_result = self.ctx.execute_request(**kwargs)
 
             if Misc_tags:
-                if enhanced_tag_placement:
-                    llm_result = AdvPromptEnhancer.enhanced_text_placement(llm_result, Misc_tags)               
-                else:
-                    llm_result += AdvPromptEnhancer.join_punct(llm_result, ".") + Misc_tags
+                llm_result = misc_tags(llm_result, enhanced_tag_placement)
 
             return(llm_result, _help, self.trbl.get_troubles())
         
+        elif LLM == "OpenAI compatible http POST":
+            if not LLM_URL:
+                self.j_mngr.log_events("'OpenAI compatible http POST' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                                    TroubleSgltn.Severity.WARNING,
+                                    True)
+                return(llm_result, _help, self.trbl.get_troubles())  
+            
+            self.ctx.request = rqst.oai_web_request()
+
+            kwargs['model'] = "POST" #Value from a 'model' field would go here
+            kwargs['request_type'] = RequestMode.OPENSOURCE
+
+            llm_result = self.ctx.execute_request(**kwargs)
+
+            if Misc_tags:
+                llm_result = misc_tags(llm_result, enhanced_tag_placement)
+
+            return(llm_result, _help, self.trbl.get_troubles())            
+
         #Oobabooga via POST
         elif LLM == "Oobabooga API-URL":
             if not LLM_URL:
@@ -1096,32 +817,30 @@ class AdvPromptEnhancer:
                                     TroubleSgltn.Severity.WARNING,
                                     True)
                 return(llm_result, _help, self.trbl.get_troubles())  
-            GPTmodel = "Oobabooga"
 
-            llm_result = Enhancer.oai_request_byurl(GPTmodel,creative_latitude, tokens, LLM_URL, RequestMode.OOBABOOGA, Prompt, instruction=Instruction, image=image, example_list=example_list)
+            self.ctx.request = rqst.ooba_web_request()
+
+            kwargs['model'] = "oobabooga"
+            kwargs['request_type'] = RequestMode.OOBABOOGA
+
+            llm_result = self.ctx.execute_request(**kwargs)
 
             if Misc_tags:
-                if enhanced_tag_placement:
-                    llm_result = AdvPromptEnhancer.enhanced_text_placement(llm_result, Misc_tags)               
-                else:
-                    llm_result += AdvPromptEnhancer.join_punct(llm_result, ".") + Misc_tags
+                llm_result = misc_tags(llm_result, enhanced_tag_placement)
 
             return(llm_result, _help, self.trbl.get_troubles())            
 
-  
+        #OpenAI ChatGPT request
+        self.ctx.request = rqst.oai_object_request( )
 
-        #output = Enhancer.icgptRequest(GPTmodel, creative_latitude, tokens, Prompt, instruction=Instruction, image=image, example_list=example_list)
-        output = Enhancer.oai_request_byobject(GPTmodel, creative_latitude, tokens, RequestMode.OPENAI, Prompt, instruction=Instruction, image=image, example_list=example_list) 
-        
+        kwargs['request_type'] = RequestMode.OPENAI
 
+        llm_result = self.ctx.execute_request(**kwargs)
+       
         if Misc_tags:
-            if enhanced_tag_placement:
-                output = AdvPromptEnhancer.enhanced_text_placement(output, Misc_tags)               
-            else:
-                output  += AdvPromptEnhancer.join_punct(output, '.') + Misc_tags
-
-        
-        return(output, _help, self.trbl.get_troubles())
+            llm_result = misc_tags(llm_result, enhanced_tag_placement)
+       
+        return(llm_result, _help, self.trbl.get_troubles())
 
 
 
@@ -1133,6 +852,8 @@ class DalleImage:
         self.help_data = helpSgltn()
         self.j_mngr = json_manager()
         self.trbl = TroubleSgltn()
+        self.ctx = rqst.request_context()
+
 
 
     @staticmethod    
@@ -1213,94 +934,6 @@ class DalleImage:
 
         return base64_image
     
-    @staticmethod
-    def oai_request_bydalle(GPTmodel:str, prompt:str, image_size:str, image_quality:str, style:str, batch_size:int)-> tuple[torch.Tensor, str]:
-        trbl = TroubleSgltn()
-        trbl.set_process_header('Dall-e Request')
-        j_mngr = json_manager()
-        cFig = cFigSingleton()
-        batched_images = torch.zeros(1, 1024, 1024, 3, dtype=torch.float32)
-        revised_prompt = "Image and mask could not be created"  # Default prompt message
-        
-        if not cFig.openaiClient:
-            j_mngr.log_events("OpenAI API key is missing or invalid.  Key must be stored in an enviroment variable (see ReadMe).  This node is not functional.",
-                                   TroubleSgltn.Severity.WARNING,
-                                   True)
-            return(batched_images, revised_prompt)
-                
-        client = cFig.openaiClient 
-        
-        
-        j_mngr.log_events(f"Talking to Dalle model: {GPTmodel}",
-                               is_trouble=True)
-
-        have_rev_prompt = False   
-        images_list = []
-
-        for _ in range(batch_size):
-            try:
-                response = client.images.generate(
-                    model = GPTmodel,
-                    prompt = prompt, 
-                    size = image_size,
-                    quality = image_quality,
-                    style = style,
-                    n=1,
-                    response_format = "b64_json",
-                )
- 
-            # Get the revised_prompt
-                if response and not 'error' in response:
-                    if not have_rev_prompt:
-                        revised_prompt = response.data[0].revised_prompt
-                        have_rev_prompt = True
-                    #Convert the b64 json to a pytorch tensor
-                    b64Json = response.data[0].b64_json
-                    if b64Json:
-                        png_image, _ = DalleImage.b64_to_tensor(b64Json)
-                        images_list.append(png_image)
-                    else:
-                        j_mngr.log_events(f"Dalle-e could not process an image in your batch of: {batch_size} ",
-                                            TroubleSgltn.Severity.WARNING,
-                                            True)  
-                    
-                else:
-                    j_mngr.log_events(f"Dalle-e could not process an image in your batch of: {batch_size} ",
-                                        TroubleSgltn.Severity.WARNING,
-                                        True)   
-            except openai.APIConnectionError as e: 
-                j_mngr.log_events(f"ChatGPT server connection error in an image in your batch of {batch_size} Error: {e.__cause__}",
-                                        TroubleSgltn.Severity.ERROR,
-                                        True)
-            except openai.RateLimitError as e:
-                j_mngr.log_events(f"ChatGPT RATE LIMIT error in an image in your batch of {batch_size} Error: {e}: {e.response}",
-                                        TroubleSgltn.Severity.ERROR,
-                                        True)
-                time.sleep(0.5)
-            except openai.APIStatusError as e:
-                j_mngr.log_events(f"ChatGPT STATUS error in an image in your batch of {batch_size}; Error: {e.status_code}:{e.response}",
-                                        TroubleSgltn.Severity.ERROR,
-                                        True)
-            except Exception as e:
-                j_mngr.log_events(f"An unexpected error in an image in your batch of {batch_size}; Error:{e}",
-                                        TroubleSgltn.Severity.ERROR,
-                                        True)
-                
-                
-        if images_list:
-            count = len(images_list)
-            j_mngr.log_events(f'{count} images were processed successfully in your batch of: {batch_size}',
-                                   is_trouble=True)
-            
-            batched_images = torch.cat(images_list, dim=0)
-        else:
-            j_mngr.log_events(f'No images were processed in your batch of: {batch_size}',
-                                   TroubleSgltn.Severity.WARNING,
-                                   is_trouble=True)
-        trbl.pop_header()
-        return(batched_images, revised_prompt)
-
-
     @classmethod
     def INPUT_TYPES(cls):
         #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
@@ -1340,10 +973,15 @@ class DalleImage:
 
         _help = self.help_data.dalle_help
 
-
-        #images_list = [] #Moved to static funct
-
-        batched_images, revised_prompt = DalleImage.oai_request_bydalle(GPTmodel, prompt, image_size, image_quality, style, batch_size)
+        self.ctx.request = rqst.dall_e_request()
+        kwargs = { "model": GPTmodel,
+                "prompt": prompt,
+                "image_size": image_size,
+                "image_quality": image_quality,
+                "style": style,
+                "batch_size": batch_size
+        }
+        batched_images, revised_prompt = self.ctx.execute_request(**kwargs)
 
         return (batched_images, revised_prompt, _help, self.trbl.get_troubles())
     
