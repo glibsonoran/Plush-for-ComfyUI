@@ -8,7 +8,7 @@
 ### Updates:
 4/14/2024 @02:01pm PST *Version 1.21.7*
 *  **Advanced Prompt Enhancer, new connection type: 'OpenAI compatible http POST'**  A connection type that uses a web POST connection rather than the OpenAI API Object to connect to the LLM front-end's local server.
-*  **Oobabooga API connection:**   This connection now automatically formats the URL to include the `/v1/chat/completions` path.
+*  **Oobabooga API connection:**   This connection now automatically formats the URL to include the `/v1/chat/completions` path.  This connection now includes both the Instruction (role:system) and Prompt (role:user) in the user submission to get around the problem of Oobabooga ignoring the system instruction.
 ******************
 3/24/2024 @12:16pm PST *Version 1.21.6*
 *  **Advanced Prompt Enhancer, new connection type:** The Oobabooga Textgen Webui API has been broken for a couple of weeks which has been resulting in a 'None Type' errors.  To get around this issue I've added a new Oobabooga connection type *Oobabooga API-URL* that uses an http POST connection rather than the OpenAI API Object.  Select this at the *LLM* selection field and provide a url that includes the path: `/chat/completions`. For example a url for this type of connection would look like: `http://127.0.0.1:5000/v1/chat/completions`.  However when using this method of connection with Oobabooga TG it seems to only see the prompt and not the instruction or examples.
