@@ -153,11 +153,15 @@ class json_manager:
         self.config_file = os.path.join(self.script_dir, 'config.json')
         self.backup_dir = self.find_child_directory(self.script_dir, 'bkup', True, True)
         self.backup_config_path = os.path.join(self.backup_dir, 'config.json')
-        self.comfy_dir = self.find_target_directory(self.script_dir, 'ComfyUI', True)
-        self.customnodes_dir = self.find_child_directory(self.comfy_dir, 'custom_nodes', False, True)
-        self.temp_dir = self.find_child_directory(self.script_dir, 'temp', True)
+
         self.log_dir = self.find_child_directory(self.script_dir, 'logs', True)
         self.log_file_name = "Plush-Events"
+
+        self.comfy_dir = self.find_target_directory(self.script_dir, 'ComfyUI', True)
+        if not self.comfy_dir:
+            #The parent of the script parent is: ComfyUI or comfy depending on installation
+            self.comfy_dir, nm = self.findParent(self.script_parent, as_string=True)
+            self.log_events(f"Non standard directory structure, ComfyUI directory name: {nm}")        
         #Private Properties
         self._config_bad = os.path.join(self.script_dir, 'config.bad')
         self._update_bad = os.path.join(self.script_dir, 'update.bad')

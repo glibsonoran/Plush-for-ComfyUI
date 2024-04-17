@@ -1075,7 +1075,7 @@ class ImageInfoExtractor:
 
         #Create path and dir for saved .txt files
         write_dir = ''
-        comfy_dir = self.j_mngr.find_target_directory(self.j_mngr.script_dir, 'ComfyUI')
+        comfy_dir = self.j_mngr.comfy_dir
         if comfy_dir:
             output_dir = self.j_mngr.find_child_directory(comfy_dir,'output')
             if output_dir:
