@@ -134,7 +134,7 @@ python -m pip install -r requirements.txt
 
 ##  How to Setup Your Environment Variables
 
-An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value. For a paid ChatGPT key you can set the name of the variable to: `OAI_KEY` or `OPENAI_API_KEY`. If you're using an Open-source product that requires or can use a key (most do not), use the environment variable: `LLM_KEY`. The example below only refers to 'OAI_KEY' but you can substitute the environment variable name that applies to you per the instructions above. 
+An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value. For a paid ChatGPT key you can set the name of the variable to: `OAI_KEY` or `OPENAI_API_KEY`. If you're using an Open-source product that requires or can use a key (most do not), use the environment variable: `LLM_KEY`. The example below only refers to 'OAI_KEY' but you can substitute the environment variable name that applies to you per the table above. 
 
 Note that after you set your Enviroment Variable, you will have to **reboot your machine** in order for it to take effect.
 ##  Windows Set-up
