@@ -112,11 +112,11 @@ python -m pip install -r requirements.txt
 
   | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source (e.g. Tabby API) |
   | :------ | :------: | :------: | :------: | :------: |
-  | OAI_KEY |      |      |   **X**   |      |
-  | OPENAI_API_KEY |      |      |   **X**   |      |
-  | LLM_KEY |     |      |      |   **X**   |
-  | GROQ_API_KEY |      |   **X**   |      |      |
-  | ANTHROPIC_API_KEY |   **X**   |      |      |      |
+  | `OAI_KEY` |      |      |   **X**   |      |
+  | `OPENAI_API_KEY` |      |      |   **X**   |      |
+  | `LLM_KEY` |     |      |      |   **X**   |
+  | `GROQ_API_KEY` |      |   **X**   |      |      |
+  | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |
 
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
    ********
