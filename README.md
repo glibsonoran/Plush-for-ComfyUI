@@ -117,9 +117,9 @@ python -m pip install -r requirements.txt
   | `LLM_KEY` |     |      |      |   **X**   |
   | `GROQ_API_KEY` |      |   **X**   |      |      |
   | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |
-
+  -------------------------------------
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
-   ********
+     
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
   *********
    *  **Installation and usage of Plush-for-ComfyUI constitutes your acceptance of responsibility for any losses due to a compromised key.**  Plush-for-Comfy uses the OpenAI recommended security for storing your key (an Environment Variable) for your safety.
