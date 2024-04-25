@@ -108,6 +108,14 @@ python -m pip install -r requirements.txt
 * Some Open-source products use a free key for security and privacy so you have the option to create one if you want.  Most of these products don't use a key, so don't worry if you don't have one.
 * The OpenAI API key requires a paid account, if you want to use an Open-source key they are typically free.  Generate the key from their website.
 
+  | Enviroment Variables | Anthropic | Groq | OpenAI ChatGPT | Open Source (e.g. Tabby API) |
+  | :------ | :------: | :------: | :------: | :------: |
+  | OAI_KEY |      |      |   X   |      |
+  | OPENAI_API_KEY |      |      |   X   |      |
+  | LLM_KEY |   X   |   X   |      |   X   |
+  | GROQ_API_KEY |      |   X   |      |      |
+  | ANTHROPIC_API_KEY |   X   |      |      |      |   
+
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
    ********
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
