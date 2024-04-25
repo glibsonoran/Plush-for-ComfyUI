@@ -117,8 +117,8 @@ python -m pip install -r requirements.txt
   | *LLM_KEY |   **X**   |   **X**   |      |   **X**   |
   | GROQ_API_KEY |      |   **X**   |      |      |
   | ANTHROPIC_API_KEY |   **X**   |      |      |      |
-  *LLM_KEY gets applied to Groq and Anthropic
-  only if the named Enviroment Variable is missing or empty 
+  
+  *LLM_KEY gets applied to Groq and Anthropic only if the named Enviroment Variable is missing or empty 
 
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
    ********
