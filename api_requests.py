@@ -204,7 +204,7 @@ class oai_object_request(Request): #Concrete class
                                     True)
 
 
-        if response and 'error' not in response:
+        if response.choices and 'error' not in response:
             rpt_model = ""
             try:
                 rpt_model = response.model
@@ -266,7 +266,7 @@ class oai_web_request(Request):
         response = None
         CGPT_response = ""    
 
-        #there's an image
+        #there's an image here
         if image:
             #The user is on their own to make
             #the right model selection for handling an image
@@ -282,7 +282,7 @@ class oai_web_request(Request):
         key = ""
         if request_type == self.mode.OPENAI:
             key =  self.cFig.key
-        elif request_type in self.mode.OPENSOURCE or self.mode.OOBABOOGA:
+        elif request_type == self.mode.OPENSOURCE or request_type == self.mode.OOBABOOGA:
             key = self.cFig.lm_key
         elif request_type == self.mode.GROQ:
             key = self.cFig.groq_key
