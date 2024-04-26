@@ -111,7 +111,7 @@ python -m pip install -r requirements.txt
 ### Requirements: 
 ##  Your OpenAI API or Open Source Key [optional] (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer when used with open-source LLM's):
 * For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI.
-* For Advanced Prompt Enhancer, you'll need a valid OpenAI API key if you're going to use it with ChatGPT models,  if you're only using it with open-source LLM's, you won't need one.
+* For Advanced Prompt Enhancer, you'll need a valid OpenAI API key if you're going to use it with ChatGPT, Anthropic or Groq models,  if you're only using it with open-source LLM's, you won't need one.
 * Some Open-source products use a free key for security and privacy so you have the option to create one if you want.  Most of these products don't use a key, so don't worry if you don't have one.
 * The OpenAI API key requires a paid account, if you want to use an Open-source key they are typically free.  Generate the key from their website.
   
@@ -135,7 +135,7 @@ python -m pip install -r requirements.txt
      
    *  Optionally you can create a key for Open-source products in the Environment Variable `LLM_KEY`.  While Open-source products are generally free to use, some use a key for security and privacy.  Open-source keys will only apply to Open-source connections, not to ChatGPT connections.
 
-   *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the 'OAI_KEY' variable will allow you to generate a separate key for Plush and track those costs separately if your other OpenAI API apps are using the standard variable.  Either way you'll need to have at least one of the two enviroment variables defined with a valid active key if you want to use ChatGPT as an inference engine.  For Open-source products, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT connections.
+   *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the 'OAI_KEY' variable will allow you to generate a separate key for Plush and track those costs separately if your other OpenAI API apps are using the standard variable.  Either way you'll need to have at least one of the two enviroment variables defined with a valid active key if you want to use ChatGPT as an inference engine.  For Open-source products, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT connections.  Enviroment Variables for other supported AI services are shown in the table above.
 
    *  If you need to make a new environment variable, see the following instructions on how to create it and set its value to your API key:
 
