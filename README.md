@@ -6,7 +6,7 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-4/26/2024 @011:47am PST *Version 1.21.8*
+4/26/2024 @11:47am PST *Version 1.21.8*
 *  **Advanced Prompt Enhancer, now suports Anthropic (Claude) and Groq connections'** 
    *    **Grog** is a free service that provides a remote inferencing platform for the latest high quality open-source models including the new *Llama 3* models, including the new 70b, and the latest *Mixtral* models.
    *    **Anthropic** is a paid service that provides a remote inferencing service for its 3 *Claude* models, which are considered to be roughtly on par with *ChatGPT* models.
