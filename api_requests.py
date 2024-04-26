@@ -5,7 +5,9 @@ import re
 import requests
 from urllib.parse import urlparse, urlunparse
 import openai
+import anthropic
 from .mng_json import json_manager, TroubleSgltn
+from .fetch_models import RequestMode
 
 class ImportedSgltn:
     """
@@ -30,7 +32,7 @@ class ImportedSgltn:
     def get_imports(self):
         # Guard against re-importing if already done
         if self._cfig is None or self._dalle is None:
-            from .style_prompt import cFigSingleton, DalleImage, RequestMode #pylint: disable=import-outside-toplevel
+            from .style_prompt import cFigSingleton, DalleImage
             self._cfig = cFigSingleton
             self._dalle = DalleImage
             self._request_mode = RequestMode
@@ -41,23 +43,15 @@ class ImportedSgltn:
 
         if self._cfig is None:
             self.get_imports()
-        return self._cfig
+        return self._cfig()
 
     @property
     def dalle(self):
 
         if self._dalle is None:
             self.get_imports()
-        return self._dalle
-    
-    
-    @property
-    def request_mode(self):
-
-        if self._request_mode is None:
-            self.get_imports()
-        return self._request_mode
-    
+        return self._dalle()
+       
 
 #Begin Strategy Pattern
 class Request(ABC):
@@ -65,9 +59,9 @@ class Request(ABC):
     def __init__(self):
         self.imps = ImportedSgltn()
         self.utils = request_utils()
-        self.cFig = self.imps.cfig()
-        self.mode = self.imps.request_mode
-        self.dalle = self.imps.dalle()
+        self.cFig = self.imps.cfig
+        self.mode = RequestMode
+        self.dalle = self.imps.dalle
         self.j_mngr = json_manager()
 
     @abstractmethod
@@ -87,8 +81,9 @@ class oai_object_request(Request): #Concrete class
         file = kwargs.get('file',"")
         image = kwargs.get('image', None)
         example_list = kwargs.get('example_list', [])
-        request_type = kwargs.get('request_type',self.mode.OPENAI)
 
+        request_type = self.cFig.lm_request_mode
+        
         response = None
         CGPT_response = ""
         file += file.strip()
@@ -103,7 +98,18 @@ class oai_object_request(Request): #Concrete class
                                   TroubleSgltn.Severity.WARNING,
                                     is_trouble=True)
                 return CGPT_response
-        else:
+            
+        if request_type == self.mode.GROQ:
+            if self.cFig.lm_url:
+                self.j_mngr.log_events("Setting client to OpenAI Groq LLM object",
+                                    is_trouble=True)
+                client = self.cFig.lm_client
+            else:
+                self.j_mngr.log_events("Groq OpenAI api object is not ready for use, no URL provided. Aborting",
+                                  TroubleSgltn.Severity.WARNING,
+                                    is_trouble=True)
+
+        if request_type == self.mode.OPENAI:
             if self.cFig.key:
                 self.j_mngr.log_events("Setting client to OpenAI ChatGPT object",
                                     is_trouble=True)
@@ -123,9 +129,9 @@ class oai_object_request(Request): #Concrete class
                                         TroubleSgltn.Severity.ERROR,
                                         True)
                 CGPT_response = "Invalid or missing OpenAI API key.  Keys must be stored in an environment variable (see: ReadMe). ChatGPT request aborted"
-
-            elif request_type == self.mode.OPENSOURCE :
-                self.j_mngr.log_events("Open Source LLM client not set.  Make sure local Server is running",
+                
+            else:
+                self.j_mngr.log_events("LLM client not set.  Make sure local Server is running if using a local LLM front-end",
                                         TroubleSgltn.Severity.ERROR,
                                         True)
                 CGPT_response = "Unable to process request, make sure local server is running"                
@@ -185,11 +191,11 @@ class oai_object_request(Request): #Concrete class
                                 TroubleSgltn.Severity.WARNING,
                                 True)
         except openai.RateLimitError as e:
-            self.j_mngr.log_events(f"Server RATE LIMIT error {e.status_code}: {e.response}",
+            self.j_mngr.log_events(f"Server RATE LIMIT error {e.status_code}: {e.response}  {e.body['message'] if e.body else ''}",
                                 TroubleSgltn.Severity.ERROR,
                                     True)
         except openai.APIStatusError as e:
-            self.j_mngr.log_events(f"Server STATUS error {e.status_code}: {e.response}. File may be too large.",
+            self.j_mngr.log_events(f"Server STATUS error {e.status_code}: {e.body['message'] if e.body else ''}. File may be too large.",
                                 TroubleSgltn.Severity.ERROR,
                                     True)
         except Exception as e:
@@ -253,8 +259,9 @@ class oai_web_request(Request):
         image = kwargs.get('image', None)
         prompt = kwargs.get('prompt', None)
         instruction = kwargs.get('instruction', "")
-        request_type = kwargs.get('request_type', self.mode.OOBABOOGA)
         example_list = kwargs.get('example_list', [])
+
+        request_type = self.cFig.lm_request_mode
 
         response = None
         CGPT_response = ""    
@@ -275,8 +282,14 @@ class oai_web_request(Request):
         key = ""
         if request_type == self.mode.OPENAI:
             key =  self.cFig.key
-        else:
+        elif request_type in self.mode.OPENSOURCE or self.mode.OOBABOOGA:
             key = self.cFig.lm_key
+        elif request_type == self.mode.GROQ:
+            key = self.cFig.groq_key
+        else:
+            self.j_mngr.log_events("No LLM key value found",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
                 
         headers = self.utils.build_web_header(key) 
         
@@ -363,8 +376,8 @@ class ooba_web_request(Request):
         image = kwargs.get('image', None)
         prompt = kwargs.get('prompt', None)
         instruction = kwargs.get('instruction', "")
-        request_type = kwargs.get('request_type', self.mode.OOBABOOGA)
         example_list = kwargs.get('example_list', [])
+        request_type = self.cFig.lm_request_mode
 
         response = None
         CGPT_response = ""    
@@ -457,8 +470,134 @@ class ooba_web_request(Request):
 class claude_request(Request):
 
     def request_completion(self, **kwargs):
-        claude_completion = ""
-        return claude_completion
+        
+        claude_model = kwargs.get('model')
+        creative_latitude = kwargs.get('creative_latitude', 0.7)
+        tokens = kwargs.get('tokens',500)
+        prompt = kwargs.get('prompt', "")
+        instruction = kwargs.get('instruction', "")
+        file = kwargs.get('file',"")
+        image = kwargs.get('image', None)
+        example_list = kwargs.get('example_list', [])
+
+        request_type = self.cFig.lm_request_mode
+        
+        response = None
+        claude_response = ""
+        file += file.strip()
+
+        if request_type == self.mode.CLAUDE:
+            client = self.cFig.anthropic_client
+
+
+        if not client:
+            if request_type ==  self.mode.CLAUDE:
+                self.j_mngr.log_events("Invalid or missing anthropic API key (Claude).  Keys must be stored in an environment variable (see: ReadMe). Claude request aborted",
+                                        TroubleSgltn.Severity.ERROR,
+                                        True)
+                claude_response = "Invalid or missing anthropic API key.  Keys must be stored in an environment variable (see: ReadMe). Claude request aborted"           
+            return claude_response
+
+        #there's an image
+        if image:
+            # Use the user's selected vision model if it's what was chosen,
+            #otherwise use the last vision model in the list
+            #If the user is using a local LLM they're on their own to make
+            #the right model selection for handling an image
+
+            if isinstance(image, torch.Tensor):  #just to be sure
+                image = self.dalle.tensor_to_base64(image)
+                
+            if not isinstance(image,str):
+                image = None
+                self.j_mngr.log_events("Image file is invalid.  Image will be disregarded in the generated output.",
+                                  TroubleSgltn.Severity.WARNING,
+                                  True)
+
+        messages = []
+
+        messages = self.utils.build_data_claude(prompt, example_list, image)
+            
+        if not prompt and not image and not instruction:
+            # User has provided no prompt, file or image
+            claude_response = "Photograph of an stained empty box with 'NOTHING' printed on its side in bold letters, small flying moths, dingy, gloomy, dim light rundown warehouse"
+            self.j_mngr.log_events("No instruction and no prompt were provided, the node was only able to provide a 'Box of Nothing'",
+                              TroubleSgltn.Severity.WARNING,
+                              True)
+            return claude_response
+
+        params = {
+        "model": claude_model,
+        "messages": messages,
+        "temperature": creative_latitude,
+        "system": instruction,
+        "max_tokens": tokens
+        }
+
+        try:
+            response = client.messages.create(**params)
+
+        except anthropic.AuthenticationError as e:
+            self.j_mngr.log_events(f"Authentication error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.ERROR, 
+                                   True)
+        except anthropic.PermissionDeniedError as e:
+            self.j_mngr.log_events(f"Permission denied error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.ERROR, 
+                                   True)
+        except anthropic.NotFoundError as e:
+            self.j_mngr.log_events(f"Not found error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.ERROR, 
+                                   True)
+        except anthropic.RateLimitError as e:
+            self.j_mngr.log_events(f"Rate limit exceeded error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.WARNING, 
+                                   True)
+        except anthropic.BadRequestError as e:
+            self.j_mngr.log_events(f"Bad request error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.ERROR, 
+                                   True)
+        except anthropic.InternalServerError as e:
+            self.j_mngr.log_events(f"Internal server error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.ERROR, 
+                                   True)
+        except Exception as e:
+            self.j_mngr.log_events(f"Unexpected error: {request_utils.parse_anthropic_error(e)}", 
+                                   TroubleSgltn.Severity.ERROR, 
+                                   True)
+
+
+        if response and 'error' not in response:
+            rpt_model = ""
+            try:
+                rpt_model = response.model
+                rpt_usage = response.usage
+
+                if rpt_model:    
+                    self.j_mngr.log_events(f"Using LLM: {rpt_model}",                                  
+                                is_trouble=True)
+                if rpt_usage:
+                    self.j_mngr.log_events(f"Tokens Used: {rpt_usage}",
+                                    TroubleSgltn.Severity.INFO,
+                                    True)              
+            except Exception as e:
+                self.j_mngr.log_events(f"Unable to report some completion information, error: {e}",
+                                  TroubleSgltn.Severity.INFO,
+                                  True) 
+            try:               
+                claude_response = response.content[0].text
+            except (IndexError, AttributeError):
+                claude_response = "No data was returned"
+                self.j_mngr.log_events("Claude response was not valid data",
+                                       TroubleSgltn.Severity.WARNING,
+                                       True)
+            claude_response = self.utils.clean_response_text(claude_response)
+        else:
+            claude_response = "Server was unable to process the request"
+            self.j_mngr.log_events('Server was unable to process this request.',
+                                TroubleSgltn.Severity.ERROR,
+                                True)
+        return claude_response
 
 class dall_e_request(Request):
 
@@ -672,6 +811,46 @@ class request_utils:
 
         return messages 
     
+    def build_data_claude(self, prompt:str, examples:list=None, image:str=None)-> list:
+        """
+        Builds a list of message dicts, aggregating 'role:user' content into a list under 'content' key.
+        - image: Base64-encoded string or None. If string, included as 'image_url' type content.
+        - prompt: String to be included as 'text' type content under 'user' role.
+        - examples: List of additional example dicts to be included.
+        """
+        messages = []
+        user_role = {"role": "user", "content": None}
+        user_content = []
+
+        if examples is None:
+            examples = []
+
+        if image and isinstance(image,str):
+
+            user_content.append({"type": "image", 
+                                "source": {
+                                "type": "base64",
+                                "media_type": "image/png",
+                                "data": image}})
+        elif image:
+            self.j_mngr.log_events("Image file is invalid.  Image will be disregarded in the generated output.",
+                                TroubleSgltn.Severity.WARNING,
+                                True)
+        
+        if prompt:
+            user_content.append({"type": "text", "text": prompt})
+
+
+        user_role['content'] = user_content    
+
+        messages.append(user_role)
+
+        if examples:
+            messages.extend(examples)
+
+        return messages
+
+    
     
     def build_web_header(self, key:str=""):
         if key:
@@ -720,5 +899,37 @@ class request_utils:
         # Replace multiple newlines or carriage returns with a single one
         cleaned_text = re.sub(r'\n+', '\n', text).strip()
         return cleaned_text
+    
+    @staticmethod
+    def parse_anthropic_error(e):
+        """
+        Parses error information from an exception object.
+
+        Args:
+            e (Exception): The exception from which to parse the error information.
+
+        Returns:
+            str: A user-friendly error message.
+        """
+        # Default error message
+        default_message = "An unknown error occurred"
+
+        # Check if the exception has a response attribute and it can be converted to JSON
+        if hasattr(e, 'response') and callable(getattr(e.response, 'json', None)):
+            try:
+                error_details = e.response.json()
+                # Navigate through the nested dictionary safely
+                return error_details.get('error', {}).get('message', default_message)
+            except ValueError:
+                # JSON decoding failed
+                return f"Failed to decode JSON from response: {e.response.text}"
+            except Exception as ex:
+                # Catch-all for any other issues that may arise
+                return f"Error processing the error response: {str(ex)}"
+        elif hasattr(e, 'message'):
+            return e.message
+        else:
+            return str(e)  
+
     
     
