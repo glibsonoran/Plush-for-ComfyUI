@@ -10,10 +10,12 @@ from typing import Optional
 from enum import Enum
 import requests
 from requests.adapters import HTTPAdapter, Retry
-import openai
 from openai import OpenAI
-from .mng_json import json_manager, helpSgltn, TroubleSgltn
+import anthropic
+from .mng_json import json_manager, helpSgltn, TroubleSgltn # add .
 from . import api_requests as rqst
+from .fetch_models import FetchModels, ModelUtils, RequestMode # add .
+
 
 
 #pip install pillow
@@ -25,30 +27,31 @@ class InputMode(Enum):
     IMAGE_ONLY = 2
     PROMPT_ONLY = 3
 
-class RequestMode(Enum):
-    OPENAI = 1
-    OPENSOURCE = 2
-    OOBABOOGA = 3
-    CLAUDE = 4
 
 #Get information from the config.json file
 class cFigSingleton:
     _instance = None
 
-    class APIObject(Enum):
-        OPENAI = 1
-        OTHER = 2
 
     def __new__(cls): 
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._lm_client = None
+            cls._anthropic_client = None
             cls._lm_url = ""
+            cls._lm_request_mode = None
             cls._lm_key = ""
-            cls._lm_client_type = None
+            cls._groq_key = ""
+            cls._claude_key = ""
+            cls._gemini_key = ""
             cls._lm_models = None
+            cls._groq_models = None
+            cls._claude_models = None
+            cls._gemini_models = None
             cls._written_url = ""
             cls.j_mngr = json_manager()
+            cls._model_fetch = FetchModels()
+            cls._model_prep = ModelUtils()
             cls._pyexiv2 = None
             cls._instance.get_file()
 
@@ -56,19 +59,6 @@ class cFigSingleton:
     
     
     def get_file(self):
-
-        def get_gpt_models(key:str):
-            openai.api_key = key
-            #Get the model list 
-            try:
-                models = openai.models.list()  
-            except Exception as e:
-                self.j_mngr.log_events(f"OpenAI API key is invalid or missing, unable to generate list of models. Error: {e}",
-                                    TroubleSgltn.Severity.WARNING,
-                                    True)
-                return None
-
-            return models
 
         #Get script working directory
         #j_mngr = json_manager()
@@ -100,6 +90,9 @@ class cFigSingleton:
                               TroubleSgltn.Severity.WARNING)
         
         self._lm_key = os.getenv("LLM_KEY","") #Fetch the LLM_KEY if the user has created one
+        self._groq_key = os.getenv("GROQ_API_KEY", "") or os.getenv("LLM_KEY", "")
+        self._claude_key = os.getenv("ANTHROPIC_API_KEY", "") or os.getenv("LLM_KEY", "")
+        self._gemini_key = os.getenv("GEMINI_API_KEY", "") or os.getenv("LLM_KEY", "")
             
         #Get user saved Open Source URL from the text file  
         #At this point all this does is pre-populate new instances of the node. 
@@ -121,55 +114,44 @@ class cFigSingleton:
         self.fig_n_Instruction = config_data.get('n_instruction', "")
         self.fig_n_ImgPromptInstruction = config_data.get('n_img_prompt_instruction', "")
         self.fig_n_ImgInstruction = config_data.get('n_img_instruction', "")
+
         
         self._fig_gpt_models = []
         
-
         if self._fig_key:
             try:
                 self.figOAIClient = OpenAI(api_key= self._fig_key)
             except Exception as e:
                 self.j_mngr.log_events(f"Invalid or missing OpenAI API key.  Please note, keys must now be kept in an environment variable (see: ReadMe) {e}",
                                   severity=TroubleSgltn.Severity.ERROR)
+                
+        if self._claude_key:
+            try:
+                self._anthropic_client = anthropic.Anthropic(api_key = self._claude_key)
+            except Exception as e:
+                self.j_mngr.log_events(f"Invalid or missing Anthropic API key. Please note, keys must be kept in an environment variable.{e}",                                       
+                                       severity=TroubleSgltn.Severity.ERROR)     
+                
+                
+        self._fig_gpt_models = self._model_fetch.fetch_models(RequestMode.OPENAI, self._fig_key)
+        self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
+        self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key)
+        self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
                        
-        self._fig_gpt_models = get_gpt_models(self._fig_key)
    
     def get_chat_models(self, sort_it:bool=False, filter_str:str="")->list:
-        CGPT_models = []
-        if self._fig_gpt_models and self._fig_gpt_models.data:
-            if filter_str:
-                filter_str = str(filter_str).lower()
+        return self._model_prep.prep_models_list(self._fig_gpt_models, sort_it, filter_str)      
+      
+    def get_groq_models(self, sort_it:bool=False, filter_str:str=""):
+        return self._model_prep.prep_models_list(self._groq_models, sort_it, filter_str)      
 
-                for model in self._fig_gpt_models.data:  
-                    if filter_str in str(model.id).lower():
-                        CGPT_models.append(model.id)  
+    def get_claude_models(self, sort_it:bool=False, filter_str:str="")->list:
+        return self._model_prep.prep_models_list(self._claude_models, sort_it, filter_str)   
+
+    def get_gemini_models(self, sort_it:bool=False, filter_str:str="")->list:       
+        return self._model_prep.prep_models_list(self._gemini_models, sort_it, filter_str)            
         
-                if sort_it:
-                    CGPT_models = sorted(CGPT_models)
-        else:
-            CGPT_models.append('gpt-4-0125-preview')
-
-        return CGPT_models
-    
-    def get_opensource_models(self, sort_it:bool=False):
-        """
-        Models are on hold right now.  There are too many issues dealing with a server that may
-        or may not be running, excessively long connection attempts, and ui control list/saved value mismatches.
-        """
-        lm_models = []
-        if self._lm_models and self._lm_models.data:
-
-            for model in self._lm_models.data:
-                lm_models.append(model.id)
-
-            if sort_it:
-                lm_models = sorted(lm_models)
-        else:
-            lm_models.append("Currently loaded model")
-        return lm_models
-    
-    
-    def set_llm_client(self, url:str, client_type:APIObject=APIObject.OPENAI, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
+    def _set_llm_client(self, url:str, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
         
         if not self.is_lm_server_up() or not url:
             self._lm_client = None
@@ -180,13 +162,10 @@ class cFigSingleton:
                           True)
             return False
         
-        lm_object = None
+        lm_object = OpenAI
         key = "No key necessary" #Default value used in LLM front-ends that don't require a key
         #Use the requested API
-        if client_type == self.APIObject.OPENAI: 
-            lm_object = OpenAI 
-        elif client_type == self.APIObject.OTHER: #Potential other Library/API objects
-            pass 
+        
 
         if request_type in (RequestMode.OOBABOOGA, RequestMode.OPENSOURCE):
             if not self._lm_key:
@@ -196,33 +175,27 @@ class cFigSingleton:
                 key = self._lm_key
                 self.j_mngr.log_events("Setting Openai client with URL and key.",
                     is_trouble=True)
-        elif request_type == RequestMode.CLAUDE: # Will use CLAUDE_KEY env var
-            pass
+        elif request_type == RequestMode.GROQ:
+            if not self._groq_key:
+                self.j_mngr.log_events("Attempting to connect to Groq with no key",
+                                       TroubleSgltn.Severity.ERROR,
+                                       True)
+            else:
+                key = self._groq_key
+                self.j_mngr.log_events("Setting Openai client with URL and Groq key.",
+                                       is_trouble=True)
+
         
         try:
             lm_client = lm_object(base_url=url, api_key=key) 
             self._lm_url = url
-            self._lm_client_type = client_type
             self._lm_client = lm_client
         except Exception as e:
             self.j_mngr.log_events(f"Unable to create LLM client object using URL. Unable to communicate with LLM: {e}",
                             TroubleSgltn.Severity.ERROR,
                             True)
             return False
-        """
-        Currently not active due to difficulties with connections times when server is not started.
-        if self.is_lm_server_up():  
-            try:
-                self._lm_models = lm_client.models.list()
-            except Exception as e:
-                self.j_mngr.log_events(f"Unable to connect to retreive model list from Open Source LLM Manager: {e}.  Make sure your LLM Manager app is running and the url is correct.",
-                                TroubleSgltn.Severity.ERROR,
-                                True)
-        else:
-            self.j_mngr.log_events("Unable to retrieve open source models, LLM server is not running",
-                              TroubleSgltn.Severity.WARNING,
-                              True)
-        """
+
         return True
 
     @property
@@ -246,20 +219,18 @@ class cFigSingleton:
         return url_result
     
     @lm_url.setter
-    def lm_url(self, url: str, request_mode:RequestMode=RequestMode.OPENSOURCE):
+    def lm_url(self, url: str):
         if url != self._lm_url or not self._lm_client:  # Check if the new URL is different to avoid unnecessary operations
+
             self._lm_url = url
             # Reset client and models only if a new URL is provided
             self._lm_client = None
             #self._lm_models = []
             if url:  # If the new URL is not empty, update the client
-                self.set_llm_client(url, self.APIObject.OPENAI, request_mode)
+                self._set_llm_client(url, self._lm_request_mode)
     
-    @property
-    def lm_client_type(self)-> APIObject | None:
-        return self._lm_client_type
     
-    def is_lm_server_up(self):
+    def is_lm_server_up(self):  #should be util in api_requests.py
         session = requests.Session()
         retries = Retry(total=2, backoff_factor=0, status_forcelist=[500, 502, 503, 504])
         session.mount('http://', HTTPAdapter(max_retries=retries))
@@ -281,19 +252,26 @@ class cFigSingleton:
             self.j_mngr.log_events(f"Local LLM Server is not running: {e}",
                               TroubleSgltn.Severity.WARNING,
                               True)
-        return False
+        return False  
             
 
     @property
     def use_examples(self)->bool:
         return self._use_examples
 
-
     @use_examples.setter        
     def use_examples(self, use_examples: bool):
         #Write, sets internal flag
         self._use_examples = use_examples    
+
+    @property
+    def lm_request_mode(self)->RequestMode:
+        return self._lm_request_mode
     
+    @lm_request_mode.setter
+    def lm_request_mode(self, mode:RequestMode)-> None:
+        self._lm_request_mode = mode
+        
     @property
     def key(self)-> str:
         return self._fig_key
@@ -301,6 +279,18 @@ class cFigSingleton:
     @property
     def lm_key(self)-> str:
         return self._lm_key
+    
+    @property
+    def groq_key(self)->str:
+        return self._groq_key
+    
+    @property
+    def anthropic_key(self)->str:
+        return self._claude_key
+    
+    @property
+    def gemini_key(self)->str:
+        return self._gemini_key
 
     @property
     def instruction(self):
@@ -363,16 +353,20 @@ class cFigSingleton:
      
 
     @property
-    def pyexiv2(self)-> Optional[object]:
+    def pyexiv2(self)-> Optional[object]:       
         return self._pyexiv2
-
+    
+    @property
+    def anthropic_client(self)->Optional[object]:
+        if self._claude_key:
+            return self._anthropic_client
+        return None
         
     @property
     def openaiClient(self)-> Optional[object]:
         if self._fig_key:
             return self.figOAIClient
-        else:
-            return None
+        return None
 
 
 class Enhancer:
@@ -460,7 +454,7 @@ class Enhancer:
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
-                "GPTmodel": (cFig.get_chat_models(True, 'gpt'),{"default": "gpt-4-0125-preview"} ),
+                "GPTmodel": (cFig.get_chat_models(True, 'gpt'),{"default": ""} ),
                 "creative_latitude" : ("FLOAT", {"max": 1.201, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}),                
                 "style": (cFig.style,{"default": "Photograph"}),
@@ -523,18 +517,17 @@ class Enhancer:
         instruction = self.build_instruction(mode, style, prompt_style, max_elements, artist)  
 
         self.ctx.request = rqst.oai_object_request()
+        self.cFig.lm_request_mode = RequestMode.OPENAI
 
         if style_info:
             self.trbl.set_process_header("Art Style Info:")
             #User has request information about the art style.  GPT will provide it
-            sty_prompt = "Give an 150 word backgrounder on the art style: {}.  Starting with describing what it is, include information about its history and which artists represent the style."
-            sty_prompt = sty_prompt.format(style)
+            sty_prompt = f"Give an 150 word backgrounder on the art style: {style}.  Starting with describing what it is, include information about its history and which artists represent the style."
 
             kwargs = { "model": GPTmodel,
                 "creative_latitude": creative_latitude,
                 "tokens": tokens,
                 "prompt": sty_prompt,
-                "request_type": RequestMode.OPENAI
             }    
             CGPT_styleInfo = self.ctx.execute_request(**kwargs)
             self.trbl.pop_header()
@@ -545,7 +538,6 @@ class Enhancer:
             "prompt": prompt,
             "instruction": instruction,
             "image": image,
-            "request_type": RequestMode.OPENAI
         }
 
         CGPT_prompt = self.ctx.execute_request(**kwargs)
@@ -564,103 +556,18 @@ class AdvPromptEnhancer:
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
 
-    @staticmethod
-    def join_punct(text: str, end_char:str=""):
-        #Utility to create proper ending puctuation for text joins and ends
-        text = text.rstrip()
-        if text.endswith((':', ';', '-', ',', '.')):
-            return ' '  # Add a space if special punctuation ends the text
-        else:
-            if end_char:
-                return end_char + ' '  # Add the passed end character and space otherwise
-            else:
-                return ' ' #User's don't want the app to add a comma to their tags
-
-    @staticmethod
-    def enhanced_text_placement(generated_text:str, user_input:str, delimiter:str="|"):
-
-        """
-        Enhances text placement within a the generated text block based on user input, specified delimiters and markup.
-        Text prefaced with "*" is placed at the beginning of the block, while text prefaced with "**"
-        is placed in the middle, immediately following a period or comma. Unmarked text is added to the end
-        of the block by default. This feature requires users to delimit each text segment intended for
-        placement with a specified delimiter (default is a pipe '|'), regardless of its intended position.
-
-        Args:
-            generated_text (str): The existing text block generated by the LLM, where new text will be integrated.
-            user_input (str): Delimited text input from the user containing potential markers for special placement.
-            delimiter (str): The character used to separate different sections of the user input for specific placement.
-
-        Returns:
-            str: The updated text block with user input integrated at specified positions.
-
-        """
-            
-            # Initialize default sections
-        if not "*" in user_input:
-            return generated_text + AdvPromptEnhancer.join_punct(generated_text,'.') + user_input.strip(', ')
-
-        end_text, beginning_text, middle_text = '', '', ''
+    def get_model(self, GPT_model, Groq_model, Anthropic_model, connection_type)->str:
         
-        # Split the input by pipe, which separates different sections
-        sections = user_input.split(delimiter)
+        if connection_type == "ChatGPT":
+            return GPT_model
         
-        for section in sections:
-            # Strip leading/trailing whitespace and check for placement indicators
-            section = section.strip(' \n')
-            section_punct = AdvPromptEnhancer.join_punct(section)
-            if section.startswith('**'):
-                middle_text += section.lstrip('*') + section_punct
-            elif section.startswith('*'):
-                beginning_text += section.lstrip('*') + section_punct
-            else:
-                end_text += section + section_punct
+        if connection_type == "Groq":
+            return Groq_model
 
-        mid_punct = AdvPromptEnhancer.join_punct(middle_text)
-        end_punct = AdvPromptEnhancer.join_punct(end_text)
-        begin_punct = AdvPromptEnhancer.join_punct(beginning_text)
+        if connection_type == "Anthropic":
+            return Anthropic_model
 
-        # Integrate middle text based on punctuation logic in the generated_text
-        commas = generated_text.count(',')
-        periods = generated_text.count('.')
-        punct_count = max(commas, periods)
-        
-        if middle_text:
-            
-            if punct_count == 0:
-                end_text = end_punct.join([end_text, middle_text]) if end_text else middle_text
-            elif punct_count <= 2:
-                # Look for the first instance of either a comma or a period
-                first_punctuation_index = len(generated_text)  # Default to the end of the string
-                for char in [',', '.']:  # Check for both commas and periods
-                    index = generated_text.find(char)
-                    if 0 <= index < first_punctuation_index:  # Check if this punctuation occurs earlier
-                        first_punctuation_index = index
-
-                # Insert the middle text after the first punctuation found, if any
-                if first_punctuation_index < len(generated_text):
-                    insert_index = first_punctuation_index + 1  # Position right after the punctuation
-                    generated_text = generated_text[:insert_index] + ' ' + middle_text + mid_punct + generated_text[insert_index:]
-            else:
-                # Insert at the midpoint punctuation
-                target = punct_count // 2
-                count = 0
-                insert_index = 0
-                for i, char in enumerate(generated_text):
-                    if char in ',.':
-                        count += 1
-                        if count == target:
-                            insert_index = i + 2  # After the punctuation and space
-                            break
-                generated_text = generated_text[:insert_index] + middle_text + mid_punct + generated_text[insert_index:]
-        
-        # Integrate beginning and end text
-        if beginning_text:
-            generated_text = beginning_text + begin_punct + generated_text
-        if end_text:
-            generated_text += AdvPromptEnhancer.join_punct(generated_text,'.') + end_text
-        
-        return generated_text.strip(', ')  # Ensure no leading or trailing commas 
+        return "None"        
     
 
     @classmethod
@@ -671,17 +578,15 @@ class AdvPromptEnhancer:
         #refresh the ui after the initial load.
         return {
             "required": {
-                
-                "LLM": (["ChatGPT", "Other LLM via URL", "OpenAI compatible http POST", "Oobabooga API-URL"], {"default": "ChatGPT"}),
-                "GPTmodel": (cFig.get_chat_models(True,'gpt'),{"default": "gpt-4-0125-preview"}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic", "Local app (URL)", "OpenAI compatible http POST", "Oobabooga API-URL"], {"default": "ChatGPT"}),
+                "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
+                "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
+                "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                  
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
                 "examples_delimiter":(["Pipe |", "Two newlines", "Two colons ::"], {"default": "Two newlines"}),
-                "enhanced_tag_placement": ("BOOLEAN", {"default": False}),
-                #"open_source_model": (cFig.get_opensource_models(True),),
-                "LLM_URL": ("STRING",{"default": cFig.lm_url}),
-                "Misc_tags": ("STRING", {"multiline": True})               
+                "LLM_URL": ("STRING",{"default": cFig.lm_url})            
                          
             },
 
@@ -706,7 +611,8 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush/Prompt"
 
-    def gogo(self, LLM, GPTmodel, creative_latitude, tokens, seed, examples_delimiter, enhanced_tag_placement, LLM_URL:str="", Misc_tags:str="", Instruction:str="", Prompt:str = "", Examples:str ="",image=None, unique_id=None):
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, creative_latitude, tokens, seed, examples_delimiter, 
+              LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples:str ="",image=None, unique_id=None):
 
         if unique_id:
             self.trbl.reset("Advanced Prompt Enhancer, Node #"+unique_id)
@@ -715,24 +621,22 @@ class AdvPromptEnhancer:
 
         _help = self.help_data.adv_prompt_help
 
-        def misc_tags(output:str, enhanced_tag_placement)-> str:
-            if enhanced_tag_placement:
-                output = AdvPromptEnhancer.enhanced_text_placement(output, Misc_tags)               
-            else:
-                output  += AdvPromptEnhancer.join_punct(output, '.') + Misc_tags
-
-            return output
-
 
         # set the value of unconnected inputs to None
         Instruction = Enhancer.undefined_to_none(Instruction)
         Prompt = Enhancer.undefined_to_none(Prompt)
         Examples = Enhancer.undefined_to_none(Examples)
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
-        Misc_tags = Enhancer.undefined_to_none(Misc_tags)   
         image = Enhancer.undefined_to_none(image)
 
-        llm_result = "Unable to process request.  Make sure the local Open Source Server is running."
+        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, AI_service)
+      
+        if remote_model == "None":
+            self.j_mngr.log_events("No model selected. If you're using a Local application it will use the loaded model.",
+                                   TroubleSgltn.Severity.INFO,
+                                   True)
+
+        llm_result = "Unable to process request.  Make sure the local Open Source Server is running.  If you're using a remote service (e.g.: ChaTGPT, Groq) make sure your key is valid, and a model is selected"
 
         #Convert PyTorch.tensor to B64encoded image
         if isinstance(image, torch.Tensor):
@@ -751,9 +655,10 @@ class AdvPromptEnhancer:
             examples_template = {"role": "assistant", "content":None}
             example_list = self.j_mngr.insert_text_into_dict(Examples, examples_template, "content",delimiter)
 
-        kwargs = { "model": GPTmodel,
+        kwargs = { "model": remote_model,
                 "creative_latitude": creative_latitude,
                 "tokens": tokens,
+                "seed": seed,
                 "prompt": Prompt,
                 "instruction": Instruction,
                 "url": LLM_URL,
@@ -761,37 +666,50 @@ class AdvPromptEnhancer:
                 "example_list": example_list,
         }
 
-        if  LLM == 'Other LLM via URL' : 
+        if  AI_service == 'Local app (URL)' or AI_service == "Groq": 
  
+            if AI_service == 'Local app (URL)':
+                self.cFig.lm_request_mode = RequestMode.OPENSOURCE
+            elif AI_service == "Groq":
+                self.cFig.lm_request_mode = RequestMode.GROQ  
+                LLM_URL = "https://api.groq.com/openai/v1"
+
             if not LLM_URL:
-                self.j_mngr.log_events("'Other LLM via URL' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                self.j_mngr.log_events("'Local app (URL)' or 'Groq' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
                 return("", _help, self.trbl.get_troubles()) 
 
-            # set the url so the function making the request will have a properly initialized object.
-            self.cFig.lm_url = LLM_URL 
+
+            # set the url so the function making the request will have a properly initialized object.               
+            self.cFig.lm_url = LLM_URL
             
             if not self.cFig.lm_client:
                 self.j_mngr.log_events("Open Source LLM server is not running.  Aborting request.",
                                        TroubleSgltn.Severity.WARNING,
                                        True)
                 return(llm_result, _help, self.trbl.get_troubles())
-        
-            kwargs['model'] = "LLM"
-            kwargs['request_type'] = RequestMode.OPENSOURCE
 
             llm_result = ""
             self.ctx.request = rqst.oai_object_request( )
 
             llm_result = self.ctx.execute_request(**kwargs)
 
-            if Misc_tags:
-                llm_result = misc_tags(llm_result, enhanced_tag_placement)
-
             return(llm_result, _help, self.trbl.get_troubles())
         
-        elif LLM == "OpenAI compatible http POST":
+
+        if  AI_service == 'Anthropic':
+ 
+            self.cFig.lm_request_mode = RequestMode.CLAUDE           
+            claude_result = ""
+            self.ctx.request = rqst.claude_request()
+
+            claude_result = self.ctx.execute_request(**kwargs)
+
+            return(claude_result, _help, self.trbl.get_troubles())
+
+        
+        if AI_service == "OpenAI compatible http POST":
             if not LLM_URL:
                 self.j_mngr.log_events("'OpenAI compatible http POST' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
@@ -799,19 +717,14 @@ class AdvPromptEnhancer:
                 return(llm_result, _help, self.trbl.get_troubles())  
             
             self.ctx.request = rqst.oai_web_request()
-
-            kwargs['model'] = "POST" #Value from a 'model' field would go here
-            kwargs['request_type'] = RequestMode.OPENSOURCE
+            self.cFig.lm_request_mode = RequestMode.OPENSOURCE
 
             llm_result = self.ctx.execute_request(**kwargs)
-
-            if Misc_tags:
-                llm_result = misc_tags(llm_result, enhanced_tag_placement)
 
             return(llm_result, _help, self.trbl.get_troubles())            
 
         #Oobabooga via POST
-        elif LLM == "Oobabooga API-URL":
+        if AI_service == "Oobabooga API-URL":
             if not LLM_URL:
                 self.j_mngr.log_events("'Oobabooga API-URL' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
@@ -819,29 +732,22 @@ class AdvPromptEnhancer:
                 return(llm_result, _help, self.trbl.get_troubles())  
 
             self.ctx.request = rqst.ooba_web_request()
-
-            kwargs['model'] = "oobabooga"
-            kwargs['request_type'] = RequestMode.OOBABOOGA
+            self.cFig.lm_request_mode = RequestMode.OOBABOOGA
 
             llm_result = self.ctx.execute_request(**kwargs)
 
-            if Misc_tags:
-                llm_result = misc_tags(llm_result, enhanced_tag_placement)
-
             return(llm_result, _help, self.trbl.get_troubles())            
 
-        #OpenAI ChatGPT request
-        self.ctx.request = rqst.oai_object_request( )
 
-        kwargs['request_type'] = RequestMode.OPENAI
+        #OpenAI ChatGPT request
+        self.ctx.request = rqst.oai_object_request()
+        self.cFig.lm_request_mode = RequestMode.OPENAI
 
         llm_result = self.ctx.execute_request(**kwargs)
        
-        if Misc_tags:
-            llm_result = misc_tags(llm_result, enhanced_tag_placement)
        
         return(llm_result, _help, self.trbl.get_troubles())
-
+    
 
 
 class DalleImage:
@@ -853,8 +759,6 @@ class DalleImage:
         self.j_mngr = json_manager()
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
-
-
 
     @staticmethod    
     def b64_to_tensor( b64_image: str) -> tuple[torch.Tensor,torch.Tensor]:
@@ -972,7 +876,6 @@ class DalleImage:
             self.trbl.reset('Dall-e Image Node')
 
         _help = self.help_data.dalle_help
-
         self.ctx.request = rqst.dall_e_request()
         kwargs = { "model": GPTmodel,
                 "prompt": prompt,
@@ -1301,3 +1204,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler"
 }
+
