@@ -133,7 +133,7 @@ python -m pip install -r requirements.txt
 
    *  You can choose to create a new Environment Variable specific to Plush called: `OAI_KEY` and store the API key there, or if you prefer, you can use the OpenAI standard environment variable: `OPENAI_API_KEY`.
      
-   *  Optionally you can create a key for Open-source products in the Environment Variable `LLM_KEY`.  While Open-source products are generally free to use, some use a key for security and privacy.  Open-source keys will only apply to Open-source connections, not to ChatGPT connections.
+   *  Optionally you can create a key for Open-source products in the Environment Variable `LLM_KEY`.  While Open-source products are generally free to use, some use a key for security and privacy. 
 
    *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the 'OAI_KEY' variable will allow you to generate a separate key for Plush and track those costs separately if your other OpenAI API apps are using the standard variable.  Either way you'll need to have at least one of the two enviroment variables defined with a valid active key if you want to use ChatGPT as an inference engine.  For Open-source products, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT connections.  Enviroment Variables for other supported AI services are shown in the table above.
 
@@ -141,7 +141,7 @@ python -m pip install -r requirements.txt
 
 ##  How to Setup Your Environment Variables
 
-An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value. For a paid ChatGPT key you can set the name of the variable to: `OAI_KEY` or `OPENAI_API_KEY`. If you're using an Open-source product that requires or can use a key (most do not), use the environment variable: `LLM_KEY`. The example below only refers to 'OAI_KEY' but you can substitute the environment variable name that applies to you per the [table](https://github.com/glibsonoran/Plush-for-ComfyUI/blob/main/README.md#your-openai-api-or-open-source-key-optional-not-required-for-exif-wrangler-switch-nodes-or-advanced-prompt-enhancer-when-used-with-open-source-llms) above. 
+An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value. For a paid ChatGPT key you can set the name of the variable to: `OAI_KEY` or `OPENAI_API_KEY`. If you're using an Open-source product that requires or can use a key (most do not), use the environment variable: `LLM_KEY`. Refer to the table above for other services. The example below only refers to 'OAI_KEY' but you can substitute the environment variable name that applies to you per the [table](https://github.com/glibsonoran/Plush-for-ComfyUI/blob/main/README.md#your-openai-api-or-open-source-key-optional-not-required-for-exif-wrangler-switch-nodes-or-advanced-prompt-enhancer-when-used-with-open-source-llms) above. 
 
 Note that after you set your Enviroment Variable, you will have to **reboot your machine** in order for it to take effect.
 ##  Windows Set-up
