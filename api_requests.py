@@ -204,8 +204,9 @@ class oai_object_request(Request): #Concrete class
                                     True)
 
 
-        if response.choices and 'error' not in response:
+        if response and response.choices and 'error' not in response:
             rpt_model = ""
+            rpt_usage = ""
             try:
                 rpt_model = response.model
                 rpt_usage = response.usage
