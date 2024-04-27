@@ -110,6 +110,7 @@ class helpSgltn:
         self._dalle_help = ''
         self._exif_wrangler_help = ''
         self._adv_prompt_help =''
+        self._tagger_help = ""
         # Empty help text is not a critical issue for the app
         if not help_data:
             j_mmgr.log_events('Help data file is empty or missing.',
@@ -120,6 +121,7 @@ class helpSgltn:
         self._exif_wrangler_help = help_data.get('wrangler_help', '')
         self._dalle_help = help_data.get('dalle_help', '')
         self._adv_prompt_help = help_data.get('adv_prompt_help', '')
+        self._tagger_help = help_data.get('tagger_help', '')
 
     @property
     def style_prompt_help(self)->str:
@@ -136,6 +138,10 @@ class helpSgltn:
     @property
     def adv_prompt_help(self)->str:
         return self._adv_prompt_help
+    
+    @property
+    def tagger_help(self)->str:
+        return self._tagger_help
     
 
 class json_manager:
@@ -159,7 +165,7 @@ class json_manager:
 
         self.comfy_dir = self.find_target_directory(self.script_dir, 'ComfyUI', True)
         if not self.comfy_dir:
-            #The parent of the script parent is: ComfyUI or comfy depending on installation
+            #The parent of the script parent is: ComfyUI or its hierarchical equivalent in non-standard installations
             self.comfy_dir, nm = self.findParent(self.script_parent, as_string=True)
             self.log_events(f"Non standard directory structure, ComfyUI directory name: {nm}")        
         #Private Properties
@@ -1262,6 +1268,7 @@ class json_manager:
             keep_key (bool): If True retains the 'key' entry in the config.json file
                             If False, removes it and relies on an Environment Variable for that value
                             Default is True for safety
+            max_log_age (int):  The maximum age in days allowed in the log file, older entries are deleted in this method.
 
         Returns:
             bool: True if an update is queued, represents a new version, and was successful
