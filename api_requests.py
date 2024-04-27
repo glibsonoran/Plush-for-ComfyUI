@@ -223,8 +223,10 @@ class oai_object_request(Request): #Concrete class
             CGPT_response = response.choices[0].message.content
             CGPT_response = self.utils.clean_response_text(CGPT_response)
         else:
+            err_mess = getattr(response, 'error', "Error message missing")
+
             CGPT_response = "Server was unable to process the request"
-            self.j_mngr.log_events('Server was unable to process this request.',
+            self.j_mngr.log_events(f"Server was unable to process this request. Error: {err_mess}",
                                 TroubleSgltn.Severity.ERROR,
                                 True)
         return CGPT_response
