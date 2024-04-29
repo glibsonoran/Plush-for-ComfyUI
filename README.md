@@ -111,9 +111,9 @@ python -m pip install -r requirements.txt
 ### Requirements: 
 ##  Your OpenAI API or Open Source Key [optional] (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer when used with open-source LLM's):
 * For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI.
-* For Advanced Prompt Enhancer, you'll need a valid OpenAI API key if you're going to use it with ChatGPT, Anthropic or Groq models,  if you're only using it with open-source LLM's, you won't need one.
+* For Advanced Prompt Enhancer, you'll need a valid API key if you're going to use it with ChatGPT, Anthropic or Groq models,  if you're only using it with open-source LLM's, you won't need one.
 * Some Open-source products use a free key for security and privacy so you have the option to create one if you want.  Most of these products don't use a key, so don't worry if you don't have one.
-* The OpenAI API key requires a paid account, if you want to use an Open-source key they are typically free.  Generate the key from their website.
+* The OpenAI API & Anthropic keys require a paid account, if you want to use an Open-source key they are typically free.  The Groq API key is free also.   Generate the key from their website.
   
   **The follwing table lists the Enviroment Variables that Plush recognizes and how the API keys they contain are applied.**
 
