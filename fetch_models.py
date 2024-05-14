@@ -12,6 +12,7 @@ class RequestMode(Enum):
     CLAUDE = 4
     GROQ = 5
     GEMINI = 6
+    OSSIMPLE = 7
 
 class ModelFetchStrategy(ABC):
  
