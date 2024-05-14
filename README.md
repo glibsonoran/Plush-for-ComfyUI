@@ -10,6 +10,7 @@
 *    **Minor Update to Advanced Prompt Enhancer and Style Prompt**
 *    Added new AI Service: *http POST Simplified Data*.  This is an http POST type connection and requires the `v1/chat/completions` path on the url.  It can be used for local applications that can't handle the nested data structure that's the OpenAI compatible standard.  Instead this uses a flatter simplified data structure.  If you're unable to connect with the other AI Service methods,  especially if you're getting a server processing error in the 500 range,  this might work for you.
 *    Removed the automatic selection of a vision capable model for ChatGPT when you pass it an image.  Both Style Prompt and Advanced Prompt Enhancer will now simply apply whatever model you select.  There are now three vision capable models in the ChatGPT model list and at this point it's better to let you select the one you want to use.  The model will now just report that it can't process your data if you try to send an image to a model that isn't vision capable.
+***************
 4/26/2024 @11:47am PST *Version 1.21.8*
 *  **Advanced Prompt Enhancer, now supports Anthropic (Claude) and Groq connections'** 
    *    **Grog** is a free service that provides a remote inferencing platform for the latest high quality open-source models including the new *Llama 3* models (*llama3-70b* & *llama3-8b*) and *Mixtral-8x7b*.
