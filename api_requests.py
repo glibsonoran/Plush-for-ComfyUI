@@ -152,13 +152,6 @@ class oai_object_request(Request): #Concrete class
                 self.j_mngr.log_events("Image file is invalid.  Image will be disregarded in the generated output.",
                                   TroubleSgltn.Severity.WARNING,
                                   True)
-            else:
-                if request_type == self.mode.OPENAI:
-                    models = self.cFig.get_chat_models(True, 'gpt-4')
-                    if 'gpt-4-turbo-2024-04-09' in models:
-                        GPTmodel = 'gpt-4-turbo'
-                    else:
-                        GPTmodel = 'gpt-4-vision-preview'
 
         messages = []
 
@@ -269,10 +262,17 @@ class oai_web_request(Request):
         response = None
         CGPT_response = ""    
 
-        #there's an image here
+        #if there's an image here
+        if image and request_type == self.mode.OSSIMPLE:
+            self.j_mngr.log_events("The AI Service using 'Simplfied Data' can't process an image. The image will be disregarded in generated output.",
+                                    TroubleSgltn.Severity.INFO,
+                                    True)
+            image = None
+
         if image:
             #The user is on their own to make
             #the right model selection for handling an image
+
             if isinstance(image, torch.Tensor):  #just to be sure
                 image = self.dalle.tensor_to_base64(image)
                 
@@ -295,8 +295,11 @@ class oai_web_request(Request):
                                    True)
                 
         headers = self.utils.build_web_header(key) 
-        
-        messages = self.utils.build_data_multi(prompt,instruction,example_list, image)
+
+        if request_type == self.mode.OSSIMPLE:
+            messages = self.utils.build_data_basic(prompt, example_list, instruction) #Some apps can't handle an embedded list of role:user dicts
+        else:
+            messages = self.utils.build_data_multi(prompt,instruction,example_list, image)
 
         params = {
         "model": GPTmodel,

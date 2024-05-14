@@ -578,7 +578,7 @@ class AdvPromptEnhancer:
         #refresh the ui after the initial load.
         return {
             "required": {
-                "AI_service": (["ChatGPT", "Groq", "Anthropic", "Local app (URL)", "OpenAI compatible http POST", "Oobabooga API-URL"], {"default": "ChatGPT"}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic", "Local app (URL)", "OpenAI compatible http POST", "http POST Simplified Data", "Oobabooga API-URL"], {"default": "ChatGPT"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                  
@@ -672,10 +672,10 @@ class AdvPromptEnhancer:
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE
             elif AI_service == "Groq":
                 self.cFig.lm_request_mode = RequestMode.GROQ  
-                LLM_URL = "https://api.groq.com/openai/v1"
+                LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
 
             if not LLM_URL:
-                self.j_mngr.log_events("'Local app (URL)' or 'Groq' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                self.j_mngr.log_events("'Local app (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
                 return("", _help, self.trbl.get_troubles()) 
@@ -722,6 +722,20 @@ class AdvPromptEnhancer:
             llm_result = self.ctx.execute_request(**kwargs)
 
             return(llm_result, _help, self.trbl.get_troubles())            
+        
+        if AI_service == "http POST Simplified Data":
+            if not LLM_URL:
+                self.j_mngr.log_events("'http POST Simplified Data' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                                    TroubleSgltn.Severity.WARNING,
+                                    True)
+                return(llm_result, _help, self.trbl.get_troubles())  
+            
+            self.ctx.request = rqst.oai_web_request()
+            self.cFig.lm_request_mode = RequestMode.OSSIMPLE
+
+            llm_result = self.ctx.execute_request(**kwargs)
+
+            return(llm_result, _help, self.trbl.get_troubles())  
 
         #Oobabooga via POST
         if AI_service == "Oobabooga API-URL":
