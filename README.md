@@ -6,6 +6,11 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+5/23/24 @08:16am PST *Version 1.21.10*
+*   **Minor Update to Advanced Prompt Enhancer and Tagger**
+*   Fixed data order issue with LM Studio's revised API
+*   Revised Tagger so it doesn't add a period to the end of the processed text block
+*****************
 5/14/24 @04:27pm PST *Version 1.21.9*
 *    **Minor Update to Advanced Prompt Enhancer and Style Prompt**
 *    Added new AI Service: *http POST Simplified Data*.  This is an http POST type connection and requires the `v1/chat/completions` path in the url.  It can be used for local applications that can't handle the OpenAI standard nested data structure.  Instead this uses a flatter simplified data structure.  If you're unable to connect to your local application with the other AI Service methods,  especially if you're getting a server processing error in the 500 range,  this might work for you.
