@@ -18,7 +18,7 @@ if jmanager.on_startup(False):
 else:
     jmanager.log_events("config.json was not updated")
 
-__version__ ="1.21.9"
+__version__ ="1.21.10"
 print('Plush - Version:', __version__)
 
 

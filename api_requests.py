@@ -83,7 +83,6 @@ class oai_object_request(Request): #Concrete class
         example_list = kwargs.get('example_list', [])
 
         request_type = self.cFig.lm_request_mode
-        
         response = None
         CGPT_response = ""
         file += file.strip()
@@ -92,7 +91,12 @@ class oai_object_request(Request): #Concrete class
             if self.cFig.lm_url:
                 self.j_mngr.log_events("Setting client to OpenAI Open Source LLM object",
                                     is_trouble=True)
+                
                 client = self.cFig.lm_client
+
+                #Force the correct url path
+                corrected_url = self.utils.validate_and_correct_url(self.cFig.lm_url,'/v1')
+                client.base_url = corrected_url
             else:
                 self.j_mngr.log_events("Open Source api object is not ready for use, no URL provided. Aborting",
                                   TroubleSgltn.Severity.WARNING,
@@ -754,18 +758,19 @@ class request_utils:
                                 True)
         
         if prompt:
-            user_content.append({"type": "text", "text": f"PROMPT: {prompt}"})
+            user_content.append({"type": "text", "text": prompt})
 
+        user_role['content'] = user_content   
 
-        user_role['content'] = user_content    
+        #Structure dicts & lists in order: System/User/Assitant
+        if instruction:
+            messages.append({"role": "system", "content": instruction}) 
 
         messages.append(user_role)
 
         if examples:
             messages.extend(examples)
 
-        if instruction:
-            messages.append({"role": "system", "content": instruction})
 
         return messages
     
@@ -781,15 +786,15 @@ class request_utils:
 
         if examples is None:
             examples = []
+
+        if instruction:
+            messages.append({"role": "system", "content": instruction})
         
         if prompt:
             messages.append({"role": "user", "content": prompt})
 
         if examples:
             messages.extend(examples)
-
-        if instruction:
-            messages.append({"role": "system", "content": instruction})
 
         return messages
     
