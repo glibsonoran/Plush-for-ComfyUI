@@ -45,7 +45,7 @@ class Tagger:
         e_tags.strip()
 
         if not b_tags and not m_tags and not e_tags:
-            return generated_text + Tagger.join_punct(generated_text,'.')
+            return generated_text 
         
         end_text, beginning_text, middle_text = '', '', ''
         beginning_text = b_tags
@@ -102,7 +102,7 @@ class Tagger:
         if beginning_text:
             generated_text = beginning_text + begin_punct + generated_text
         if end_text:
-            generated_text += Tagger.join_punct(generated_text,'.') + end_text
+            generated_text += Tagger.join_punct(generated_text) + end_text
         
         return generated_text.strip(', ')  # Ensure no leading or trailing commas 
     
