@@ -8,7 +8,7 @@
 ### Updates:
 5/23/24 @08:16am PST *Version 1.21.10*
 *   **Minor Update to Advanced Prompt Enhancer and Tagger**
-*   Fixed data order issue with LM Studio's revised API
+*   Fixed data order issue to accomodate the changes to LM Studio's API
 *   Revised Tagger so it doesn't add a period to the end of the processed text block
 *****************
 5/14/24 @04:27pm PST *Version 1.21.9*
