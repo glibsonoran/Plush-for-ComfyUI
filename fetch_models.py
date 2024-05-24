@@ -167,14 +167,3 @@ class ModelContainer:
         return models
 
 
-#*****************Test site*******************
-"""
-fetcher = FetchModels()
-utils = ModelUtils()
-
-mdl_list = fetcher.fetch_models(RequestMode.GEMINI,"AIzaSyBB1-7e9HsjtRzunovTOQxcODmkk-oVIkY" )
-
-prep_list = utils.prep_models_list(mdl_list, True)
-
-print(prep_list)
-"""
