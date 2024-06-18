@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "plush-for-comfyui"
+version = "1.21.11"
+description = "A suite of nodes that includes:  - Prompt enhancers/generators that employ remote AI services and local front-ends like: ChatGPT, Anthropic Claude, Groq, LM Studio, Oobabooga, etc.  - An Image Generator that uses Dall_e 3.  - An image metadata extractor that extracts seed, prompt, cfg, size, denoise, etc from existing AI generated images and photo metadata (exif) from jpeg photographs.  A tagger that appends text (tags) to the beginning, end and/or middle of a text block.  Image and text multiplexer utili"
+authors = ["glibsonoran <31249593+glibsonoran@users.noreply.github.com>"]
+license = "GNU GENERAL PUBLIC LICENSE"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.10, 3.11, 3.12"
+numpy = "1.23.5"
+openai = "1.12.0"
+pillow = "10.3.0"
+torch = "2.0.1"
+requests = "2.31.0"
+pyexiv2 = "2.12.0"
+groq = "0.5.0"
+anthropic = "0.25.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
