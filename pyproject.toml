@@ -1,0 +1,15 @@
+[project]
+name = "plush-for-comfyui"
+description = "Nodes: Style Prompt, OAI Dall_e Image. Plush contains two OpenAI enabled nodes: Style Prompt: Takes your prompt and the art style you specify and generates a prompt from ChatGPT3 or 4 that Stable Diffusion can use to generate an image in that style. OAI Dall_e 3: Takes your prompt and parameters and produces a Dall_e3 image in ComfyUI."
+version = "1.0.0"
+license = "LICENSE"
+dependencies = ["numpy", "openai==1.12.0", "Pillow", "torch", "requests", "pyexiv2", "groq", "anthropic"]
+
+[project.urls]
+Repository = "https://github.com/glibsonoran/Plush-for-ComfyUI"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "Plush-for-ComfyUI"
+Icon = ""
