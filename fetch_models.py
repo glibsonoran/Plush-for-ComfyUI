@@ -104,7 +104,7 @@ class FetchModels:
             self.strategy = FetchByMethod()
 
         elif request_type == RequestMode.CLAUDE:
-            model_names = ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-opus-20240229']
+            model_names = ['claude-3-haiku-20240307', 'claude-3-sonnet-20240229', 'claude-3-5-sonnet-20240620', 'claude-3-opus-20240229']
             return ModelsContainer(model_names)
         
         elif request_type == RequestMode.GEMINI:
