@@ -6,6 +6,11 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+7/6/2024 @1:37pm PST *Version 1.21.11*
+*   **Updates to Advanced Prompt Enhancer and Style Prompt nodes**
+*   Advanced Prompt Enhancer: Added *LM Studio* selection item to *AI Services* list.  This is an http: POST connection so you can use chat connections url that appears on LM Studio's server screen when you first start the server.
+*   Style Prompt: Can now use remote services and models from: ChatGPT, Grog and Anthropic, whereas before it could only use ChatGPT. As a result it now requires you to connect the *AI Chooser* node in order to service and model selection.
+**************
 5/23/24 @08:16am PST *Version 1.21.10*
 *   **Minor Update to Advanced Prompt Enhancer and Tagger**
 *   Fixed data order issue to accomodate the changes to LM Studio's API
