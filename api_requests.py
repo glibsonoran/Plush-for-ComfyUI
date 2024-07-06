@@ -159,7 +159,11 @@ class oai_object_request(Request): #Concrete class
 
         messages = []
 
-        messages = self.utils.build_data_multi(prompt, instruction, example_list, image)
+        #Use basic data structure if there is no image
+        if not image:
+            messages = self.utils.build_data_basic(prompt, example_list, instruction)
+        else:
+            messages = self.utils.build_data_multi(prompt, instruction, example_list, image)
             
         if not prompt and not image and not instruction:
             # User has provided no prompt, file or image
@@ -289,7 +293,7 @@ class oai_web_request(Request):
         key = ""
         if request_type == self.mode.OPENAI:
             key =  self.cFig.key
-        elif request_type == self.mode.OPENSOURCE or request_type == self.mode.OOBABOOGA:
+        elif request_type == self.mode.OPENSOURCE or request_type == self.mode.LMSTUDIO:
             key = self.cFig.lm_key
         elif request_type == self.mode.GROQ:
             key = self.cFig.groq_key
@@ -300,10 +304,16 @@ class oai_web_request(Request):
                 
         headers = self.utils.build_web_header(key) 
 
-        if request_type == self.mode.OSSIMPLE:
+        if request_type == self.mode.OSSIMPLE or not image:
             messages = self.utils.build_data_basic(prompt, example_list, instruction) #Some apps can't handle an embedded list of role:user dicts
+            self.j_mngr.log_events("Using Basic data structure",
+                                   TroubleSgltn.Severity.INFO,
+                                   True)
         else:
             messages = self.utils.build_data_multi(prompt,instruction,example_list, image)
+            self.j_mngr.log_events("Using Complex data structure",
+                                   TroubleSgltn.Severity.INFO,
+                                   True)
 
         params = {
         "model": GPTmodel,

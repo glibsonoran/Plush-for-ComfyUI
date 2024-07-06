@@ -367,6 +367,69 @@ class cFigSingleton:
         if self._fig_key:
             return self.figOAIClient
         return None
+    
+class AI_Chooser:
+    def __init__(self):
+        #instantiate Configuration and Help data classes
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+
+    @staticmethod
+    def select_request_mode(user_selection:str) -> RequestMode:
+         
+        mode_map = {
+            "ChatGPT": RequestMode.OPENAI,
+            "Groq": RequestMode.GROQ,
+            "Anthropic": RequestMode.CLAUDE,
+            "LM_Studio": RequestMode.LMSTUDIO,
+            "Local app (URL)": RequestMode.OPENSOURCE,
+            "OpenAI compatible http POST": RequestMode.OPENSOURCE,
+            "http POST Simplified Data": RequestMode.OSSIMPLE,
+            "Oobabooga API-URL": RequestMode.OOBABOOGA
+        }
+        return mode_map.get(user_selection)
+        
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        cFig=cFigSingleton()
+
+        #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
+        return {
+            "required": {
+                "AI_Service": (["ChatGPT", "Groq", "Anthropic"], {"default": "ChatGPT"}),
+                "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
+                "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
+                "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                                  
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+
+    RETURN_TYPES = ("DICTIONARY",)
+    RETURN_NAMES = ("AI_Selection",)
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Prompt"  
+
+    def gogo(self, unique_id, AI_Service, ChatGPT_model, Groq_model, Anthropic_model):  
+
+        ai_dict = {"service": AI_Chooser.select_request_mode(AI_Service), "model": None}
+
+        if ai_dict['service'] == RequestMode.OPENAI and ChatGPT_model != "none":
+            ai_dict['model'] = ChatGPT_model
+        elif ai_dict['service'] == RequestMode.GROQ and Groq_model != "none":
+            ai_dict['model'] = Groq_model
+        elif ai_dict['service'] == RequestMode.CLAUDE and Anthropic_model != "none":
+            ai_dict['model'] = Anthropic_model
+
+        return (ai_dict,)
 
 
 class Enhancer:
@@ -454,7 +517,7 @@ class Enhancer:
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
-                "GPTmodel": (cFig.get_chat_models(True, 'gpt'),{"default": ""} ),
+                #"GPTmodel": (cFig.get_chat_models(True, 'gpt'),{"default": ""} ),
                 "creative_latitude" : ("FLOAT", {"max": 1.201, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}),                
                 "style": (cFig.style,{"default": "Photograph"}),
@@ -467,13 +530,14 @@ class Enhancer:
                 "unique_id": "UNIQUE_ID",
             },
             "optional": {  
+                "AI_Selection":("DICTIONARY", {"default": None}),
                 "prompt": ("STRING",{"multiline": True, "default": ""}),          
                 "image" : ("IMAGE", {"default": None})
             }
         } 
 
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING","STRING")
-    RETURN_NAMES = ("CGPTprompt", "CGPTinstruction","Style Info", "Help","troubleshooting")
+    RETURN_NAMES = ("AI_prompt", "AI_instruction","Style Info", "Help","troubleshooting")
 
     FUNCTION = "gogo"
 
@@ -482,23 +546,31 @@ class Enhancer:
     CATEGORY = "Plush/Prompt"
  
 
-    def gogo(self, GPTmodel, creative_latitude, tokens, style, artist, prompt_style, max_elements, style_info, prompt="", image=None, unique_id=None):
+    def gogo(self, creative_latitude, tokens, style, artist, prompt_style, max_elements, style_info, AI_Selection=None, prompt="", image=None, unique_id=None):
 
         if unique_id:
             self.trbl.reset('Style Prompt, Node #'+unique_id)
         else:
             self.trbl.reset('Style Prompt')
-
+        
         _help = self.help_data.style_prompt_help
         CGPT_prompt = ""
         instruction = ""
         CGPT_styleInfo = ""
 
+        if AI_Selection:       
+            ais_model = AI_Selection['model']
+        else:
+            self.j_mngr.log_events("You must connect the  Plush AI_Chooser to the AI_Selection Input and choose an AI_Service and model to use",
+                                   TroubleSgltn.Severity.ERROR,
+                                   True)
+            CGPT_prompt = "Plush AI_Chooser not connected to AI_Selection input, or missing input values"
+            return(CGPT_prompt, instruction, CGPT_styleInfo, _help, self.trbl.get_troubles())
+
         # unconnected UI elements get passed in as the string "undefined" by ComfyUI
         image = self.undefined_to_none(image)
         prompt = self.undefined_to_none(prompt)
-        #Translate any friendly model names
-        GPTmodel = self.translateModelName(GPTmodel)       
+        #Translate any friendly model names    
 
         #Convert PyTorch.tensor to B64encoded image
         if isinstance(image, torch.Tensor):
@@ -516,15 +588,23 @@ class Enhancer:
 
         instruction = self.build_instruction(mode, style, prompt_style, max_elements, artist)  
 
-        self.ctx.request = rqst.oai_object_request()
-        self.cFig.lm_request_mode = RequestMode.OPENAI
+        self.cFig.lm_request_mode = AI_Selection['service']
+
+        if AI_Selection['service'] == RequestMode.OPENAI:
+            self.ctx.request = rqst.oai_object_request()
+        elif AI_Selection['service'] == RequestMode.GROQ:
+            self.ctx.request = rqst.oai_object_request()
+            # set the url so the function making the request will have a properly initialized object.               
+            self.cFig.lm_url = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
+        elif AI_Selection['service'] == RequestMode.CLAUDE:
+            self.ctx.request = rqst.claude_request()
 
         if style_info:
             self.trbl.set_process_header("Art Style Info:")
             #User has request information about the art style.  GPT will provide it
             sty_prompt = f"Give an 150 word backgrounder on the art style: {style}.  Starting with describing what it is, include information about its history and which artists represent the style."
 
-            kwargs = { "model": GPTmodel,
+            kwargs = { "model": ais_model,
                 "creative_latitude": creative_latitude,
                 "tokens": tokens,
                 "prompt": sty_prompt,
@@ -532,7 +612,7 @@ class Enhancer:
             CGPT_styleInfo = self.ctx.execute_request(**kwargs)
             self.trbl.pop_header()
 
-        kwargs = { "model": GPTmodel,
+        kwargs = { "model": ais_model,
             "creative_latitude": creative_latitude,
             "tokens": tokens,
             "prompt": prompt,
@@ -578,7 +658,7 @@ class AdvPromptEnhancer:
         #refresh the ui after the initial load.
         return {
             "required": {
-                "AI_service": (["ChatGPT", "Groq", "Anthropic", "Local app (URL)", "OpenAI compatible http POST", "http POST Simplified Data", "Oobabooga API-URL"], {"default": "ChatGPT"}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio", "Local app (URL)", "OpenAI compatible http POST", "http POST Simplified Data", "Oobabooga API-URL"], {"default": "ChatGPT"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                  
@@ -709,7 +789,7 @@ class AdvPromptEnhancer:
             return(claude_result, _help, self.trbl.get_troubles())
 
         
-        if AI_service == "OpenAI compatible http POST":
+        if AI_service == "OpenAI compatible http POST" or AI_service == "LM_Studio":
             if not LLM_URL:
                 self.j_mngr.log_events("'OpenAI compatible http POST' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
@@ -717,7 +797,11 @@ class AdvPromptEnhancer:
                 return(llm_result, _help, self.trbl.get_troubles())  
             
             self.ctx.request = rqst.oai_web_request()
-            self.cFig.lm_request_mode = RequestMode.OPENSOURCE
+            
+            if AI_service == "LM_Studio":
+                self.cFig.lm_request_mode = RequestMode.LMSTUDIO
+            else:
+                self.cFig.lm_request_mode = RequestMode.OPENSOURCE
 
             llm_result = self.ctx.execute_request(**kwargs)
 
@@ -1206,6 +1290,7 @@ class ImageInfoExtractor:
 # NOTE: names should be globally unique
 NODE_CLASS_MAPPINGS = {
     "Enhancer": Enhancer,
+    "AI Chooser": AI_Chooser,
     "AdvPromptEnhancer": AdvPromptEnhancer,
     "DalleImage": DalleImage,
     "Plush-Exif Wrangler" :ImageInfoExtractor
@@ -1214,6 +1299,7 @@ NODE_CLASS_MAPPINGS = {
 # A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
     "Enhancer": "Style Prompt",
+    "AI Chooser": "AI_Chooser",
     "AdvPromptEnhancer": "Advanced Prompt Enhancer",
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler"
