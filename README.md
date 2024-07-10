@@ -7,7 +7,7 @@
 ****
 ### Updates:
 7/10/2024 @11:45am PST *No version change*
-*   **Agenic Chain Example:** Added a new Example Workflow that demostrates using Plush **Advanced Prompt Enhancer** and Plush **Tagger** nodes to create a series of AI agents to improve instruction adherence in generating image prompts.
+*   **Agenic Chain Example:** Added a new Example Workflow: *AgentsExample.png* that demostrates using Plush **Advanced Prompt Enhancer** and Plush **Tagger** nodes to create a series of AI agents to improve instruction adherence in generating image prompts.
 *************
 7/6/2024 @1:37pm PST *Version 1.21.11*
 *   **Updates to Advanced Prompt Enhancer and Style Prompt nodes**
