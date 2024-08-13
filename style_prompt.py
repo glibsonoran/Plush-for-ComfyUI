@@ -636,7 +636,7 @@ class AdvPromptEnhancer:
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
 
-    def get_model(self, GPT_model, Groq_model, Anthropic_model, connection_type)->str:
+    def get_model(self, GPT_model, Groq_model, Anthropic_model, local_model, connection_type)->str:
         
         if connection_type == "ChatGPT":
             return GPT_model
@@ -647,7 +647,7 @@ class AdvPromptEnhancer:
         if connection_type == "Anthropic":
             return Anthropic_model
 
-        return "None"        
+        return local_model       
     
 
     @classmethod
@@ -661,7 +661,8 @@ class AdvPromptEnhancer:
                 "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio", "Local app (URL)", "OpenAI compatible http POST", "http POST Simplified Data", "Oobabooga API-URL"], {"default": "ChatGPT"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
-                "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                  
+                "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
+                "optional_local_model": ("STRING",{"default": "None"}),                 
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
@@ -691,7 +692,7 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush/Prompt"
 
-    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, creative_latitude, tokens, seed, examples_delimiter, 
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, optional_local_model, creative_latitude, tokens, seed, examples_delimiter, 
               LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples:str ="",image=None, unique_id=None):
 
         if unique_id:
@@ -709,10 +710,10 @@ class AdvPromptEnhancer:
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
 
-        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, AI_service)
+        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, optional_local_model, AI_service)
       
         if remote_model == "None":
-            self.j_mngr.log_events("No model selected. If you're using a Local application it will use the loaded model.",
+            self.j_mngr.log_events("No model selected. If you're using a Local application it will most likely use the loaded model.",
                                    TroubleSgltn.Severity.INFO,
                                    True)
 
@@ -1304,4 +1305,3 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler"
 }
-
