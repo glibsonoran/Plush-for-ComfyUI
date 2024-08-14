@@ -7,10 +7,14 @@
 ****
 ### Updates:
 7/13/2024 @4:58pm PST *Verson 1.21.12*
-*   **Update to Advanced Prompt Enhancer:**  Added *optional_local_model* field.  If your local LLM front end requires you to pass a model name (most don't), you can put it here.  This is primarily for *Ollama* users. 
+*   **Update to Advanced Prompt Enhancer:**
+*   Added *optional_local_model* field.  If your local LLM front end requires you to pass a model name (most don't), you can put it here.  This is primarily for *Ollama* users. 
 *************
-8/10/2024 @11:45am PST *No version change*
-
+8/10/2024 @11:45am PST *No version change*  
+*    **New Example Workflows Demonstrating Agentic Systems:**
+*    New workflow: *AgentsExample.png* is a simple Refinement Cascade.  It takes a prompt and evaluates it as to how closely it followed the Instruction and then revises it to adhere to the Instruction more closely.
+*    New workflow: *Agent-ImageEvaluator.png* Evaluates an image in regard to how closely it followed the prompt. It then produces a list of items to improve Prompt Adherence.
+*    New workflow: *Mixture of Agents.png*  Uses a matrix of individual AI agents that collaborate and produce a consensus output to improve accuracy.
 *************
 7/6/2024 @1:37pm PST *Version 1.21.11*
 *   **Updates to Advanced Prompt Enhancer and Style Prompt nodes**
