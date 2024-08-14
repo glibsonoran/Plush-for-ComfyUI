@@ -6,12 +6,11 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-8/10/2024 @11:45am PST *No version change*
-
-*************
-### Updates:
 7/13/2024 @4:58pm PST *Verson 1.21.12*
 *   **Update to Advanced Prompt Enhancer:**  Added *optional_local_model* field.  If your local LLM front end requires you to pass a model name (most don't), you can put it here.  This is primarily for *Ollama* users. 
+*************
+8/10/2024 @11:45am PST *No version change*
+
 *************
 7/6/2024 @1:37pm PST *Version 1.21.11*
 *   **Updates to Advanced Prompt Enhancer and Style Prompt nodes**
