@@ -6,9 +6,12 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-7/10/2024 @11:45am PST *No version change*
-*   **Refinement Cascade Example:** Added a new Example Workflow: *AgentsExample.png* that demostrates using Plush **Advanced Prompt Enhancer** and Plush **Tagger** nodes to create a series of AI agents to improve instruction adherence in generating image prompts.  Also added *Agent-ImageEvaluator.png* that critiques an image as to how closely it refects the prompt.
-*   **Mixture of Agents Example:**  Example workflow that demonstrates using using Plush **Advanced Prompt Enhancer** and Plush **Tagger** nodes to create a Mixture of Agents system.  [Research paper here](https://arxiv.org/abs/2406.04692)
+8/10/2024 @11:45am PST *No version change*
+
+*************
+### Updates:
+7/13/2024 @4:58pm PST *Verson 1.21.12*
+*   **Update to Advanced Prompt Enhancer:**  Added *optional_local_model* field.  If your local LLM front end requires you to pass a model name (most don't), you can put it here.  This is primarily for *Ollama* users. 
 *************
 7/6/2024 @1:37pm PST *Version 1.21.11*
 *   **Updates to Advanced Prompt Enhancer and Style Prompt nodes**
