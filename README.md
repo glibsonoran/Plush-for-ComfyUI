@@ -6,6 +6,10 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+8/31/2024 @3:56pm PST *Verson 1.21.13*
+*   **Update to Advanced Prompt Enhancer:**
+*   Added *Ollama_model* field.  If you're using Ollama with Adveanced Prompt Enhancer you'll now be able to select your model from a drop down. In order for this to work correctly you'll have to have loaded Ollama with the models you intend to use before starting ComfyUI. 
+*************
 8/13/2024 @4:58pm PST *Verson 1.21.12*
 *   **Update to Advanced Prompt Enhancer:**
 *   Added *optional_local_model* field.  If your local LLM front end requires you to pass a model name (most don't), you can put it here.  This is primarily for *Ollama* users. 
