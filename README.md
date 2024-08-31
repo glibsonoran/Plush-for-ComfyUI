@@ -8,7 +8,7 @@
 ### Updates:
 8/31/2024 @3:56pm PST *Verson 1.21.13*
 *   **Update to Advanced Prompt Enhancer:**
-*   Added *Ollama_model* field.  If you're using Ollama with Advanced Prompt Enhancer you'll now be able to select your model from a drop down. In order for this to work correctly you'll have to have loaded Ollama with the models you intend to use before starting ComfyUI. (Display the node's *help* output for more information 
+*   Added *Ollama_model* field.  If you're using Ollama with Advanced Prompt Enhancer you'll now be able to select your model from a drop down. In order for this to work correctly you'll have to have loaded Ollama with the models you intend to use before starting ComfyUI. (Display the node's *help* output for more information.) 
 *************
 8/13/2024 @4:58pm PST *Verson 1.21.12*
 *   **Update to Advanced Prompt Enhancer:**
