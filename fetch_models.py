@@ -2,7 +2,9 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from .mng_json import json_manager, TroubleSgltn #add .
+from .utils import CommUtils
 import openai
+import json
 from groq import Groq
 
 class RequestMode(Enum):
@@ -14,11 +16,13 @@ class RequestMode(Enum):
     GEMINI = 6
     OSSIMPLE = 7
     LMSTUDIO = 8
+    OLLAMA = 9
 
 class ModelFetchStrategy(ABC):
  
     def __init__(self)->None:
         self.j_mngr = json_manager()
+        self.utils = ModelUtils()
 
     @abstractmethod
     def fetch_models(self, api_obj, key):
@@ -71,8 +75,6 @@ class FetchGeminiModels(ModelFetchStrategy):
 
         return packaged_models
 
-
-
 class FetchByMethod(ModelFetchStrategy):
 
     def fetch_models(self, api_obj, key:str):
@@ -87,6 +89,43 @@ class FetchByMethod(ModelFetchStrategy):
                                    True)
             return None
         return model_list   
+    
+class FetchOllama(ModelFetchStrategy):
+
+    def __init__(self)->None:
+        super().__init__()  # Ensures common setup from Request
+        self.comm = CommUtils()
+
+    def fetch_models(self, api_obj, key):
+        """Parameters are ignored in this method and class as Ollama is a local app that has no
+            imported api object and doesn't require a key.  Ollama is unique among local apps
+            in that it requires a model name be passed in the request."""
+        
+        url = self.utils.url_file("urls.json", "ollama_url")
+        t_response = self.comm.is_lm_server_up(url,1,2)
+        if t_response:
+            response = self.comm.get_data(url, retries=2)
+        else:
+            response = None
+
+        model_list = []
+        if response is None:
+            return ModelsContainer(model_list)
+        
+        try:
+            data = response.json()
+        except json.JSONDecodeError as e:
+            self.j_mngr.log_events(f"Failed to decode Ollama models JSON file: {e}",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+            return ModelsContainer(model_list)
+
+        for model in data.get('models', []):
+            model_list.append(model.get('name'))
+
+        return ModelsContainer(model_list)
+
+
 
 class FetchModels:
     def __init__(self):
@@ -94,7 +133,7 @@ class FetchModels:
         self.strategy = None
         self.api_obj = None
 
-    def fetch_models(self, request_type:RequestMode, key: str):
+    def fetch_models(self, request_type:RequestMode, key: str=""):
 
         if request_type == RequestMode.OPENAI:
             self.api_obj = openai
@@ -111,6 +150,9 @@ class FetchModels:
         elif request_type == RequestMode.GEMINI:
             model_names = ['gemini-1.0-pro', 'gemini-1.0-pro-001', 'gemini-1.0-pro-latest', 'gemini-1.0-pro-vision-latest', 'gemini-1.5-pro-latest', 'gemini-pro', 'gemini-pro-vision']
             return ModelsContainer(model_names)
+        
+        elif request_type == RequestMode.OLLAMA:
+            self.strategy = FetchOllama()
 
         if self.strategy and self.api_obj:
             return self.strategy.fetch_models(self.api_obj, key)
@@ -144,6 +186,13 @@ class ModelUtils:
         
         return prepped_models 
     
+    def url_file(self, file_name:str, field_name:str) -> str:
+        url_file_name = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, file_name)
+        url_data = self.j_mngr.load_json(url_file_name)
+        if url_data:
+            return url_data.get(field_name,'')
+        return ''
+    
 #Create container for models that are generated in non-standard formats
 class Model:
     def __init__(self, model_id):
@@ -160,7 +209,11 @@ class ModelContainer:
     def get_models(self, sort_it:bool=True, with_none:bool=True, filter_str:str="",):
 
         models = ['none'] if with_none else []
-        models.extend(model for model in self._models if filter_str.lower() in model.lower())
+
+        if filter_str:
+            models.extend(model for model in self._models if filter_str.lower() in model.lower())
+        else:
+            models = self._models
 
         if sort_it:
             models.sort()

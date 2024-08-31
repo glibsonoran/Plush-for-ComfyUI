@@ -270,6 +270,12 @@ class oai_web_request(Request):
         response = None
         CGPT_response = ""    
 
+        self.cFig.lm_url = url
+        if not self.cFig.is_lm_server_up:
+            self.j_mngr.log_events("Local or remote server is not responding, may be unable to send data.",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+
         #if there's an image here
         if image and request_type == self.mode.OSSIMPLE:
             self.j_mngr.log_events("The AI Service using 'Simplfied Data' can't process an image. The image will be disregarded in generated output.",
@@ -403,6 +409,12 @@ class ooba_web_request(Request):
         CGPT_response = ""    
 
         url = self.utils.validate_and_correct_url(url) #validate v1/chat/completions path
+
+        self.cFig.lm_url = url
+        if not self.cFig.is_lm_server_up:
+            self.j_mngr.log_events("Local server is not responding, may be unable to send data.",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
 
         #image code is here, but right now none of the tested LLM front ends can handle them 
         #when using an http POST
@@ -656,6 +668,7 @@ class dall_e_request(Request):
 
         for _ in range(batch_size):
             try:
+
                 response = client.images.generate(
                     model = GPTmodel,
                     prompt = prompt, 
@@ -664,7 +677,7 @@ class dall_e_request(Request):
                     style = style,
                     n=1,
                     response_format = "b64_json",
-                )
+            )
  
             # Get the revised_prompt
                 if response and not 'error' in response:
@@ -716,6 +729,21 @@ class dall_e_request(Request):
                                    is_trouble=True)
         self.trbl.pop_header()
         return(batched_images, revised_prompt)
+    
+    def modify_image(self, client, model, image_bytes, prompt, image_size):
+        """This is an unused stub to be used if Dall-e-3 ever implements image to image edits"""
+        image_bytes.seek(0)  # Ensure the buffer is at the beginning
+
+        response = client.images.edit(
+        model=model,
+        image=image_bytes,
+        prompt=prompt,
+        n=1,
+        size=image_size,
+        response_format = "b64_json"
+        )
+
+        return response
 
 class request_context:
     def __init__(self)-> None:
