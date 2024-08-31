@@ -48,6 +48,7 @@ class cFigSingleton:
             cls._groq_models = None
             cls._claude_models = None
             cls._gemini_models = None
+            cls._ollama_models = None
             cls._written_url = ""
             cls.j_mngr = json_manager()
             cls._model_fetch = FetchModels()
@@ -137,7 +138,7 @@ class cFigSingleton:
         self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
         self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key)
         self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
-                       
+        self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")            
    
     def get_chat_models(self, sort_it:bool=False, filter_str:str="")->list:
         return self._model_prep.prep_models_list(self._fig_gpt_models, sort_it, filter_str)      
@@ -149,7 +150,10 @@ class cFigSingleton:
         return self._model_prep.prep_models_list(self._claude_models, sort_it, filter_str)   
 
     def get_gemini_models(self, sort_it:bool=False, filter_str:str="")->list:       
-        return self._model_prep.prep_models_list(self._gemini_models, sort_it, filter_str)            
+        return self._model_prep.prep_models_list(self._gemini_models, sort_it, filter_str)   
+
+    def get_ollama_models(self, sort_it:bool=False, filter_str:str="")->list:
+        return self._model_prep.prep_models_list(self._ollama_models, sort_it, filter_str)        
         
     def _set_llm_client(self, url:str, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
         
@@ -228,6 +232,7 @@ class cFigSingleton:
             #self._lm_models = []
             if url:  # If the new URL is not empty, update the client
                 self._set_llm_client(url, self._lm_request_mode)
+
     
     
     def is_lm_server_up(self):  #should be util in api_requests.py
@@ -243,6 +248,7 @@ class cFigSingleton:
                               True)
                 return True
             else:
+                self.write_url(self._lm_url) #Save url to a text file
                 self.j_mngr.log_events(f"Server returned response code: {response.status_code}",
                                        TroubleSgltn.Severity.INFO,
                                        True)
@@ -647,7 +653,7 @@ class AdvPromptEnhancer:
         if connection_type == "Anthropic":
             return Anthropic_model
 
-        return local_model       
+        return local_model        
     
 
     @classmethod
@@ -662,7 +668,7 @@ class AdvPromptEnhancer:
                 "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
-                "optional_local_model": ("STRING",{"default": "None"}),                 
+                "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}),                 
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
@@ -692,7 +698,7 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush/Prompt"
 
-    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, optional_local_model, creative_latitude, tokens, seed, examples_delimiter, 
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, creative_latitude, tokens, seed, examples_delimiter, 
               LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples:str ="",image=None, unique_id=None):
 
         if unique_id:
@@ -710,10 +716,10 @@ class AdvPromptEnhancer:
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
 
-        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, optional_local_model, AI_service)
+        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, AI_service)
       
-        if remote_model == "None":
-            self.j_mngr.log_events("No model selected. If you're using a Local application it will most likely use the loaded model.",
+        if remote_model == "none":
+            self.j_mngr.log_events("No model selected. If you're using a local desktop application, most will just use the loaded model.",
                                    TroubleSgltn.Severity.INFO,
                                    True)
 
@@ -937,6 +943,29 @@ class DalleImage:
 
         return base64_image
     
+    @staticmethod
+    def tensor_to_bytes(tensor: torch.Tensor) -> BytesIO:
+        """
+        Converts a PyTorch tensor to a bytes object.
+
+        Args:
+            tensor (torch.Tensor): The image tensor to convert.
+
+        Returns:
+            BytesIO: BytesIO object containing the image data.
+        """
+        # Convert tensor to PIL Image
+        if tensor.ndim == 4:
+            tensor = tensor.squeeze(0)  # Remove batch dimension if present
+        pil_image = Image.fromarray((tensor.numpy() * 255).astype('uint8'))
+
+        # Save PIL Image to a buffer
+        buffer = BytesIO()
+        pil_image.save(buffer, format="PNG")  # Can change to JPEG if preferred
+        buffer.seek(0)
+
+        return buffer
+    
     @classmethod
     def INPUT_TYPES(cls):
         #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
@@ -974,6 +1003,7 @@ class DalleImage:
         else:
             self.trbl.reset('Dall-e Image Node')
 
+
         _help = self.help_data.dalle_help
         self.ctx.request = rqst.dall_e_request()
         kwargs = { "model": GPTmodel,
@@ -981,7 +1011,7 @@ class DalleImage:
                 "image_size": image_size,
                 "image_quality": image_quality,
                 "style": style,
-                "batch_size": batch_size
+                "batch_size": batch_size,
         }
         batched_images, revised_prompt = self.ctx.execute_request(**kwargs)
 
@@ -1305,3 +1335,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler"
 }
+
