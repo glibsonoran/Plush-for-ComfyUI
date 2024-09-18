@@ -9,7 +9,8 @@ import re
 import math
 import time
 from pathlib import Path
-from typing import Optional, Any,  Union
+from typing import Optional, Any, Union, List, Dict
+
 
 
 class TroubleSgltn:
@@ -1043,6 +1044,202 @@ class json_manager:
         # Return the list of dictionaries directly
         return dict_list                
     
+
+    def insert_string_dict(self, input_data: Union[str, list[str]], template_dict: dict, insert_key: str, delimiter: Optional[str] = None):
+        """
+        Processes input_data to insert multiple or a single text string(s) into the template_dict. The input_data can be a
+        single string or a list of text segments. Each segment or string is
+        inserted into a copy of the template_dict at the insert_key.  If the calling app provides a valid delimiter
+        the input_string will be segmented and multiple dicts will be returned in a list.  If the delimiter = None
+        then a single dict will be returned in a list.
+
+        Args:
+            input_data (Union[str, list[str]]): The raw text or list of strings to insert.
+            template_dict (dict): The dictionary template containing the static elements of the dictionary 
+                and the key which will correspond to the text segment as its value.
+            insert_key (str): The key in the template_dict to which the text segment will be applied.
+            delimiter (str): Delimiter used to split input_data if it's a string. 
+                                   If None, no splitting will occur. Default is None.
+            
+        Returns:
+            list[dict]: A list with either a single or mulitple dictionaries.
+        """
+        dict_list = []
+        # Copy the template dictionary to avoid altering the original
+        new_dict = template_dict.copy()        
+
+        if insert_key not in template_dict:
+            self.log_events("Attempted to insert text into dictionary with wrong key.",
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+
+            return dict_list
+    
+        if not input_data or not isinstance(input_data, (str, list)):
+            self.log_events("Attempted to insert wrong data type into dictionary.",
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+
+            return dict_list
+
+
+        if delimiter:
+            segments = input_data.split(delimiter) if isinstance(input_data, str) else input_data
+
+            for segment in segments:
+                trimmed_segment = segment.strip() #remove spaces and new line chars
+                
+                if not trimmed_segment:
+                    continue
+
+                # Copy the template dictionary to avoid altering the original
+                segment_dict = template_dict.copy()
+                segment_dict[insert_key] = trimmed_segment
+                dict_list.append(segment_dict)
+        else:
+            new_dict[insert_key] = input_data.strip()
+            dict_list.append(new_dict)
+
+        return dict_list
+    
+
+
+    def build_context(
+        self,
+        input_data: str,
+        delimiter: Optional[str] = None,
+        dict_template1: Optional[Dict[str, Optional[str]]] = None,
+        dict_template2: Optional[Dict[str, Optional[str]]] = None,
+        insert_key1: str = "content",
+        insert_key2: str = "content",
+        initial_role: str = "user",
+        single_input_role: str = "user"
+    ) -> List[Dict[str, str]]:
+        """
+        Builds a context list of dictionaries based on input data and template dictionaries.
+
+        This method processes the input data and creates a list of dictionaries using the provided
+        template dictionaries. It can handle delimited input, special markers for user and model content,
+        and alternating between two templates.
+
+        Parameters:
+        -----------
+        input_data : str
+            The input string to process. If empty or not a string, an empty list is returned.
+        delimiter : str or None, optional
+            The delimiter used to split input_data. If None or if the delimiter doesn't occur in the input,
+            the entire input_data is processed as a single entry. Default is None.
+        dict_template1 : dict or None, optional
+            Template dictionary for the first type of entry (typically user input).
+            Default is {"role": "user", "content": None}.
+        dict_template2 : dict or None, optional
+            Template dictionary for the second type of entry (typically model output).
+            Default is {"role": "assistant", "content": None}.
+        insert_key1 : str, optional
+            The key in dict_template1 where the processed content will be inserted. Default is "content".
+        insert_key2 : str, optional
+            The key in dict_template2 where the processed content will be inserted. Default is "content".
+        initial_role : str, optional
+            The role to start with when processing delimited input. Must match a 'role' value in one of the templates.
+            Default is "user".
+        single_input_role : str, optional
+            The role to use when input is not delimited or when the delimiter doesn't occur in the input.
+            Must match a 'role' value in one of the templates. Default is "assistant".
+
+        Returns:
+        --------
+        List[Dict[str, str]]
+            A list of dictionaries created from the templates and filled with processed input data.
+            Returns an empty list if input validation fails.
+
+        Notes:
+        ------
+        - If delimiter is None or doesn't occur in the input, the entire input_data is processed
+        as a single entry using the template that matches single_input_role.
+        - When processing delimited input, the method alternates between dict_template1 and dict_template2,
+        starting with the template that matches the initial_role.
+        - Special markers "{{user}}" and "{{model}}" in the input override the alternating pattern.
+        - Empty segments in delimited input are skipped.
+        """
+
+        result = []
+
+        # Set default values for mutable arguments
+        if dict_template1 is None:
+            dict_template1 = {"role": "user", "content": None}
+        if dict_template2 is None:
+            dict_template2 = {"role": "assistant", "content": None}
+
+        # Test input_data
+        if not isinstance(input_data, str) or not input_data.strip():
+            self.log_events("Input 'examples_or_context' data is empty or not a string", TroubleSgltn.Severity.ERROR, True)
+            return result
+
+        # Test insert keys
+        if insert_key1 not in dict_template1 or insert_key2 not in dict_template2:
+            self.log_events("Insert keys not found in templates", TroubleSgltn.Severity.ERROR)
+            return result
+
+        # Test roles
+        template_roles = (dict_template1.get('role', ''), dict_template2.get('role', ''))
+        if initial_role not in template_roles or single_input_role not in template_roles:
+            self.log_events(f"Role not found in templates:{initial_role} or {single_input_role} not in {template_roles}", TroubleSgltn.Severity.ERROR)
+            return result
+
+        # Function to handle single input
+        def process_single_input(input_str: str) -> Dict[str, str]:
+            if single_input_role == dict_template1.get('role'):
+                filled_dict = dict_template1.copy()
+                filled_dict[insert_key1] = input_str.strip()
+            else:
+                filled_dict = dict_template2.copy()
+                filled_dict[insert_key2] = input_str.strip()
+            return filled_dict
+
+        # If delimiter is None or doesn't occur in the input, treat as single input
+        if delimiter is None or delimiter not in input_data:
+            result.append(process_single_input(input_data))
+            return result
+
+        # Split input_data and process segments
+        segments = [seg.strip() for seg in input_data.split(delimiter)]
+
+        # If only one non-empty segment after splitting, treat as single input
+        non_empty_segments = [seg for seg in segments if seg]
+        if len(non_empty_segments) == 1:
+            result.append(process_single_input(non_empty_segments[0]))
+            return result
+
+        # Process multiple segments
+        use_template1 = dict_template1.get('role') == initial_role
+
+        for segment in segments:
+            if not segment:
+                continue  # Skip empty segments
+
+            segment_stripped = segment.strip()
+            lower_segment = segment_stripped.lower()
+
+            if lower_segment.startswith("{{user}}"):
+                filled_dict = dict_template1.copy()
+                content = segment_stripped[len("{{user}}"):].strip()
+                filled_dict[insert_key1] = content
+            elif lower_segment.startswith("{{model}}"):
+                filled_dict = dict_template2.copy()
+                content = segment_stripped[len("{{model}}"):].strip()
+                filled_dict[insert_key2] = content
+            else:
+                if use_template1:
+                    filled_dict = dict_template1.copy()
+                    filled_dict[insert_key1] = segment
+                else:
+                    filled_dict = dict_template2.copy()
+                    filled_dict[insert_key2] = segment
+                use_template1 = not use_template1
+
+            result.append(filled_dict)
+
+        return result
     
     
     def convert_to_json_string(self, data, pretty=False, is_logger:bool = False) -> Optional[str]:

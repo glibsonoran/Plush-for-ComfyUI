@@ -6,6 +6,7 @@ from .utils import CommUtils
 import openai
 import json
 from groq import Groq
+from typing import Iterable, Optional
 
 class RequestMode(Enum):
     OPENAI = 1
@@ -167,7 +168,7 @@ class ModelUtils:
         self.j_mngr = json_manager()
         
         
-    def prep_models_list(self, models, sort_it:bool=False, filter_str:str=""):
+    def old_prep_models_list(self, models, sort_it:bool=False, filter_str:str=""):
         #Start with 'None' here to prevent node error 'value not in list'
         prepped_models = ['none']
 
@@ -185,6 +186,36 @@ class ModelUtils:
             prepped_models.sort()
         
         return prepped_models 
+    
+
+    def prep_models_list(self, models, sort_it: bool = False, filter_str: Optional[Iterable[str]] = None):
+        # Start with 'none' here to prevent node error 'value not in list'
+        prepped_models = ['none']
+
+        if models is None or not hasattr(models, 'data') or not models.data:
+            self.j_mngr.log_events(
+                "Models object is empty or malformed",
+                TroubleSgltn.Severity.ERROR,
+                True
+            )
+            return prepped_models
+
+        # Initialize filter_str to an empty tuple if it's None
+        if filter_str is None:
+            filter_str = ()
+
+        # Include all models that contain any of the strings in filter_str
+        filtered_models = [
+            model.id for model in models.data
+            if not filter_str or any(f.lower() in model.id.lower() for f in filter_str)
+        ]
+
+        prepped_models.extend(filtered_models)
+
+        if sort_it:
+            prepped_models.sort()
+
+        return prepped_models
     
     def url_file(self, file_name:str, field_name:str) -> str:
         url_file_name = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, file_name)
