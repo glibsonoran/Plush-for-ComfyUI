@@ -8,6 +8,7 @@ import openai
 import anthropic
 from .mng_json import json_manager, TroubleSgltn
 from .fetch_models import RequestMode
+from .utils import ImageUtils 
 
 class ImportedSgltn:
     """
@@ -87,7 +88,7 @@ class oai_object_request(Request): #Concrete class
         CGPT_response = ""
         file += file.strip()
 
-        if request_type == self.mode.OPENSOURCE:
+        if request_type == self.mode.OPENSOURCE or request_type == self.mode.OLLAMA:
             if self.cFig.lm_url:
                 self.j_mngr.log_events("Setting client to OpenAI Open Source LLM object",
                                     is_trouble=True)
@@ -165,7 +166,7 @@ class oai_object_request(Request): #Concrete class
         else:
             messages = self.utils.build_data_multi(prompt, instruction, example_list, image)
             
-        if not prompt and not image and not instruction:
+        if not prompt and not image and not instruction and not example_list:
             # User has provided no prompt, file or image
             response = "Photograph of an stained empty box with 'NOTHING' printed on its side in bold letters, small flying moths, dingy, gloomy, dim light rundown warehouse"
             self.j_mngr.log_events("No instruction and no prompt were provided, the node was only able to provide a 'Box of Nothing'",
@@ -550,7 +551,7 @@ class claude_request(Request):
 
         messages = self.utils.build_data_claude(prompt, example_list, image)
             
-        if not prompt and not image and not instruction:
+        if not prompt and not image and not instruction and not example_list:
             # User has provided no prompt, file or image
             claude_response = "Photograph of an stained empty box with 'NOTHING' printed on its side in bold letters, small flying moths, dingy, gloomy, dim light rundown warehouse"
             self.j_mngr.log_events("No instruction and no prompt were provided, the node was only able to provide a 'Box of Nothing'",
@@ -636,6 +637,7 @@ class dall_e_request(Request):
     def __init__(self):
         super().__init__()  # Ensures common setup from Request
         self.trbl = TroubleSgltn() 
+        self.iu = ImageUtils()
 
     def request_completion(self, **kwargs)->tuple[torch.Tensor, str]:
 
@@ -784,31 +786,23 @@ class request_utils:
         user_role = {"role": "user", "content": None}
         user_content = []
 
-        if examples is None:
-            examples = []
-
-        if image and isinstance(image,str):
-            image_url = f"data:image/jpeg;base64,{image}"
-            user_content.append({"type": "image_url", "image_url": {"url":image_url}})
-        elif image:
-            self.j_mngr.log_events("Image file is invalid.  Image will be disregarded in the generated output.",
-                                TroubleSgltn.Severity.WARNING,
-                                True)
-        
-        if prompt:
-            user_content.append({"type": "text", "text": prompt})
-
-        user_role['content'] = user_content   
-
-        #Structure dicts & lists in order: System/User/Assitant
         if instruction:
-            messages.append({"role": "system", "content": instruction}) 
-
-        messages.append(user_role)
+            messages.append({"role": "system", "content": instruction})         
 
         if examples:
             messages.extend(examples)
 
+
+        processed_image = self.process_image(image)
+        if processed_image:
+            user_content.append(processed_image)
+        
+        if prompt:
+            user_content.append({"type": "text", "text": prompt})
+
+        if user_content:
+            user_role['content'] = user_content   
+            messages.append(user_role)
 
         return messages
     
@@ -822,17 +816,15 @@ class request_utils:
 
         messages = []
 
-        if examples is None:
-            examples = []
-
         if instruction:
             messages.append({"role": "system", "content": instruction})
+
+        if examples:
+            messages.extend(examples)     
         
         if prompt:
             messages.append({"role": "user", "content": prompt})
 
-        if examples:
-            messages.extend(examples)
 
         return messages
     
@@ -847,16 +839,20 @@ class request_utils:
 
         messages = []
 
-        ooba_prompt =  f"INSTRUCTION: {instruction} \nPROMPT: {prompt}"
+        ooba_prompt = ""
 
-        if examples is None:
-            examples = []
-        
-        if ooba_prompt:
-            messages.append({"role": "user", "content": ooba_prompt})
+        if instruction:
+            ooba_prompt += f"INSTRUCTION: {instruction}\n\n"
+
+        if prompt:
+            ooba_prompt += f"PROMPT: {prompt}"
+
 
         if examples:
             messages.extend(examples)
+        
+        if ooba_prompt:
+            messages.append({"role": "user", "content": ooba_prompt.strip()})
 
         return messages 
     
@@ -871,35 +867,40 @@ class request_utils:
         user_role = {"role": "user", "content": None}
         user_content = []
 
-        if examples is None:
-            examples = []
+        if examples:
+            messages.extend(examples)
 
-        if image and isinstance(image,str):
 
-            user_content.append({"type": "image", 
-                                "source": {
-                                "type": "base64",
-                                "media_type": "image/png",
-                                "data": image}})
-        elif image:
-            self.j_mngr.log_events("Image file is invalid.  Image will be disregarded in the generated output.",
-                                TroubleSgltn.Severity.WARNING,
-                                True)
+        processed_image = self.process_image(image)
+        if processed_image:
+            user_content.append(processed_image)
         
         if prompt:
             user_content.append({"type": "text", "text": prompt})
 
-
-        user_role['content'] = user_content    
-
-        messages.append(user_role)
-
-        if examples:
-            messages.extend(examples)
+        if user_content:     
+            user_role['content'] = user_content    
+            messages.append(user_role)
 
         return messages
 
-    
+
+    def process_image(self, image: str) :
+        if not image:
+            return None
+        
+        if isinstance(image, str):
+            return {
+                "type": "image",
+                "source": {
+                "type": "base64",
+                "media_type": "image/png",
+                "data": image
+                }
+            }
+
+        self.j_mngr.log_events("Image file is invalid.", TroubleSgltn.Severity.WARNING, True)
+        return None
     
     def build_web_header(self, key:str=""):
         if key:

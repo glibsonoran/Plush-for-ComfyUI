@@ -140,19 +140,19 @@ class cFigSingleton:
         self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
         self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")            
    
-    def get_chat_models(self, sort_it:bool=False, filter_str:str="")->list:
+    def get_chat_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._fig_gpt_models, sort_it, filter_str)      
       
-    def get_groq_models(self, sort_it:bool=False, filter_str:str=""):
+    def get_groq_models(self, sort_it:bool=False, filter_str:tuple=()):
         return self._model_prep.prep_models_list(self._groq_models, sort_it, filter_str)      
 
-    def get_claude_models(self, sort_it:bool=False, filter_str:str="")->list:
+    def get_claude_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._claude_models, sort_it, filter_str)   
 
-    def get_gemini_models(self, sort_it:bool=False, filter_str:str="")->list:       
+    def get_gemini_models(self, sort_it:bool=False, filter_str:tuple=())->list:       
         return self._model_prep.prep_models_list(self._gemini_models, sort_it, filter_str)   
 
-    def get_ollama_models(self, sort_it:bool=False, filter_str:str="")->list:
+    def get_ollama_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._ollama_models, sort_it, filter_str)        
         
     def _set_llm_client(self, url:str, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
@@ -401,12 +401,12 @@ class AI_Chooser:
     @classmethod
     def INPUT_TYPES(cls):
         cFig=cFigSingleton()
-
+        gptfilter = ("gpt","o1")
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
                 "AI_Service": (["ChatGPT", "Groq", "Anthropic"], {"default": "ChatGPT"}),
-                "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
+                "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                                  
             },
@@ -642,7 +642,7 @@ class AdvPromptEnhancer:
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
 
-    def get_model(self, GPT_model, Groq_model, Anthropic_model, local_model, connection_type)->str:
+    def get_model(self, GPT_model, Groq_model, Anthropic_model, Ollamm_model, connection_type)->str:
         
         if connection_type == "ChatGPT":
             return GPT_model
@@ -652,20 +652,24 @@ class AdvPromptEnhancer:
 
         if connection_type == "Anthropic":
             return Anthropic_model
+        
+        if "Ollama" in connection_type:
+            return Ollamm_model
 
-        return local_model        
+        return "none"        
     
 
     @classmethod
     def INPUT_TYPES(cls):
         cFig = cFigSingleton()
+        gptfilter = ("gpt","o1")
         #open source models are too problematic to implement right now in an environment where you 
         #can't be sure if the local host server (open source) will be running, and where you can't
         #refresh the ui after the initial load.
         return {
             "required": {
-                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio", "Local app (URL)", "OpenAI compatible http POST", "http POST Simplified Data", "Oobabooga API-URL"], {"default": "ChatGPT"}),
-                "ChatGPT_model": (cFig.get_chat_models(True,'gpt'), {"default": ""}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","Local app (URL)", "OpenAI compatible http POST (URL)", "http POST Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq"}),
+                "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
                 "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}),                 
@@ -682,7 +686,7 @@ class AdvPromptEnhancer:
             },
             "optional": {  
                 "Instruction": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
-                "Examples": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
+                "Examples_or_Context": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Prompt": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "image" : ("IMAGE", {"default": None})                          
                 
@@ -699,7 +703,7 @@ class AdvPromptEnhancer:
     CATEGORY = "Plush/Prompt"
 
     def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, creative_latitude, tokens, seed, examples_delimiter, 
-              LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples:str ="",image=None, unique_id=None):
+              LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="",image=None, unique_id=None):
 
         if unique_id:
             self.trbl.reset("Advanced Prompt Enhancer, Node #"+unique_id)
@@ -712,7 +716,7 @@ class AdvPromptEnhancer:
         # set the value of unconnected inputs to None
         Instruction = Enhancer.undefined_to_none(Instruction)
         Prompt = Enhancer.undefined_to_none(Prompt)
-        Examples = Enhancer.undefined_to_none(Examples)
+        Examples = Enhancer.undefined_to_none(Examples_or_Context)
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
 
@@ -723,25 +727,26 @@ class AdvPromptEnhancer:
                                    TroubleSgltn.Severity.INFO,
                                    True)
 
-        llm_result = "Unable to process request.  Make sure the local Open Source Server is running.  If you're using a remote service (e.g.: ChaTGPT, Groq) make sure your key is valid, and a model is selected"
+        llm_result = "Unable to process request.  Make sure the local Open Source Server is running, and you've provided a valid URL.  If you're using a remote service (e.g.: ChaTGPT, Groq) make sure your key is valid, and a model is selected"
 
         #Convert PyTorch.tensor to B64encoded image
         if isinstance(image, torch.Tensor):
             image = DalleImage.tensor_to_base64(image)
 
-        #Create a list of dictionaries out of the user provided examples
+        #Create a list of dictionaries out of the user provided Examples_or_Context
         example_list = []    
         
         if Examples:
-            delimiter ="|"
+            delimiter = ""
             if examples_delimiter == "Two newlines":
                 delimiter = "\n\n"
             elif examples_delimiter == "Two colons ::":
                 delimiter = "::"
+            elif examples_delimiter == "Pipe |":
+                delimiter = "|"
 
-            examples_template = {"role": "assistant", "content":None}
-            example_list = self.j_mngr.insert_text_into_dict(Examples, examples_template, "content",delimiter)
-
+            example_list = self.j_mngr.build_context(Examples, delimiter)
+            
         kwargs = { "model": remote_model,
                 "creative_latitude": creative_latitude,
                 "tokens": tokens,
@@ -753,20 +758,21 @@ class AdvPromptEnhancer:
                 "example_list": example_list,
         }
 
-        if  AI_service == 'Local app (URL)' or AI_service == "Groq": 
+        if  AI_service == 'Local app (URL)' or AI_service == "Groq" or AI_service == "Ollama": 
  
             if AI_service == 'Local app (URL)':
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE
             elif AI_service == "Groq":
                 self.cFig.lm_request_mode = RequestMode.GROQ  
                 LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
+            elif AI_service == "Ollama":
+                self.cFig.lm_request_mode = RequestMode.OLLAMA
 
             if not LLM_URL:
                 self.j_mngr.log_events("'Local app (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
-                return("", _help, self.trbl.get_troubles()) 
-
+                return(llm_result, _help, self.trbl.get_troubles()) 
 
             # set the url so the function making the request will have a properly initialized object.               
             self.cFig.lm_url = LLM_URL
