@@ -9,13 +9,13 @@
 9/18/2024 @2:19pm PST *Verson 1.21.14*
 *   **Update to Advanced Prompt Enhancer:**
     *   Fixed *Examples* input, which is now renamed *Examples_or_Context*. This input will now automatically parse delimited example or context input into the proper roles (User or Assistant) and present them to the LLM as required (use the node's *help* output for more details).  This allows you to provide examples of how you want your output to look, or to use *Few Shot Prompting*, or to keep context by including earlier input.
-  *   Advanced Prompt Enhancer's model filter will now include OpenAI's new "o" series models if you qualify to use them in your API account: e.g. "o1".
-  *   There's now a dedicated *Ollama (URL)* menu item in the *AI_Services* menu.
+    *   Advanced Prompt Enhancer's model filter will now include OpenAI's new "o" series models if you qualify to use them in your API account: e.g. "o1".
+    *   There's now a dedicated *Ollama (URL)* menu item in the *AI_Services* menu.
 *   **Examples**
-  *   Fixed some older examples, updated them to use the revised Advanced Prompt Enhancer.
-  *   Added a new Example: *How_To_Use_Examples* to illustrate how to use the newly fixed and renamed *Examples_or_Context* input in Advanced Prompt Enhancer.
+    *   Fixed some older examples, updated them to use the revised Advanced Prompt Enhancer.
+    *   Added a new Example: *How_To_Use_Examples* to illustrate how to use the newly fixed and renamed *Examples_or_Context* input in Advanced Prompt Enhancer.
 *   **Help.json**
-  *   Updated to reflect changes detailed above.
+    *   Updated to reflect changes detailed above.
 *************
 8/31/2024 @3:56pm PST *Verson 1.21.13*
 *   **Update to Advanced Prompt Enhancer:**
