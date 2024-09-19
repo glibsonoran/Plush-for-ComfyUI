@@ -6,7 +6,7 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-9/18/2024 @2:19pm PST *Verson 1.21.14*
+9/18/2024 @2:19pm PST *Version 1.21.14*
 *   **Update to Advanced Prompt Enhancer:**
     *   Fixed *Examples* input, which is now renamed *Examples_or_Context*. This input will now automatically parse delimited example or context input into the proper roles (User or Assistant) and present them to the LLM as required (use the node's *help* output for more details).  This allows you to provide examples of how you want your output to look, or to use *Few Shot Prompting*, or to keep context by including earlier input.
     *   Advanced Prompt Enhancer's model filter will now include OpenAI's new "o" series models if you qualify to use them in your API account: e.g. "o1".
@@ -17,11 +17,11 @@
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *************
-8/31/2024 @3:56pm PST *Verson 1.21.13*
+8/31/2024 @3:56pm PST *Version 1.21.13*
 *   **Update to Advanced Prompt Enhancer:**
 *   Added *Ollama_model* field.  If you're using Ollama with Advanced Prompt Enhancer you'll now be able to select your model from a drop down. In order for this to work correctly you'll have to have loaded Ollama with the models you intend to use before starting ComfyUI. (Display the node's *help* output for more information.) 
 *************
-8/13/2024 @4:58pm PST *Verson 1.21.12*
+8/13/2024 @4:58pm PST *Version 1.21.12*
 *   **Update to Advanced Prompt Enhancer:**
 *   Added *optional_local_model* field.  If your local LLM front end requires you to pass a model name (most don't), you can put it here.  This is primarily for *Ollama* users. 
 *************
