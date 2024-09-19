@@ -773,6 +773,7 @@ class request_utils:
 
     def __init__(self)-> None:
         self.j_mngr = json_manager()
+        self.mode = RequestMode
 
     def build_data_multi(self, prompt:str, instruction:str="", examples:list=None, image:str=None):
         """
@@ -871,7 +872,7 @@ class request_utils:
             messages.extend(examples)
 
 
-        processed_image = self.process_image(image)
+        processed_image = self.process_image(image,RequestMode.CLAUDE)
         if processed_image:
             user_content.append(processed_image)
         
@@ -885,12 +886,13 @@ class request_utils:
         return messages
 
 
-    def process_image(self, image: str) :
+    def process_image(self, image: str, request_type:RequestMode=RequestMode.OPENAI) :
         if not image:
             return None
         
         if isinstance(image, str):
-            return {
+            if request_type == self.mode.CLAUDE:
+                return {
                 "type": "image",
                 "source": {
                 "type": "base64",
@@ -898,6 +900,12 @@ class request_utils:
                 "data": image
                 }
             }
+
+            return {"type": "image_url",
+                    "image_url": {
+                    "url": f"data:image/png;base64, {image}"
+                    }                  
+                    }
 
         self.j_mngr.log_events("Image file is invalid.", TroubleSgltn.Severity.WARNING, True)
         return None
