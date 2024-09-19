@@ -193,13 +193,15 @@ class oai_object_request(Request): #Concrete class
                                 TroubleSgltn.Severity.WARNING,
                                 True)
         except openai.RateLimitError as e:
-            self.j_mngr.log_events(f"Server RATE LIMIT error {e.status_code}: {e.response}  {e.body['message'] if e.body else ''}",
-                                TroubleSgltn.Severity.ERROR,
-                                    True)
+            error_message = e.body.get('message', "No error message provided") if isinstance(e.body, dict) else str(e.body or "No error message provided")
+            self.j_mngr.log_events(f"Server STATUS error {e.status_code}: {error_message}.",
+                           TroubleSgltn.Severity.ERROR,
+                           True)
         except openai.APIStatusError as e:
-            self.j_mngr.log_events(f"Server STATUS error {e.status_code}: {e.body['message'] if e.body else ''}. File may be too large.",
-                                TroubleSgltn.Severity.ERROR,
-                                    True)
+            error_message = e.body.get('message', "No error message provided") if isinstance(e.body, dict) else str(e.body or "No error message provided")
+            self.j_mngr.log_events(f"Server STATUS error {e.status_code}: {error_message}.",
+                           TroubleSgltn.Severity.ERROR,
+                           True)
         except Exception as e:
             self.j_mngr.log_events(f"An unexpected server error occurred.: {e}",
                                 TroubleSgltn.Severity.ERROR,
@@ -903,7 +905,7 @@ class request_utils:
 
             return {"type": "image_url",
                     "image_url": {
-                    "url": f"data:image/jpeg;base64, {image}"
+                    "url": f"data:image/jpeg;base64,{image}"
                     }                  
                     }
 
