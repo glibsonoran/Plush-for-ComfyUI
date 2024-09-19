@@ -758,7 +758,7 @@ class AdvPromptEnhancer:
                 "example_list": example_list,
         }
 
-        if  AI_service == 'Local app (URL)' or AI_service == "Groq" or AI_service == "Ollama": 
+        if  AI_service == 'Local app (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
  
             if AI_service == 'Local app (URL)':
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE
@@ -802,7 +802,7 @@ class AdvPromptEnhancer:
             return(claude_result, _help, self.trbl.get_troubles())
 
         
-        if AI_service == "OpenAI compatible http POST" or AI_service == "LM_Studio":
+        if AI_service == "OpenAI compatible http POST (URL)" or AI_service == "LM_Studio (URL)":
             if not LLM_URL:
                 self.j_mngr.log_events("'OpenAI compatible http POST' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
@@ -820,7 +820,7 @@ class AdvPromptEnhancer:
 
             return(llm_result, _help, self.trbl.get_troubles())            
         
-        if AI_service == "http POST Simplified Data":
+        if AI_service == "http POST Simplified Data (URL)":
             if not LLM_URL:
                 self.j_mngr.log_events("'http POST Simplified Data' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
@@ -835,7 +835,7 @@ class AdvPromptEnhancer:
             return(llm_result, _help, self.trbl.get_troubles())  
 
         #Oobabooga via POST
-        if AI_service == "Oobabooga API-URL":
+        if AI_service == "Oobabooga API (URL)":
             if not LLM_URL:
                 self.j_mngr.log_events("'Oobabooga API-URL' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
