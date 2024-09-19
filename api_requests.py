@@ -793,13 +793,13 @@ class request_utils:
         if examples:
             messages.extend(examples)
 
+        if prompt:
+            user_content.append({"type": "text", "text": prompt})
 
         processed_image = self.process_image(image)
         if processed_image:
             user_content.append(processed_image)
         
-        if prompt:
-            user_content.append({"type": "text", "text": prompt})
 
         if user_content:
             user_role['content'] = user_content   
@@ -903,7 +903,7 @@ class request_utils:
 
             return {"type": "image_url",
                     "image_url": {
-                    "url": f"data:image/png;base64, {image}"
+                    "url": f"data:image/jpeg;base64, {image}"
                     }                  
                     }
 
