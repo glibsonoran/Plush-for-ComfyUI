@@ -49,6 +49,7 @@ class cFigSingleton:
             cls._claude_models = None
             cls._gemini_models = None
             cls._ollama_models = None
+            cls._optional_models = None
             cls._written_url = ""
             cls.j_mngr = json_manager()
             cls._model_fetch = FetchModels()
@@ -138,7 +139,8 @@ class cFigSingleton:
         self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
         self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key)
         self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
-        self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")            
+        self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")  
+        self._optional_models = self._model_fetch.fetch_models(RequestMode.OPENSOURCE, "")          
    
     def get_chat_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._fig_gpt_models, sort_it, filter_str)      
@@ -153,7 +155,10 @@ class cFigSingleton:
         return self._model_prep.prep_models_list(self._gemini_models, sort_it, filter_str)   
 
     def get_ollama_models(self, sort_it:bool=False, filter_str:tuple=())->list:
-        return self._model_prep.prep_models_list(self._ollama_models, sort_it, filter_str)        
+        return self._model_prep.prep_models_list(self._ollama_models, sort_it, filter_str)    
+
+    def get_optional_models(self, sort_it:bool=False, filter_str:tuple=())->list: 
+        return self._model_prep.prep_models_list(self._optional_models, sort_it, filter_str)   
         
     def _set_llm_client(self, url:str, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
         
@@ -642,7 +647,7 @@ class AdvPromptEnhancer:
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
 
-    def get_model(self, GPT_model, Groq_model, Anthropic_model, Ollamm_model, connection_type)->str:
+    def get_model(self, GPT_model, Groq_model, Anthropic_model, Ollamm_model, Optional_model, connection_type)->str:
         
         if connection_type == "ChatGPT":
             return GPT_model
@@ -653,8 +658,17 @@ class AdvPromptEnhancer:
         if connection_type == "Anthropic":
             return Anthropic_model
         
-        if "Ollama" in connection_type:
+        if "Ollama" in connection_type and Ollamm_model != "none":
             return Ollamm_model
+        
+        if Optional_model and Optional_model != "none":
+            template = {"content": None}
+            model_dlist = []
+            model_dlist = self.j_mngr.insert_string_dict(Optional_model,template,"content","::")
+            if len(model_dlist) > 1:
+                return model_dlist[1]['content']
+
+            return model_dlist[0]['content']
 
         return "none"        
     
@@ -672,7 +686,8 @@ class AdvPromptEnhancer:
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
-                "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}),                 
+                "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}), 
+                "Optional_model": (cFig.get_optional_models(True), {"default": ""}),                
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
@@ -702,7 +717,7 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush/Prompt"
 
-    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, creative_latitude, tokens, seed, examples_delimiter, 
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
               LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="",image=None, unique_id=None):
 
         if unique_id:
@@ -720,7 +735,7 @@ class AdvPromptEnhancer:
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
 
-        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, AI_service)
+        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, AI_service)
       
         if remote_model == "none":
             self.j_mngr.log_events("No model selected. If you're using a local desktop application, most will just use the loaded model.",
@@ -765,7 +780,7 @@ class AdvPromptEnhancer:
             elif AI_service == "Groq":
                 self.cFig.lm_request_mode = RequestMode.GROQ  
                 LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
-            elif AI_service == "Ollama":
+            elif AI_service == "Ollama (URL)":
                 self.cFig.lm_request_mode = RequestMode.OLLAMA
 
             if not LLM_URL:
@@ -811,7 +826,7 @@ class AdvPromptEnhancer:
             
             self.ctx.request = rqst.oai_web_request()
             
-            if AI_service == "LM_Studio":
+            if AI_service == "LM_Studio (URL)":
                 self.cFig.lm_request_mode = RequestMode.LMSTUDIO
             else:
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE

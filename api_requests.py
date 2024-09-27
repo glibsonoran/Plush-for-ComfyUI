@@ -87,6 +87,7 @@ class oai_object_request(Request): #Concrete class
         response = None
         CGPT_response = ""
         file += file.strip()
+        client = None
 
         if request_type == self.mode.OPENSOURCE or request_type == self.mode.OLLAMA:
             if self.cFig.lm_url:
@@ -520,6 +521,7 @@ class claude_request(Request):
         response = None
         claude_response = ""
         file += file.strip()
+        client = None
 
         if request_type == self.mode.CLAUDE:
             client = self.cFig.anthropic_client

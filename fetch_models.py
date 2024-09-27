@@ -4,6 +4,7 @@ from enum import Enum
 from .mng_json import json_manager, TroubleSgltn #add .
 from .utils import CommUtils
 import openai
+import os
 import json
 from groq import Groq
 from typing import Iterable, Optional
@@ -125,6 +126,34 @@ class FetchOllama(ModelFetchStrategy):
             model_list.append(model.get('name'))
 
         return ModelsContainer(model_list)
+    
+class FetchOptional(ModelFetchStrategy):
+
+    def fetch_models(self, api_obj, key):
+        """Parameters are ignored in this method and class as these model names exist in a
+            local file named "optional_models.txt".  These model names are to used 
+            for remote or local apps, other than Ollama, that require a file name to
+            be passed.
+        """
+        model_list = []
+
+        model_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, "optional_models.txt")
+
+        if not os.path.exists(model_file):
+            self.j_mngr.log_events("Optional Models file is missing.",
+                                   TroubleSgltn.Severity.ERROR,
+                                   True)
+            return ModelsContainer(model_list)
+        
+        
+        try:
+            model_list = self.j_mngr.read_lines_of_file(model_file, is_critical=True) #Returns a list with any user entered model names
+            return ModelsContainer(model_list)
+        except Exception as e:
+            self.j_mngr.log_events(f"Unable to read optional_models.txt file. Error: {e}",
+                                   TroubleSgltn.Severity.ERROR,
+                                   True)        
+            return ModelsContainer(model_list)#empty model list
 
 
 
@@ -153,12 +182,18 @@ class FetchModels:
             return ModelsContainer(model_names)
         
         elif request_type == RequestMode.OLLAMA:
+            self.api_obj = None
             self.strategy = FetchOllama()
 
-        if self.strategy and self.api_obj:
+        elif request_type == RequestMode.OPENSOURCE or request_type == RequestMode.OSSIMPLE:
+            self.api_obj = None
+            self.strategy = FetchOptional()
+
+        if self.strategy:
+
             return self.strategy.fetch_models(self.api_obj, key)
         else:
-            self.j_mngr.log_events("Model fetch class or api object missing",
+            self.j_mngr.log_events("No Model fetch class specified",
                                    TroubleSgltn.Severity.WARNING,
                                    True)
      
