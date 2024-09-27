@@ -6,6 +6,15 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+9/26/2024 @9:31pm PST *Version 1.21.15*
+*   **Update to Advanced Prompt Enhancer:**
+    *   Added a new field: *Optional_model*.  The model names in this drop-down field are extacted from a user editable text file: `custom_nodes/Plush-for-ComfyUI/optional_models.txt`.  This is for AI Services, local or remote, that require a model name to be provided as part of the inference request.
+    *   The file *optional_models.txt* has a comment header that explains how to enter the model names, and the Advanced Prompt Enhancer help output has information on the new field.
+    *   The models listed in *Optional_model* field pull down will only be applied when useing *AI_Services* that end in *(URL)*.
+    *   Fixed various bugs in Advanced Prompt Enhancer code.
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
 9/18/2024 @2:19pm PST *Version 1.21.14*
 *   **Update to Advanced Prompt Enhancer:**
     *   Fixed *Examples* input, which is now renamed *Examples_or_Context*. This input will now automatically parse delimited example or context input into the proper roles (User or Assistant) and present them to the LLM as required (use the node's *help* output for more details).  This allows you to provide examples of how you want your output to look, or to use *Few Shot Prompting*, or to keep context by including earlier input.
