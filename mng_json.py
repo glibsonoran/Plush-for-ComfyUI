@@ -497,29 +497,31 @@ class json_manager:
 
         return False
     
-    def read_lines_of_file(self, file_path: Union[str, Path], lines:int=0, is_critical: bool = False) -> list|None:
+    def read_lines_of_file(self, file_path: Union[str, Path], lines: int = 0, comment_char: str = '#', is_critical: bool = False) -> list | None:
         """
-        Loads a specified number of lines from a text file, used for simple text file data.
-
+        Loads a specified number of lines from a text file, skipping lines that start with a comment character.
         Args:
             file_path (Union[str, Path]): The path to the file from which data will be loaded.
             lines (int): Number of lines to read from the file. A zero argument returns all lines.
+            comment_char (str): The character used to denote comments. Default is '#'.            
             is_critical (bool): If True, raises exceptions for errors.
 
         Returns:
-            list or None: The loaded list of file lines, or None otherwise.
+            list or None: The loaded list of file lines (excluding comments), or None otherwise.
         """
         file_lines = []
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 line_num = 0
                 for line in file:
-                    file_lines.append(line.strip())  # Remove trailing newlines
-                    line_num += 1
-                    if 0 < lines <= line_num:
-                        break
+                    stripped_line = line.strip()
+                    if not stripped_line.startswith(comment_char):
+                        file_lines.append(stripped_line)
+                        line_num += 1
+                        if 0 < lines <= line_num:
+                            break
             return file_lines
-
+        
         except Exception as e:
             self.log_events(f"Error reading from file: {file_path}: {e}",
                             TroubleSgltn.Severity.ERROR,
@@ -527,8 +529,8 @@ class json_manager:
                             is_critical=is_critical)
             if is_critical:
                 raise
+
             return None
-        
 
     def write_string_to_file(self, data: str, file_path: Union[str,Path], is_critical: bool=False)->bool:
         """
