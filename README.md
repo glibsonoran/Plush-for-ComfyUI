@@ -6,6 +6,14 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+9/28/2024 @12:03pm PST *Version 1.21.16*
+*   **Update to Advanced Prompt Enhancer, bug fix user-entered models are now in the `opt_models.txt` file:**
+    *   The file: *optional_models.txt* was being overwritten when updating the installation using the ComfyUI Manager, although it stayed intact when being updated by a standard git pull.  Since most people update using the manager, I've decided to use an untracked file: `opt_models.txt` that will now hold your user-entered model names.
+    *   The new file 'opt_models.txt' has a comment header that explains how to enter the model names, and the Advanced Prompt Enhancer help output has information on the new field.
+    *   The models listed in *Optional_model* field pull down will only be applied when useing *AI_Services* that end in *(URL)*.  
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
 9/26/2024 @9:31pm PST *Version 1.21.15*
 *   **Update to Advanced Prompt Enhancer:**
     *   Added a new field: *Optional_model*.  The model names in this drop-down field are extacted from a user editable text file: `custom_nodes/Plush-for-ComfyUI/optional_models.txt`.  This is for AI Services, local or remote, that require a model name to be provided as part of the inference request.
