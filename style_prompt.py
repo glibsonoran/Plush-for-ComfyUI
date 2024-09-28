@@ -752,7 +752,7 @@ class AdvPromptEnhancer:
         example_list = []    
         
         if Examples:
-            delimiter = ""
+            delimiter = None
             if examples_delimiter == "Two newlines":
                 delimiter = "\n\n"
             elif examples_delimiter == "Two colons ::":
