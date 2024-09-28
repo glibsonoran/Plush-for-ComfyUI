@@ -531,6 +531,91 @@ class json_manager:
                 raise
 
             return None
+        
+
+    def copy_template_file(self, template: str, new_file: str, overwrite: bool = False, is_critical: bool = False) -> bool:
+        """
+        Copies a template file to a new location with a new file name.
+        
+        Parameters:
+        - template (str): The path and file name of the template file.
+        - new_file (str): The path and file name to be given to the new file.
+        - overwrite (bool): Whether to overwrite the file if it already exists (default is False).
+        - is_critical (bool): If True, exceptions will be raised; if False, exceptions will be handled in the method (default is False).
+        
+        Returns:
+        - bool: True if the file was copied or already exists without needing overwrite, False if the copy fails.
+        """
+        
+        # Convert paths to Path objects
+        template_path = Path(template)
+        new_file_path = Path(new_file)
+
+        try:
+            # Check if the new file already exists
+            if new_file_path.exists() and not overwrite:
+                self.log_events(f"File '{new_file}' already exists and overwrite is set to False.",
+                                TroubleSgltn.Severity.INFO)
+                return True  # File exists, no overwrite, so we consider it a success
+
+            # Check if the template file exists
+            if not template_path.exists():
+                raise FileNotFoundError(f"Template file '{template}' not found.")
+
+            # Create parent directories for the new file if they don't exist
+            new_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Copy the file
+            try:
+                shutil.copy(template_path, new_file_path)
+            except Exception as e:
+                error_message = f"Failed to copy template '{template}' to '{new_file}': {e}"
+                self.log_events(error_message, TroubleSgltn.Severity.ERROR)
+                if is_critical:
+                    raise Exception(error_message) from e
+                return False
+
+            self.log_events(f"Template file '{template}' successfully copied to '{new_file}'.",
+                            TroubleSgltn.Severity.INFO)
+            return True  # Success
+
+        except Exception as e:
+            if is_critical:
+                # Raise the original exception if the operation is critical
+                raise e
+            else:
+                # Handle the exception without raising
+                self.log_events(f"An error occurred: {e}", TroubleSgltn.Severity.ERROR)
+                return False  # Failure
+        
+
+    def read_file_contents(self, file_path, is_critical=False):
+        try:
+            with open(file_path, 'r', encoding='utf-8') as file:
+                contents = file.read()
+            return contents
+        except FileNotFoundError as e:
+            error_message = f"Error: The file '{file_path}' was not found."
+            if is_critical:
+                raise FileNotFoundError(error_message) from e
+            else:
+                self.log_events(error_message,
+                                TroubleSgltn.Severity.ERROR)
+        except IOError as e:
+            error_message = f"Error: There was an issue reading the file '{file_path}'."
+            if is_critical:
+                raise IOError(error_message) from e
+            else:
+                self.log_events(error_message,
+                                TroubleSgltn.Severity.ERROR)
+        except Exception as e:
+            error_message = f"An unexpected error occurred: {e}"
+            if is_critical:
+                raise
+            else:
+                self.log_events(error_message,
+                                TroubleSgltn.Severity.ERROR)
+        return None
 
     def write_string_to_file(self, data: str, file_path: Union[str,Path], is_critical: bool=False)->bool:
         """
@@ -1484,6 +1569,20 @@ class json_manager:
             self.log_events(f'Log file {self.log_file_name} was unable to be processed for old entries.  File was corrupt and was deleted',
                             TroubleSgltn.Severity.ERROR)
             
+
+        #Create untracked files to hold users entered data
+        untracked_type = "Optional Models"
+        untracked_file = 'opt_models.txt'
+        untracked_path = self.append_filename_to_path(self.script_dir, untracked_file)
+        template_file = 'models_template.txt'
+        template_path = self.append_filename_to_path(self.script_dir, template_file)
+        result = self.copy_template_file(template_path, untracked_path)
+        if result:
+            self.log_events(f"{untracked_type} file successfully created or already exists: {untracked_file}'")
+        else:
+            self.log_events(f"Creation of {untracked_type} file failed. {untracked_file} does not exist",
+                            TroubleSgltn.Severity.WARNING)
+
 
         # Check for config.json
         if not os.path.exists(self.config_file):
