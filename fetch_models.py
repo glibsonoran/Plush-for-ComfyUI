@@ -137,7 +137,7 @@ class FetchOptional(ModelFetchStrategy):
         """
         model_list = []
 
-        model_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, "optional_models.txt")
+        model_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, "opt_models.txt")
 
         if not os.path.exists(model_file):
             self.j_mngr.log_events("Optional Models file is missing.",
@@ -202,26 +202,6 @@ class ModelUtils:
     def __init__(self) -> None:
         self.j_mngr = json_manager()
         
-        
-    def old_prep_models_list(self, models, sort_it:bool=False, filter_str:str=""):
-        #Start with 'None' here to prevent node error 'value not in list'
-        prepped_models = ['none']
-
-        if models is None or not hasattr(models, 'data') or not models.data:
-            self.j_mngr.log_events("Models object is empty or malformed",
-                                   TroubleSgltn.Severity.ERROR,
-                                   True)
-            return prepped_models
-            
-        filtered_models = [model.id for model in models.data if filter_str.lower() in model.id.lower()]
-
-        prepped_models.extend(filtered_models)
-
-        if sort_it:
-            prepped_models.sort()
-        
-        return prepped_models 
-    
 
     def prep_models_list(self, models, sort_it: bool = False, filter_str: Optional[Iterable[str]] = None):
         # Start with 'none' here to prevent node error 'value not in list'
@@ -230,7 +210,7 @@ class ModelUtils:
         if models is None or not hasattr(models, 'data') or not models.data:
             self.j_mngr.log_events(
                 "Models object is empty or malformed",
-                TroubleSgltn.Severity.ERROR,
+                TroubleSgltn.Severity.INFO,
                 True
             )
             return prepped_models

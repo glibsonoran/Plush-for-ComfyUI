@@ -1,0 +1,18 @@
+# Add the model names you want to use.
+# They will appear in the 'Optional_model' dropdown in the Advanced Prompt Enhancer.
+# This applies to both local or remote services that require you to pass a model name.
+# *****************
+# Enter each model name on a new line after this comment section.
+# Optionally, you can preface each model name with the name of the service it applies to, followed by two colons.
+# The models will be sorted alphabetically.
+# The service name is for your reference only; the model name sent to the service will be the part that appears after the two colons.
+# If you don't include a service name, the model name will be presented exactly as you enter it.
+# Be sure to spell the model names exactly as they appear in the service.
+# After adding or removing model names and saving this file, you'll need to restart ComfyUI to see the changes in the app.
+# ******************
+# Examples:
+# ******************
+# HotAIdotcom::llama-405b
+# HotAIdotcom::mistral-nemo-12b
+# LLM Central::phi3.5
+# mixtral-12b-instruct
