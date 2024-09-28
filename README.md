@@ -9,7 +9,7 @@
 9/28/2024 @12:03pm PST *Version 1.21.16*
 *   **Update to Advanced Prompt Enhancer, bug fix user-entered models are now in the `opt_models.txt` file:**
     *   The file: *optional_models.txt* was being overwritten when updating the installation using the ComfyUI Manager, although it stayed intact when being updated by a standard git pull.  Since most people update using the manager, I've decided to use an untracked file: `opt_models.txt` that will now hold your user-entered model names.
-    *   The new file 'opt_models.txt' has a comment header that explains how to enter the model names, and the Advanced Prompt Enhancer help output has information on the new field.
+    *   The new file `opt_models.txt` has a comment header that explains how to enter the model names, and the Advanced Prompt Enhancer help output has information on the new field.
     *   The models listed in *Optional_model* field pull down will only be applied when useing *AI_Services* that end in *(URL)*.  
 *   **Help.json**
     *   Updated to reflect changes detailed above.
