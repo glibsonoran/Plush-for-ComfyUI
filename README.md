@@ -9,6 +9,7 @@
 9/28/2024 @12:03pm PST *Version 1.21.16*
 *   **Update to Advanced Prompt Enhancer, bug fix user-entered models are now in the `opt_models.txt` file:**
     *   The file: *optional_models.txt* was being overwritten when updating the installation using the ComfyUI Manager, although it stayed intact when being updated by a standard git pull.  Since most people update using the manager, I've decided to use an untracked file: `opt_models.txt` that will now hold your user-entered model names.
+    *   The new file `opt_models.txt` */Plush-for-ComfyUI* is created during first startup after updating the Plush node suite.  It will not appear until after you've restarted ComfyUI following a: Manager Update, or a  git clone, or a git pull to version 1.21.16 or higher.
     *   The new file `opt_models.txt` has a comment header that explains how to enter the model names, and the Advanced Prompt Enhancer help output has information on the new field.
     *   The models extracted from this file and listed in the *Optional_model* field pull down will only be applied when using *AI_Services* that end in *(URL)*.  
 *   **Help.json**
