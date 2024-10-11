@@ -35,6 +35,10 @@ class FetchByProperty(ModelFetchStrategy):
 
     def fetch_models(self, api_obj, key:str):
 
+        if not key:
+            self.j_mngr.log_events("No OpenAI Key found.")
+            return None
+
         api_obj.api_key = key
         #Get the model list 
 
@@ -52,6 +56,7 @@ class FetchGeminiModels(ModelFetchStrategy):
 
     def fetch_models(self, api_obj, key):
 
+        
         api_obj.configure(api_key=key)
 
         try:
@@ -81,6 +86,10 @@ class FetchByMethod(ModelFetchStrategy):
 
     def fetch_models(self, api_obj, key:str):
 
+        if not key:
+            self.j_mngr.log_events("No Groq Key found.")
+            return None
+        
         client = api_obj(api_key=key)
 
         try:
@@ -100,8 +109,8 @@ class FetchOllama(ModelFetchStrategy):
 
     def fetch_models(self, api_obj, key):
         """Parameters are ignored in this method and class as Ollama is a local app that has no
-            imported api object and doesn't require a key.  Ollama is unique among local apps
-            in that it requires a model name be passed in the request."""
+            imported api object and doesn't require a key.  Ollama is a local app
+            that requires a model name be passed in the request."""
         
         url = self.utils.url_file("urls.json", "ollama_url")
         t_response = self.comm.is_lm_server_up(url,1,2)
