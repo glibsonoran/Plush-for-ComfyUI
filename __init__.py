@@ -7,7 +7,6 @@ from .mng_json import json_manager
 #Diagnostic version print to detect incompatible openai versions
 import openai
 
-#WEB_DIRECTORY = "./js"
 
 print(f"Plush - Running on python installation: {sys.executable}, ver: {sys.version}")
 print("Plush - Current Openai Version: ", openai.__version__)
@@ -18,7 +17,7 @@ if jmanager.on_startup(False):
 else:
     jmanager.log_events("config.json was not updated")
 
-__version__ ="1.21.16"
+__version__ ="1.21.18"
 print('Plush - Version:', __version__)
 
 
@@ -32,5 +31,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay}
 
 #NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings, **testClassMappings}
 #NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay, **testDisplay}
+WEB_DIRECTORY = "./Web"
 
-__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
+__all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS', "WEB_DIRECTORY"]

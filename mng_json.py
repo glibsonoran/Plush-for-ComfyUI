@@ -6,7 +6,8 @@ from enum import Enum
 import bisect
 from datetime import datetime, timedelta
 import re
-import math
+import math    
+import ast
 import time
 from pathlib import Path
 from typing import Optional, Any, Union, List, Dict
@@ -112,6 +113,8 @@ class helpSgltn:
         self._exif_wrangler_help = ''
         self._adv_prompt_help =''
         self._tagger_help = ""
+        self._add_param_help = ""
+        self._extract_json_help = ""
         # Empty help text is not a critical issue for the app
         if not help_data:
             j_mmgr.log_events('Help data file is empty or missing.',
@@ -123,6 +126,8 @@ class helpSgltn:
         self._dalle_help = help_data.get('dalle_help', '')
         self._adv_prompt_help = help_data.get('adv_prompt_help', '')
         self._tagger_help = help_data.get('tagger_help', '')
+        self._add_param_help = help_data.get('add_param_help', '')
+        self._extract_json_help = help_data.get('extract_json_help', '')
 
     @property
     def style_prompt_help(self)->str:
@@ -144,6 +149,13 @@ class helpSgltn:
     def tagger_help(self)->str:
         return self._tagger_help
     
+    @property
+    def add_param_help(self)->str:
+        return self._add_param_help
+    
+    @property
+    def extract_json_help (self)->str:
+        return self._extract_json_help
 
 class json_manager:
 
@@ -682,7 +694,130 @@ class json_manager:
 
         return cfg_data
     
-    
+
+
+    def append_params(self, target_dict: dict, add_list: list, key_value_keys: list, is_critical: bool = False):
+        """
+        Appends key-value pairs to target_dict based on dynamic key-value mapping.
+        
+        Args:
+            target_dict (dict): The dictionary to which key-value pairs are added.
+            add_list (list): A list of dictionaries, each containing key-value pairs.
+            key_value_keys (list): A list with two elements: The add_dict keys associated with the add_dict values
+                                    to be added to the target_dict (key[0] will become the target_dict key; 
+                                    key[1] will become the target_dict value.).
+            is_critical (bool): If True, raises an exception on missing keys or invalid entries.
+                                Defaults to False.
+        
+        Returns:
+            None: The target_dict is updated in place.
+        """
+        
+        if len(key_value_keys) != 2:
+            raise ValueError("key_value_keys must contain exactly two elements for key and value names.")
+        
+        key_name, value_name = key_value_keys
+        
+        for index, add_dict in enumerate(add_list):
+            try:
+                # Ensure the specified keys are present in each dictionary in add_list
+                if key_name not in add_dict or value_name not in add_dict:
+                    message = f"Missing '{key_name}' or '{value_name}' in add_list item at index {index}."
+                    self.log_events(message, TroubleSgltn.Severity.ERROR, True)
+                    if is_critical:
+                        raise ValueError(message)
+                    continue  # Skip this entry if it's not well-formed
+
+                # Add the new key-value pair to target_dict
+                param_key = add_dict[key_name]
+                param_value = add_dict[value_name]
+                target_dict[param_key] = param_value
+
+            except Exception as e:
+                message = f"Exception encountered when processing add_list at index {index}, Error: {e}."
+                self.log_events(message, TroubleSgltn.Severity.ERROR, True)
+                if is_critical:
+                    raise ValueError(message) from e
+
+
+
+    def infer_type(self, value):
+
+
+        """
+        Infers the most appropriate data type for a given input value and converts it accordingly.
+        
+        This method attempts to interpret the input `value` based on the following logic:
+        
+        1. If `value` is already a complex data type (e.g., `dict`, `list`, or `tuple`), it is directly returned as-is.
+        2. If `value` is a string, the method first attempts to evaluate it using `ast.literal_eval()` to convert
+        it into a valid Python literal (such as a number, list, tuple, dictionary, boolean, or None). 
+        - If this fails due to a `ValueError` or `SyntaxError`, a second attempt is made by applying `.title()` 
+            to the string and re-evaluating, which can help interpret keywords like "None" or "True" when passed in 
+            lowercase.
+        3. If both `literal_eval()` attempts fail, the method attempts to convert `value` to a float:
+        - If `value` can be interpreted as a float and represents a whole number, it is returned as an `int`.
+        - Otherwise, it is returned as a `float`.
+        4. If all conversions are unsuccessful, `value` is returned as a string by default.
+        
+        Throughout the process, the inferred type is logged for debugging and troubleshooting purposes.
+
+        Parameters:
+        ----------
+        value : Any
+            The input value whose type is to be inferred. Typically, this value is provided as a string but can be
+            any type. Strings representing Python literals, numbers, booleans, lists, tuples, and dictionaries
+            can be automatically converted into their respective types.
+
+        Returns:
+        -------
+        Any
+            The input `value` converted into its inferred type. Possible return types include:
+            - `dict`, `list`, `tuple`: if `value` is already one of these types.
+            - 'dict', 'list', 'tuple' or other data structure if the value is a string that can be evaluated as such
+            - `int`, `float`, that can be interpreted as a number.
+            - `bool`: if `value` is a string representing "True" or "False".
+            - `None`: if `value` is the string "None".
+            - `str`: if no other conversions are applicable, the original `value` is returned as a string.
+        
+        Logs:
+        -----
+        Logs the inferred type of `value` to aid in debugging, with a flag indicating an issue (`is_trouble=True`)
+        for each conversion attempt.
+        
+        Raises:
+        -------
+        This method does not raise any exceptions itself. Instead, it captures `ValueError` and `SyntaxError`
+        exceptions that may occur during conversion attempts and gracefully continues to the next conversion step.
+        """
+
+        # Directly return if it's already a complex type
+        if isinstance(value, (dict, list, tuple)):
+            self.log_events(f"Value inferred as data type: {type(value)}", is_trouble=True)
+            return value
+
+        # Try to convert using ast.literal_eval
+        if isinstance(value, str):
+            try:
+                # First attempt to evaluate the original string
+                evaluated_value = ast.literal_eval(value)
+                self.log_events(f"Value inferred as data type: {type(evaluated_value)}", is_trouble=True)
+                return evaluated_value
+            except (ValueError, SyntaxError):
+                # If it fails, try evaluating the title-cased version
+                try:
+                    second_test_value = ast.literal_eval(value.title())
+                    self.log_events(f"Value inferred as data type: {type(second_test_value)}", is_trouble=True)
+                    return second_test_value
+                except (ValueError, SyntaxError):
+                    pass  # Continue if both evaluations fail
+
+        # If all else fails, return as a string
+        self.log_events("Value inferred as data type: str", is_trouble=True)
+        return value
+
+
+
     
     def extract_from_dict(self, dict_data:dict, target:list)->dict:
         """
@@ -697,9 +832,9 @@ class json_manager:
                 A dictionary containg the dicts whose keys match the criteria and lists that either hold values from 
                 duplicate keys, or had elements that matched the criteria
         """
-
+        
         def find_it(data, search_key, new_dict):
-                    
+    
             for k, v in data.items():
                 if k == search_key:
 
@@ -709,8 +844,8 @@ class json_manager:
                         else:
                             new_dict[k] = [new_dict[k], v] #Convert it to a list and append it
                     else:
-                        new_dict[k] = v                            
-                
+                        new_dict[k] = v                       
+
                 elif isinstance(v, str):
                     v = v.strip()
                     if v.startswith('{') or v.startswith('['):
@@ -743,6 +878,82 @@ class json_manager:
                             TroubleSgltn.Severity.WARNING,
                             True)
         return new_dict
+    
+
+
+
+    def extract_list_of_dicts(self, dict_data, target: list) -> dict:
+        """
+        A recursive method that extracts data from a dict or list of dicts by finding keys that meet the criteria in the target argument, 
+        and returns them and their values in a new dict. Duplicate keys have their values stored in a list under the key.  
+        JSON strings are coerced to a dictionary object.
+            Args:
+                dict_data (dict or list of dicts): The dictionary (or list of dictionaries) to be searched for matching values
+                target (list):  A list of search values 
+
+            Returns:
+                A dictionary containing the dicts whose keys match the criteria and lists that either hold values from 
+                duplicate keys, or had elements that matched the criteria
+        """
+        
+        def find_it(data, search_key, new_dict):
+            
+            if isinstance(data, list):
+                for item in data:
+                    if isinstance(item, dict):
+                        find_it(item, search_key, new_dict)
+                return
+            
+            for k, v in data.items():
+                if k == search_key:
+                    if k in new_dict:  # key is a duplicate
+                        if isinstance(new_dict[k], list):  # if the new item is a list
+                            new_dict[k].append(v)  # append the list with the dupe key
+                        else:
+                            new_dict[k] = [new_dict[k], v]  # Convert it to a list and append it
+                    else:
+                        new_dict[k] = v
+
+                elif isinstance(v, str):
+                    v = v.strip()
+                    if v.startswith('{') or v.startswith('['):
+                        try:
+                            parsed = json.loads(v)
+                            find_it(parsed, search_key, new_dict) 
+                        except json.JSONDecodeError:
+                            # JSON parsing failed
+                            self.log_events(f"Attempt to convert string to dictionary failed, some data will be missing:  {v}",
+                                            TroubleSgltn.Severity.WARNING,
+                                            True)
+                            continue
+                elif isinstance(v, dict):
+                    find_it(v, search_key, new_dict)
+                elif isinstance(v, list):
+                    for i in v:
+                        if i == search_key:
+                            new_dict[k] = v
+                        if isinstance(i, dict):
+                            find_it(i, search_key, new_dict)
+                            
+        new_dict = {}
+
+        if isinstance(dict_data, list):
+            self.log_events("Data is a list.", is_trouble=True)
+            for item in dict_data:
+                if isinstance(item, dict):
+                    for search_key in target:
+                        find_it(item, search_key, new_dict)
+        elif isinstance(dict_data, dict):
+            self.log_events("Data is a JSON (dictionary).", is_trouble=True)
+            for search_key in target:
+                find_it(dict_data, search_key, new_dict)
+        else:
+            self.log_events("'extract_from_dict', Incoming data is neither a dict nor a list of dicts. Returning empty dict.",
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+        
+        return new_dict
+
     
 
     #**testing
