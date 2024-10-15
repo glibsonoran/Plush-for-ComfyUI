@@ -378,6 +378,10 @@ class cFigSingleton:
         if self._fig_key:
             return self.figOAIClient
         return None
+
+#********************End Singleton*********************
+
+
     
 class AI_Chooser:
     def __init__(self):
@@ -634,8 +638,103 @@ class Enhancer:
         CGPT_prompt = self.ctx.execute_request(**kwargs)
     
         return (CGPT_prompt, instruction, CGPT_styleInfo, _help, self.trbl.get_troubles())
+
+
+class addParams:
+    def __init__(self):
+        #instantiate Configuration and Help data classes
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "required": {
+                "Parameter_type": (["none", "OpenAI JSON Format", "User Defined"], {"default": "none"}),
+                "Param_Name": ("STRING", {"default": ""}),
+                "Param_Value": ("STRING", {"multiline": True}),
+                "Is_JSON": ("BOOLEAN", {"default": False})
+                                                          
+            },
+
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            },
+
+            "optional": {
+                "Add_Parameters": ("LIST", {"default": None, "forceInput": True})
+            }
+        
+        } 
     
-    
+    RETURN_TYPES = ("LIST", "STRING", "STRING")
+    RETURN_NAMES = ("Add_Parameter","Help","Troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Prompt"  
+
+    def gogo(self, Parameter_type, Param_Name, Param_Value, Is_JSON: bool, Add_Parameters=None, unique_id=None):
+
+        self.trbl.reset(f"Additional Parameters, Node: {unique_id}")
+        _help = self.help_data.add_param_help 
+        # Copy Add_Parameters or start fresh to avoid reference issues
+        param_list = list(Add_Parameters) if isinstance(Add_Parameters, list) else []
+
+            # Handle OpenAI JSON Format case
+        if Parameter_type == "OpenAI JSON Format":
+            f_json = {"type": "json_object"}
+            param_list.append({"param": "response_format", "value": f_json})
+            self.j_mngr.log_events(f"Param output: {str(param_list)}", is_trouble=True)
+            return (param_list, _help, self.trbl.get_troubles())
+
+        # Handle 'none' case
+        if Parameter_type == "none":
+            self.j_mngr.log_events(f"Param output: {str(param_list)}", is_trouble=True)
+            return (param_list, _help, self.trbl.get_troubles())
+        
+        # Handle User Defined case
+        if Parameter_type == "User Defined":
+            if Param_Name and Param_Value:
+                self.j_mngr.log_events(f"Processing User Defined parameter: {Param_Name}", is_trouble=True)
+                temp_dict = {'param': Param_Name}
+                
+                # Attempt to parse as JSON if specified
+                if Is_JSON:
+                    p_json = self.j_mngr.convert_from_json_string(Param_Value)
+                    if p_json:
+                        temp_dict['value'] = p_json
+                    else:
+                        self.j_mngr.log_events(f"Invalid JSON presented to Additional Parameters. Node: {unique_id}",
+                                            TroubleSgltn.Severity.ERROR,
+                                            True)
+                        self.j_mngr.log_events(f"Param output: {str(param_list)}", is_trouble=True)
+                        return (param_list, _help, self.trbl.get_troubles())
+                else:
+                    # Infer type 
+                    i_value = self.j_mngr.infer_type(Param_Value)
+                    temp_dict['value'] = i_value
+
+            else:
+                self.j_mngr.log_events("Parameter Name or Value is missing. Parameter was not processed.",
+                                    TroubleSgltn.Severity.WARNING,
+                                    True)
+                self.j_mngr.log_events(f"Param output: {str(param_list)}", is_trouble=True)
+                return (param_list, _help, self.trbl.get_troubles())
+            
+            if temp_dict:
+                param_list.append(temp_dict)
+                self.j_mngr.log_events(f"Param output: {str(param_list)}", is_trouble=True)
+                
+        return (param_list, _help, self.trbl.get_troubles())
+
+
+
 
 class AdvPromptEnhancer:
     #Advance Prompt Enhancer: User entered Instruction, Prompt and Examples
@@ -703,6 +802,7 @@ class AdvPromptEnhancer:
                 "Instruction": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Examples_or_Context": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Prompt": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
+                "Add_Parameter": ("LIST", {"default": None, "forceInput": True}),
                 "image" : ("IMAGE", {"default": None})                          
                 
             }
@@ -718,7 +818,7 @@ class AdvPromptEnhancer:
     CATEGORY = "Plush/Prompt"
 
     def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
-              LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="",image=None, unique_id=None):
+              Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="", image=None, unique_id=None):
 
         if unique_id:
             self.trbl.reset("Advanced Prompt Enhancer, Node #"+unique_id)
@@ -734,6 +834,13 @@ class AdvPromptEnhancer:
         Examples = Enhancer.undefined_to_none(Examples_or_Context)
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
+        
+        if not isinstance(Add_Parameter, list):
+            Add_Parameter = []
+
+        self.j_mngr.log_events(f"Additional parameters input: {str(Add_Parameter)}",
+                        TroubleSgltn.Severity.INFO,
+                        True)
 
         remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, AI_service)
       
@@ -743,6 +850,7 @@ class AdvPromptEnhancer:
                                    True)
 
         llm_result = "Unable to process request.  Make sure the local Open Source Server is running, and you've provided a valid URL.  If you're using a remote service (e.g.: ChaTGPT, Groq) make sure your key is valid, and a model is selected"
+
 
         #Convert PyTorch.tensor to B64encoded image
         if isinstance(image, torch.Tensor):
@@ -771,6 +879,7 @@ class AdvPromptEnhancer:
                 "url": LLM_URL,
                 "image": image,
                 "example_list": example_list,
+                "add_params": Add_Parameter,
         }
 
         if  AI_service == 'Local app (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
@@ -1345,7 +1454,8 @@ NODE_CLASS_MAPPINGS = {
     "AI Chooser": AI_Chooser,
     "AdvPromptEnhancer": AdvPromptEnhancer,
     "DalleImage": DalleImage,
-    "Plush-Exif Wrangler" :ImageInfoExtractor
+    "Plush-Exif Wrangler" :ImageInfoExtractor,
+    "Additional Parameter" :addParams
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -1354,6 +1464,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AI Chooser": "AI_Chooser",
     "AdvPromptEnhancer": "Advanced Prompt Enhancer",
     "DalleImage": "OAI Dall_e Image",
-    "ImageInfoExtractor": "Exif Wrangler"
+    "ImageInfoExtractor": "Exif Wrangler",
+    "Additional Parameter": "Additional Parameter"
 }
 

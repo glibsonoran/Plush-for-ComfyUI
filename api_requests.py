@@ -82,6 +82,7 @@ class oai_object_request(Request): #Concrete class
         file = kwargs.get('file',"")
         image = kwargs.get('image', None)
         example_list = kwargs.get('example_list', [])
+        add_params = kwargs.get('add_params', None)
 
         request_type = self.cFig.lm_request_mode
         response = None
@@ -182,6 +183,11 @@ class oai_object_request(Request): #Concrete class
         "max_tokens": tokens
         }
 
+        # Add the parameter if it exists 
+        if add_params:
+            add_keys =['param','value']
+            self.j_mngr.append_params(params, add_params, add_keys)
+
         try:
             response = client.chat.completions.create(**params)
 
@@ -268,6 +274,9 @@ class oai_web_request(Request):
         prompt = kwargs.get('prompt', None)
         instruction = kwargs.get('instruction', "")
         example_list = kwargs.get('example_list', [])
+        add_params = kwargs.get('add_params', None)
+
+
 
         request_type = self.cFig.lm_request_mode
 
@@ -330,7 +339,12 @@ class oai_web_request(Request):
         "messages": messages,
         "temperature": creative_latitude,
         "max_tokens": tokens
-        }    
+        }   
+
+        if add_params:
+            add_keys =['param','value']
+            self.j_mngr.append_params(params, add_params, add_keys)
+
 
         post_success = False
         response_json = ""
@@ -408,6 +422,8 @@ class ooba_web_request(Request):
         instruction = kwargs.get('instruction', "")
         example_list = kwargs.get('example_list', [])
         request_type = self.cFig.lm_request_mode
+        add_params = kwargs.get('add_params', None)
+
 
         response = None
         CGPT_response = ""    
@@ -458,6 +474,12 @@ class ooba_web_request(Request):
             "temperature": creative_latitude,
             "max_tokens": tokens
             }    
+
+        # Add the parameter if it exists 
+        if add_params:
+            add_keys =['param','value']
+            self.j_mngr.append_params(params, add_params, add_keys)
+
         post_success = False
         response_json = ""
         #payload = {**params}
@@ -515,6 +537,8 @@ class claude_request(Request):
         file = kwargs.get('file',"")
         image = kwargs.get('image', None)
         example_list = kwargs.get('example_list', [])
+        add_params = kwargs.get('add_params', None)
+
 
         request_type = self.cFig.lm_request_mode
         
@@ -570,6 +594,11 @@ class claude_request(Request):
         "system": instruction,
         "max_tokens": tokens
         }
+
+        # Add the parameter if it exists 
+        if add_params:
+            add_keys =['param','value']
+            self.j_mngr.append_params(params, add_params, add_keys)   
 
         try:
             response = client.messages.create(**params)

@@ -257,15 +257,121 @@ class ImgTextSwitch:
             raise Exception ("Missing text and image input, check selction")
 
         return (ret_text, ret_img)
+
+class jsonParse:
+    def __init__(self)-> None:
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "key_1": ("STRING", {"default": "", "tooltip": "JSON key whose value will be output"}),
+                "key_2": ("STRING", {"default": "", "tooltip": "JSON key whose value will be output"}),
+                "key_3": ("STRING", {"default": "", "tooltip": "JSON key whose value will be output"}),
+                "key_4": ("STRING", {"default": "", "tooltip": "JSON key whose value will be output"}),
+                "key_5": ("STRING", {"default": "", "tooltip": "JSON key whose value will be output"})
+            },
+            "optional": {
+                "json_string": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
+            }
+        }
+
+    FUNCTION = "gogo"
+    RETURN_NAMES = ("string_1", "string_2", "string_3", "string_4", "string_5", "JSON_Obj", "help", "Troubleshooting")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "DICTIONARY","STRING","STRING")
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, json_string: str, key_1: str, key_2: str, key_3: str, key_4: str, key_5: str,):
+        self.trbl.reset("Extract JSON")
+        _help = self.help_data.extract_json_help
+        s_json = json_string.strip()
+
+        # Create a list and exclude empty strings
+        key_list = [var for var in [key_1, key_2, key_3, key_4, key_5] if var]
+
+        p_json = self.j_mngr.convert_from_json_string(s_json)
+        if p_json is None:
+            self.j_mngr.log_events("Invalid JSON presented in JSON parse node.", TroubleSgltn.Severity.ERROR, True)
+            return "", "", "", "", "", {},_help,self.trbl.get_troubles()
+
+        if isinstance(p_json, (list, dict)):
+            self.j_mngr.log_events("Extracting JSON key values.",is_trouble=True)
+            p_json = self.j_mngr.extract_list_of_dicts(p_json, key_list)
+        else:
+            self.j_mngr.log_events("Invalid JSON presented in JSON parse node.",
+                                    TroubleSgltn.Severity.ERROR,
+                                    True)
+            return "", "", "", "", "", {},_help,self.trbl.get_troubles() 
+
+        # Extract values for each key and ensure output format
+        values = {k: str(p_json.get(k, "")) for k in key_list}
+
+        return (*[values.get(k, "") for k in [key_1, key_2, key_3, key_4, key_5]], p_json,_help,self.trbl.get_troubles())
+    
+
+class ShowInfo_md:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "md_text": ("STRING", {"multiline": True, "forceInput": True}),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+                "extra_pnginfo": "EXTRA_PNGINFO",
+            },
+        }
+
+    INPUT_IS_LIST = True
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("String",)
+    FUNCTION = "notify"
+    OUTPUT_NODE = True
+    OUTPUT_IS_LIST = (True,)
+
+    CATEGORY = "Plush/Utils"
+
+    def notify(self, md_text, unique_id=None, extra_pnginfo=None):
+        text = md_text
+        if unique_id and extra_pnginfo and "workflow" in extra_pnginfo[0]:
+            workflow = extra_pnginfo[0]["workflow"]
+            node = next(
+                (x for x in workflow["nodes"] if str(x["id"]) == unique_id[0]), None
+            )
+            if node:
+                node["widgets_values"] = [text]
+        
+        # Ensure that 'text' is a string
+        if isinstance(text, list):
+            text = ''.join(text)
+        elif not isinstance(text, str):
+            text = str(text)
+        
+
+        return {"ui": {"text": text}, "result": (text,)}
+    
+
+
+
     
 NODE_CLASS_MAPPINGS = {
     "mulTextSwitch": mulTextSwitch,
     "ImgTextSwitch": ImgTextSwitch,
-    "Tagger": Tagger
+    "Tagger": Tagger,
+    "ShowInfo_md": ShowInfo_md,
+    "ParseJSON": jsonParse
+
+
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
 "mulTextSwitch": "MultiLine Text Switch",
 "ImgTextSwitch": "Image & Text Switch",
-"Tagger": "Tagger"
+"Tagger": "Tagger",
+"ShowInfo_md": "Display Markdown Text",
+"ParseJSON": "Extract JSON data"
+
 }

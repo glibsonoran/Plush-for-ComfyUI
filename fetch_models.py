@@ -217,11 +217,7 @@ class ModelUtils:
         prepped_models = ['none']
 
         if models is None or not hasattr(models, 'data') or not models.data:
-            self.j_mngr.log_events(
-                "Models object is empty or malformed",
-                TroubleSgltn.Severity.INFO,
-                True
-            )
+
             return prepped_models
 
         # Initialize filter_str to an empty tuple if it's None
