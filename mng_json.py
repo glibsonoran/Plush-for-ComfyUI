@@ -114,6 +114,7 @@ class helpSgltn:
         self._adv_prompt_help =''
         self._tagger_help = ""
         self._add_param_help = ""
+        self._add_params_help = ""
         self._extract_json_help = ""
         # Empty help text is not a critical issue for the app
         if not help_data:
@@ -127,6 +128,7 @@ class helpSgltn:
         self._adv_prompt_help = help_data.get('adv_prompt_help', '')
         self._tagger_help = help_data.get('tagger_help', '')
         self._add_param_help = help_data.get('add_param_help', '')
+        self._add_params_help = help_data.get('add_params_help', '')
         self._extract_json_help = help_data.get('extract_json_help', '')
 
     @property
@@ -152,6 +154,10 @@ class helpSgltn:
     @property
     def add_param_help(self)->str:
         return self._add_param_help
+    
+    @property
+    def add_params_help(self)->str:
+        return self._add_params_help    
     
     @property
     def extract_json_help (self)->str:
@@ -1304,6 +1310,67 @@ class json_manager:
         elif isinstance(dict_data, list):
             for item in dict_data:
                 self.remove_keys_from_dict(item, keys_to_remove)
+
+
+
+    def positional_str_to_dict(self, input_data: str, template_dict: Dict[str, Any], comment_char: str = None, delimiter: str = ",") -> List[Dict[str, Any]]:
+        """
+        Parses the input data string to create a list of dictionaries based on a provided template dictionary.
+        
+        Args:
+            input_data (str): The raw input string with items separated by newline characters and fields within
+                each item separated by the specified delimiter. Each item will be parsed and mapped to the keys 
+                in the template dictionary according to their order.
+            template_dict (Dict[str, Any]): A dictionary template that defines the structure for each output entry.
+                The order of the keys in this template dictates the assignment of parsed fields from each item
+                in the input data.
+            comment_char (str, optional): A character indicating that a line should be treated as a comment and ignored.
+                Any line beginning with this character will not be processed. If None, all lines are processed.
+                Default is None.
+            delimiter (str, optional): The character(s) used to separate fields within each item in input_data. 
+                Default is ",".
+
+        Returns:
+            List[Dict[str, Any]]: A list of dictionaries that match the template structure, with values populated 
+            based on the parsed input data.
+
+        Note:
+            Each field in an item (separated by the specified delimiter) 
+            is mapped to the corresponding key in `template_dict` based on their order. Ensure that the template 
+            dictionary and input data lines are structured consistently with each other.
+        """
+    # Extract the keys from the template dict to map data
+        template_keys = list(template_dict.keys())
+        
+        # Split input into lines
+        lines = input_data.split('\n')
+        
+        # Initialize the list to hold the resulting dictionaries
+        result_list = []
+        self.log_events(f"Received input data of {len(lines)} items.", is_trouble=True)
+
+        # Process each line
+        for line in lines:
+            # Skip empty lines or lines that begin with the comment character (if set)
+            line = line.strip()  # First remove general whitespace, including newlines
+            if not line or (comment_char and line.startswith(comment_char)):
+                continue
+            line = line.strip(",.;")  # Then remove specific characters as needed
+            
+            # Split line into fields by the specified delimiter
+            fields = line.split(delimiter)
+            
+            # Create the dictionary structure based on the template
+            entry = template_dict.copy()
+            for i, key in enumerate(template_keys):
+                if i < len(fields):
+                    # Assign the parsed value to the corresponding template key
+                    entry[key] = self.infer_type(fields[i].strip())
+            
+            result_list.append(entry)
+        
+        return result_list
+
 
 
     def insert_text_into_dict(self, input_data:Union[str, list[str]], template_dict:dict, insert_key:str, delimiter:str="|"):

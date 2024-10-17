@@ -1,5 +1,6 @@
 
 from .mng_json import json_manager, helpSgltn, TroubleSgltn
+import random
 
 class Tagger:
     def __init__(self)-> None:
@@ -159,6 +160,96 @@ class Tagger:
                                
         return(output, _help, self.trbl.get_troubles())
     
+
+class randomOut:
+
+    def __init__(self)-> None:
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "required": {
+                "Text": ("STRING", {"multiline": True, "forceInput": True}),
+                "randomized_outputs": (['1','2','3','4','5'], {"default": "2"}),
+                "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff})
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+    
+    RETURN_TYPES = ("STRING","STRING","STRING","STRING","STRING")
+    RETURN_NAMES = ("Text_1", "Text_2","Text_3","Text_4","Text_5")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, Text, unique_id, seed, randomized_outputs=0):
+        random.seed(seed)
+        rnd_out = int(randomized_outputs)
+        int_rnd = random.randint(1, rnd_out)
+        outputs = ["","","","",""]
+        if 1 <= int_rnd <= 5:
+            outputs[int_rnd-1] = Text
+        out_tuple = tuple(outputs[:5])
+
+        return out_tuple
+    
+
+class mixer:
+
+    def __init__(self)-> None:
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "optional": {
+                "Text_1": ("STRING", {"multiline": True, "forceInput": True}),
+                "Text_2": ("STRING", {"multiline": True, "forceInput": True}),
+                "Text_3": ("STRING", {"multiline": True, "forceInput": True}),
+                "Text_4": ("STRING", {"multiline": True, "forceInput": True}),
+                "Text_5": ("STRING", {"multiline": True, "forceInput": True}),
+
+                "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff})
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+    
+    RETURN_TYPES = ("STRING","STRING","STRING","STRING","STRING")
+    RETURN_NAMES = ("Output_1", "Output_2","Output_3","Output_4","Output_5")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, unique_id, seed, Text_1:str="", Text_2:str="", Text_3:str="", Text_4:str="", Text_5:str=""):
+
+        valid_input = [text for text in [Text_1, Text_2, Text_3, Text_4, Text_5] if text] #Fill the list only with actual input data
+        random.seed(seed)        
+        random.shuffle(valid_input) #randomize list order
+
+        padding = 5 - len(valid_input)
+        valid_input.extend([""] * padding) #pad the outputs with no valid input data with empty strings
+        out_tuple = tuple(valid_input[:5])
+
+        return out_tuple    
+
+
 
 
 class mulTextSwitch:
@@ -361,8 +452,9 @@ NODE_CLASS_MAPPINGS = {
     "mulTextSwitch": mulTextSwitch,
     "ImgTextSwitch": ImgTextSwitch,
     "Tagger": Tagger,
-    "ShowInfo_md": ShowInfo_md,
-    "ParseJSON": jsonParse
+    "ParseJSON": jsonParse,
+    "Random Output": randomOut,
+    "Random Mixer": mixer
 
 
 }
@@ -371,7 +463,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 "mulTextSwitch": "MultiLine Text Switch",
 "ImgTextSwitch": "Image & Text Switch",
 "Tagger": "Tagger",
-"ShowInfo_md": "Display Markdown Text",
-"ParseJSON": "Extract JSON data"
+"ParseJSON": "Extract JSON data",
+"Random Output": "Random Output",
+"Random Mixer": "Random Mixer"
 
 }
