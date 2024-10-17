@@ -640,6 +640,95 @@ class Enhancer:
         return (CGPT_prompt, instruction, CGPT_styleInfo, _help, self.trbl.get_troubles())
 
 
+class addParameters:
+    ##New##
+    def __init__(self):
+        #instantiate Configuration and Help data classes
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "required": {
+                "Parameters": ("STRING", {"multiline": True, "default": ""}),
+                "Save_to_file": ("BOOLEAN", {"default": False}),
+                "File_name": ("STRING", {"default": ""})
+                                                          
+            },
+
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        
+        } 
+    
+    RETURN_TYPES = ("LIST", "STRING", "STRING")
+    RETURN_NAMES = ("Add_Parameter","Help","Troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Prompt"  
+
+    def gogo(self, Parameters, Save_to_file, File_name:bool, unique_id=None):
+
+        self.trbl.reset(f"Add Parameters, Node: {unique_id}")
+        _help = self.help_data.add_params_help
+        param_list = []
+
+        #Create path and dir for saved .txt files
+        write_dir = ''
+        comfy_dir = self.j_mngr.comfy_dir
+        if comfy_dir:
+            output_dir = self.j_mngr.find_child_directory(comfy_dir,'output')
+            if output_dir:
+                write_dir = self.j_mngr.find_child_directory(output_dir, 'PlushFiles',True) #Setting argument to True means dir will be created if not present
+                if not write_dir:
+                    self.j_mngr.log_events('Unable to find or create PlushFiles directory. Unable to write files',
+                                    TroubleSgltn.Severity.WARNING,
+                                    True)
+            else:
+                self.j_mngr.log_events('Unable to find output directory, Unable to write files',
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+        else:
+            self.j_mngr.log_events('Unable to find ComfyUI directory. Unable to write files.',
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+
+        if Save_to_file and write_dir:
+
+            working_file_name = self.j_mngr.generate_unique_filename("txt", File_name + '_param_')
+            working_file_path = self.j_mngr.append_filename_to_path(write_dir,working_file_name)
+            self.j_mngr.write_string_to_file(Parameters,working_file_path)  
+            self.j_mngr.log_events(f"Parameter file: '{working_file_name}' successfully written to directory [{write_dir}]",
+                                   is_trouble=True)          
+
+
+        if Parameters:
+            template_dict = {"param": None, "value": None}
+            param_list = self.j_mngr.positional_str_to_dict(Parameters,template_dict,"#","::")  #Parses the Parameters data and puts the result in a list of dicts
+            if not param_list:
+                self.j_mngr.log_events("Parameters not processed",
+                                        TroubleSgltn.Severity.ERROR,
+                                        True)
+                return(param_list,_help,self.trbl.get_troubles())
+        else:
+            self.j_mngr.log_events("No paramter data provided.",
+                                   TroubleSgltn.Severity.INFO,
+                                   True)    
+            return(param_list,_help,self.trbl.get_troubles())
+        
+        self.j_mngr.log_events(f"Parameters added: {str(param_list)}",
+                               is_trouble=True)
+        return(param_list,_help,self.trbl.get_troubles())
+
+
 class addParams:
     def __init__(self):
         #instantiate Configuration and Help data classes
@@ -1455,7 +1544,8 @@ NODE_CLASS_MAPPINGS = {
     "AdvPromptEnhancer": AdvPromptEnhancer,
     "DalleImage": DalleImage,
     "Plush-Exif Wrangler" :ImageInfoExtractor,
-    "Additional Parameter" :addParams
+    "Additional Parameter" :addParams,
+    "Add Parameters": addParameters
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -1465,6 +1555,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AdvPromptEnhancer": "Advanced Prompt Enhancer",
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler",
-    "Additional Parameter": "Additional Parameter"
+    "Additional Parameter": "Additional Parameter",
+    "Add Parameters": "Add Parameters"
 }
 
