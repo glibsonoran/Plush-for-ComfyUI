@@ -10,7 +10,7 @@
 *   **New node *Add Parameters*:**
     *   I've added another version of the node to add parameters called: *Add Parameters*.  This node takes text entered into a text area.  See the Example Workflow: .../Plush-for_ComfyUI/Example_Workflows/How_to_use_addParameters.png file for more details.
 *   **New nodes: Random Output & Random Mixer**
-    *   These nodes allow you to send output to differnt inputs randomly.  See the Example Workflow: ....../Plush-for_ComfyUI/Example_Workflows/How_to_use_RandomizedUtilityNodes.png for more information.
+    *   These nodes allow you to send output to different inputs randomly.  See the Example Workflow: .../Plush-for_ComfyUI/Example_Workflows/How_to_use_RandomizedUtilityNodes.png for more information.
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *************
