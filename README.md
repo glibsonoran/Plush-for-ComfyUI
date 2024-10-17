@@ -6,6 +6,15 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+10/16/2024 @9:24pm PST *Version 1.21.18.1*
+*   **New node *Add Parameters*:**
+    *   I've added another version of the node to add parameters called: *Add Parameters*.  This node takes text entered into a text area.  See the Example Workflow: .../Plush-for_ComfyUI/Example_Workflows/How_to_use_addParameters.png file for more details.
+*   **New nodes: Random Output & Random Mixer**
+    *   These nodes allow you to send output to differnt inputs randomly.  See the Example Workflow: ....../Plush-for_ComfyUI/Example_Workflows/How_to_use_RandomizedUtilityNodes.png for more information.
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
+
 10/14/2024 @5:28pm PST *Version 1.21.18*
 *   **New node *Additional Parameter*:**
     *   This node will allow you to add inference parameters to Advanced Prompt Enhancer (APE) that don't appear in the UI.  Parameters like *top_p* and *response_format* can allow you to have more control over the inference process.  These nodes can be daisy chained which will allow you add mulitiple parameters per run.  Find a list of [OpenAI parameters](https://platform.openai.com/docs/api-reference/chat/create) and their information at the link.  You should check the documentation of whichever service and model you're using to make sure the parameters you want to use can be applied.  You can find a Workflow Example of how to use this new node and the *Extract JSON data* node mentioned below here: `.../custom_nodes/Plush-for-ComfyUI/Example_Workflows/How_to_use_additionalParameters.png`
