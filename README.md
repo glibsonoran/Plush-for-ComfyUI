@@ -221,7 +221,8 @@ An environment variable is a variable that is set on your operating system, rath
 Note that after you set your Enviroment Variable, you will have to **reboot your machine** in order for it to take effect.
 ##  Windows Set-up
 
-**Option 1**: Set your ‘OAI_KEY’ Environment Variable via the cmd prompt
+**Option 1**: Set your ‘OAI_KEY’ Environment Variable via the cmd prompt with admin privileges.
+
 
 Run the following in the cmd prompt, replacing <yourkey> with your API key:
 
@@ -241,6 +242,8 @@ You can validate that this variable has been set by opening a new cmd prompt win
 
 Variable name: OAI_KEY
 Variable value: (yourkey)
+
+In either case if you're having trouble and getting an invalid key response, per the instructions above, please try rebooting your machine.
 
 
 ##  Linux / MacOS Set-up
