@@ -11,7 +11,8 @@
     *   Type Converter:  Converts various data types from a string.  Also can cross-reference equivalent data type
     *   Image Mixer and Random Image Output: Two randomizing nodes that can randomly change the order of images or randomly present an image to another node from a group of images.
 *   **Advance Prompt Enhancer (APE), Context Output**
-    *   Allows chaining of successive prompt/response interactions between APE nodes, allow each successive node to be aware of earlier node's interactions i.e. Nodes linked in this manner share their context.  
+    *   Allows chaining of successive prompt/response interactions between APE nodes, allow each successive node to be aware of earlier node's interactions i.e. Nodes linked in this manner share their context.
+*   **Advanced Prompt Enhancer, the old Parameters node has been removed from the Suite**
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *************
