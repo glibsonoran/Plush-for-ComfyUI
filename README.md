@@ -6,6 +6,16 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+10/20/2024 @5:04pm PST *Version 1.21.18.1*
+*   **New Utility nodes:**
+    *   Type Converter:  Converts various data types from a string.  Also can cross-reference equivalent data type
+    *   Image Mixer and Random Image Output: Two randomizing nodes that can randomly change the order of images or randomly present an image to another node from a group of images.
+*   **Advance Prompt Enhancer (APE), Context Output**
+    *   Allows chaining of successive prompt/response interactions between APE nodes, allow each successive node to be aware of earlier node's interactions.  
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
+
 10/16/2024 @9:24pm PST *Version 1.21.18.1*
 *   **New node *Add Parameters*:**
     *   I've added another version of the node to add parameters called: *Add Parameters*.  This node takes text entered into a text area.  See the Example Workflow: .../Plush-for_ComfyUI/Example_Workflows/How_to_use_addParameters.png file for more details.
