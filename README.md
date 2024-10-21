@@ -6,7 +6,7 @@
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-10/20/2024 @5:04pm PST *Version 1.21.18.1*
+10/20/2024 @5:04pm PST *Version 1.21.19*
 *   **New Utility nodes:**
     *   Type Converter:  Converts various data types from a string.  Also can cross-reference equivalent data type
     *   Image Mixer and Random Image Output: Two randomizing nodes that can randomly change the order of images or randomly present an image to another node from a group of images.
