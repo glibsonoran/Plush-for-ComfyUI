@@ -730,6 +730,7 @@ class addParameters:
 
 
 class addParams:
+    ##Depricated##
     def __init__(self):
         #instantiate Configuration and Help data classes
         self.cFig = cFigSingleton()
@@ -897,8 +898,8 @@ class AdvPromptEnhancer:
             }
         } 
 
-    RETURN_TYPES = ("STRING", "STRING", "STRING")
-    RETURN_NAMES = ("LLMprompt", "Help","Troubleshooting")
+    RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("LLMprompt", "Context", "Help","Troubleshooting")
 
     FUNCTION = "gogo"
 
@@ -948,15 +949,16 @@ class AdvPromptEnhancer:
         #Create a list of dictionaries out of the user provided Examples_or_Context
         example_list = []    
         
-        if Examples:
-            delimiter = None
-            if examples_delimiter == "Two newlines":
-                delimiter = "\n\n"
-            elif examples_delimiter == "Two colons ::":
-                delimiter = "::"
-            elif examples_delimiter == "Pipe |":
-                delimiter = "|"
 
+        delimiter = None
+        if examples_delimiter == "Two newlines":
+            delimiter = "\n\n"
+        elif examples_delimiter == "Two colons ::":
+            delimiter = "::"
+        elif examples_delimiter == "Pipe |":
+            delimiter = "|"
+
+        if Examples:
             example_list = self.j_mngr.build_context(Examples, delimiter)
             
         kwargs = { "model": remote_model,
@@ -970,6 +972,10 @@ class AdvPromptEnhancer:
                 "example_list": example_list,
                 "add_params": Add_Parameter,
         }
+        context_output = ""
+        ctx_delimiter = "\n" + delimiter +"\n"
+
+        context_output = (Examples + ctx_delimiter if Examples else "") + Prompt + ctx_delimiter
 
         if  AI_service == 'Local app (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
  
@@ -985,7 +991,7 @@ class AdvPromptEnhancer:
                 self.j_mngr.log_events("'Local app (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
-                return(llm_result, _help, self.trbl.get_troubles()) 
+                return(llm_result,"", _help, self.trbl.get_troubles()) 
 
             # set the url so the function making the request will have a properly initialized object.               
             self.cFig.lm_url = LLM_URL
@@ -994,14 +1000,16 @@ class AdvPromptEnhancer:
                 self.j_mngr.log_events("Open Source LLM server is not running.  Aborting request.",
                                        TroubleSgltn.Severity.WARNING,
                                        True)
-                return(llm_result, _help, self.trbl.get_troubles())
+                return(llm_result,"", _help, self.trbl.get_troubles())
 
             llm_result = ""
             self.ctx.request = rqst.oai_object_request( )
 
             llm_result = self.ctx.execute_request(**kwargs)
 
-            return(llm_result, _help, self.trbl.get_troubles())
+            context_output += llm_result
+
+            return(llm_result, context_output, _help, self.trbl.get_troubles())
         
 
         if  AI_service == 'Anthropic':
@@ -1012,7 +1020,9 @@ class AdvPromptEnhancer:
 
             claude_result = self.ctx.execute_request(**kwargs)
 
-            return(claude_result, _help, self.trbl.get_troubles())
+            context_output += claude_result
+
+            return(claude_result, context_output, _help, self.trbl.get_troubles())
 
         
         if AI_service == "OpenAI compatible http POST (URL)" or AI_service == "LM_Studio (URL)":
@@ -1020,7 +1030,7 @@ class AdvPromptEnhancer:
                 self.j_mngr.log_events("'OpenAI compatible http POST' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
-                return(llm_result, _help, self.trbl.get_troubles())  
+                return(llm_result, "", _help, self.trbl.get_troubles())  
             
             self.ctx.request = rqst.oai_web_request()
             
@@ -1031,21 +1041,25 @@ class AdvPromptEnhancer:
 
             llm_result = self.ctx.execute_request(**kwargs)
 
-            return(llm_result, _help, self.trbl.get_troubles())            
+            context_output += llm_result
+
+            return(llm_result, context_output, _help, self.trbl.get_troubles())            
         
         if AI_service == "http POST Simplified Data (URL)":
             if not LLM_URL:
                 self.j_mngr.log_events("'http POST Simplified Data' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
-                return(llm_result, _help, self.trbl.get_troubles())  
+                return(llm_result, "", _help, self.trbl.get_troubles())  
             
             self.ctx.request = rqst.oai_web_request()
             self.cFig.lm_request_mode = RequestMode.OSSIMPLE
 
             llm_result = self.ctx.execute_request(**kwargs)
 
-            return(llm_result, _help, self.trbl.get_troubles())  
+            context_output += llm_result
+
+            return(llm_result,context_output, _help, self.trbl.get_troubles())  
 
         #Oobabooga via POST
         if AI_service == "Oobabooga API (URL)":
@@ -1053,14 +1067,16 @@ class AdvPromptEnhancer:
                 self.j_mngr.log_events("'Oobabooga API-URL' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
-                return(llm_result, _help, self.trbl.get_troubles())  
+                return(llm_result,"", _help, self.trbl.get_troubles())  
 
             self.ctx.request = rqst.ooba_web_request()
             self.cFig.lm_request_mode = RequestMode.OOBABOOGA
 
             llm_result = self.ctx.execute_request(**kwargs)
 
-            return(llm_result, _help, self.trbl.get_troubles())            
+            context_output += llm_result
+
+            return(llm_result, context_output,  _help, self.trbl.get_troubles())            
 
 
         #OpenAI ChatGPT request
@@ -1068,9 +1084,9 @@ class AdvPromptEnhancer:
         self.cFig.lm_request_mode = RequestMode.OPENAI
 
         llm_result = self.ctx.execute_request(**kwargs)
+        context_output += llm_result
        
-       
-        return(llm_result, _help, self.trbl.get_troubles())
+        return(llm_result,context_output, _help, self.trbl.get_troubles())
     
 
 
@@ -1544,7 +1560,6 @@ NODE_CLASS_MAPPINGS = {
     "AdvPromptEnhancer": AdvPromptEnhancer,
     "DalleImage": DalleImage,
     "Plush-Exif Wrangler" :ImageInfoExtractor,
-    "Additional Parameter" :addParams,
     "Add Parameters": addParameters
 }
 
@@ -1555,7 +1570,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AdvPromptEnhancer": "Advanced Prompt Enhancer",
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler",
-    "Additional Parameter": "Additional Parameter",
     "Add Parameters": "Add Parameters"
 }
 

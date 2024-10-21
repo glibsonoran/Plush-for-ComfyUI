@@ -1,6 +1,7 @@
 
 from .mng_json import json_manager, helpSgltn, TroubleSgltn
 import random
+import torch
 
 class Tagger:
     def __init__(self)-> None:
@@ -201,6 +202,50 @@ class randomOut:
         out_tuple = tuple(outputs[:5])
 
         return out_tuple
+
+
+
+class randomImgOut:
+
+    def __init__(self)-> None:
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "required": {
+                "Image": ("IMAGE", {"multiline": True, "forceInput": True}),
+                "randomized_outputs": (['1','2','3','4','5'], {"default": "2"}),
+                "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff})
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+    
+    RETURN_TYPES = ("IMAGE","IMAGE","IMAGE","IMAGE","IMAGE")
+    RETURN_NAMES = ("Image_1", "Image_2","Image_3","Image_4","Image_5")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, Image, unique_id, seed, randomized_outputs=0):
+        random.seed(seed)
+        rnd_out = int(randomized_outputs)
+        int_rnd = random.randint(1, rnd_out)
+        dummy_tensor = torch.zeros(1, 8, 8, 3, dtype=torch.float32)
+        outputs = [dummy_tensor,dummy_tensor,dummy_tensor,dummy_tensor,dummy_tensor]
+        if 1 <= int_rnd <= 5:
+            outputs[int_rnd-1] = Image
+        out_tuple = tuple(outputs[:5])
+
+        return out_tuple
     
 
 class mixer:
@@ -249,6 +294,138 @@ class mixer:
 
         return out_tuple    
 
+class imgMixer:
+
+    def __init__(self)-> None:
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "optional": {
+                "Image_1": ("IMAGE", {"multiline": True, "forceInput": True}),
+                "Image_2": ("IMAGE", {"multiline": True, "forceInput": True}),
+                "Image_3": ("IMAGE", {"multiline": True, "forceInput": True}),
+                "Image_4": ("IMAGE", {"multiline": True, "forceInput": True}),
+                "Image_5": ("IMAGE", {"multiline": True, "forceInput": True}),
+
+                "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff})
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+    
+    RETURN_TYPES = ("IMAGE","IMAGE","IMAGE","IMAGE","IMAGE")
+    RETURN_NAMES = ("Output_1", "Output_2","Output_3","Output_4","Output_5")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, unique_id, seed, Image_1:str="", Image_2:str="", Image_3:str="", Image_4:str="", Image_5:str=""):
+
+        valid_input = [img for img in [Image_1, Image_2, Image_3, Image_4, Image_5] if isinstance(img, torch.Tensor) and img.numel() > 0] #Fill the list only with actual input data
+        random.seed(seed)        
+        random.shuffle(valid_input) #randomize list order
+        dummy_tensor = torch.zeros(1, 8, 8, 3, dtype=torch.float32)
+        padding = 5 - len(valid_input)
+        valid_input.extend([dummy_tensor] * padding) #pad the outputs with no valid input data with tiny black tensors
+        out_tuple = tuple(valid_input[:5])
+
+        return out_tuple    
+
+
+class typeConvert:
+
+    def __init__(self)-> None:
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "optional": {
+                "Text": ("STRING", {"multiline": True, "forceInput": True}),
+                "Cross_reference_types": ("BOOLEAN", {"default": False})
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+    
+    RETURN_TYPES = ("STRING","FLOAT","INT","BOOLEAN","LIST","DICTIONARY", "STRING", "STRING")
+    RETURN_NAMES = ("Text", "Float","Integer","Boolean","List", "JSON/Dict", "help","Troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, unique_id, Cross_reference_types:bool=False,  Text:str=""):
+
+        self.trbl.reset(f"Type Converter, Node: {unique_id}")
+        _help = self.help_data.type_convert_help
+        out_list = [Text, None, None, None, None, None]
+        cxt = Cross_reference_types
+
+        # Log the input string received
+        self.j_mngr.log_events(f"Received input text: {Text}", is_trouble=True)
+
+        # Infer the data type of the input text
+        inferred_value = self.j_mngr.infer_type(Text)
+        inferred_type = type(inferred_value)
+
+        # Log the inferred type
+        self.j_mngr.log_events(f"Primary Inferred data type: {inferred_type}", is_trouble=True)
+
+        # Place the inferred value in the correct position based on its type
+        # Handle float and integer conversions
+        if isinstance(inferred_value, float):
+            out_list[1] = inferred_value  # Store the float value
+            if cxt:
+                out_list[2] = round(inferred_value)  # Store the rounded integer equivalent
+
+        elif isinstance(inferred_value, int):
+            out_list[2] = inferred_value  # Store the integer value
+            if cxt:
+                out_list[1] = float(inferred_value)  # Store the float equivalent (int.0)
+
+            # Convert integer to boolean if it's 0 or 1
+            if inferred_value == 0 and cxt:
+                out_list[3] = False  # int 0 -> False
+            elif inferred_value == 1 and cxt:
+                out_list[3] = True  # int 1 -> True
+
+        elif isinstance(inferred_value, bool):
+            out_list[3] = inferred_value  # Store the boolean value
+            if cxt:
+                out_list[2] = int(inferred_value)  # Store the integer equivalent (1 for True, 0 for False)
+
+        elif isinstance(inferred_value, list):
+            out_list[4] = inferred_value
+
+        elif isinstance(inferred_value, dict):
+            out_list[5] = inferred_value
+        
+        else:
+            self.j_mngr.log_events("No data type conversion performed. Output as string.", 
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+
+            # Return the tuple of outputs
+            
+        out_tuple = tuple(out_list) + (_help, self.trbl.get_troubles())
+
+        return out_tuple    
 
 
 
@@ -454,7 +631,10 @@ NODE_CLASS_MAPPINGS = {
     "Tagger": Tagger,
     "ParseJSON": jsonParse,
     "Random Output": randomOut,
-    "Random Mixer": mixer
+    "Random Mixer": mixer,
+    "Type Converter": typeConvert,
+    "Image Mixer": imgMixer,
+    "Random Image Output": randomImgOut
 
 
 }
@@ -465,6 +645,10 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 "Tagger": "Tagger",
 "ParseJSON": "Extract JSON data",
 "Random Output": "Random Output",
-"Random Mixer": "Random Mixer"
+"Random Mixer": "Random Mixer",
+"Type Converter": "Plush - Type Converter",
+"Image Mixer": "Image Mixer",
+"Random Image Output": "Random Image Output"
+
 
 }
