@@ -116,6 +116,7 @@ class helpSgltn:
         self._add_param_help = ""
         self._add_params_help = ""
         self._extract_json_help = ""
+        self._type_convert_help = ""
         # Empty help text is not a critical issue for the app
         if not help_data:
             j_mmgr.log_events('Help data file is empty or missing.',
@@ -130,6 +131,7 @@ class helpSgltn:
         self._add_param_help = help_data.get('add_param_help', '')
         self._add_params_help = help_data.get('add_params_help', '')
         self._extract_json_help = help_data.get('extract_json_help', '')
+        self._type_convert_help = help_data.get('type_convert_help', '')
 
     @property
     def style_prompt_help(self)->str:
@@ -162,6 +164,10 @@ class helpSgltn:
     @property
     def extract_json_help (self)->str:
         return self._extract_json_help
+    
+    @property
+    def type_convert_help (self)->str:
+        return self._type_convert_help    
 
 class json_manager:
 
@@ -1523,7 +1529,7 @@ class json_manager:
         as a single entry using the template that matches single_input_role.
         - When processing delimited input, the method alternates between dict_template1 and dict_template2,
         starting with the template that matches the initial_role.
-        - Special markers "{{user}}" and "{{model}}" in the input override the alternating pattern.
+        - Special markers "<<user>>" and "<<model>>}" in the input override the alternating pattern.
         - Empty segments in delimited input are skipped.
         """
 
@@ -1585,13 +1591,13 @@ class json_manager:
             segment_stripped = segment.strip()
             lower_segment = segment_stripped.lower()
 
-            if lower_segment.startswith("{{user}}"):
+            if lower_segment.startswith("<<user>>"):
                 filled_dict = dict_template1.copy()
-                content = segment_stripped[len("{{user}}"):].strip()
+                content = segment_stripped[len("<<user>>"):].strip()
                 filled_dict[insert_key1] = content
-            elif lower_segment.startswith("{{model}}"):
+            elif lower_segment.startswith("<<model>>}"):
                 filled_dict = dict_template2.copy()
-                content = segment_stripped[len("{{model}}"):].strip()
+                content = segment_stripped[len("<<model>>}"):].strip()
                 filled_dict[insert_key2] = content
             else:
                 if use_template1:
