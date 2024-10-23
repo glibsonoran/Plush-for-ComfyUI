@@ -207,7 +207,7 @@ python -m pip install -r requirements.txt
   | :------ | :------: | :------: | :------: | :------: |
   | `OAI_KEY` |      |      |   **X**   |      |
   | `OPENAI_API_KEY` |      |      |   **X**   |      |
-  | `LLM_KEY` |  **X**   |  **X**   |      |   **X**   |
+  | `LLM_KEY` |      |      |      |   **X**   |
   | `GROQ_API_KEY` |      |   **X**   |      |      |
   | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |
   -------------------------------------
