@@ -92,9 +92,9 @@ class cFigSingleton:
                               TroubleSgltn.Severity.WARNING)
         
         self._lm_key = os.getenv("LLM_KEY","") #Fetch the LLM_KEY if the user has created one
-        self._groq_key = os.getenv("GROQ_API_KEY", "") or os.getenv("LLM_KEY", "")
-        self._claude_key = os.getenv("ANTHROPIC_API_KEY", "") or os.getenv("LLM_KEY", "")
-        self._gemini_key = os.getenv("GEMINI_API_KEY", "") or os.getenv("LLM_KEY", "")
+        self._groq_key = os.getenv("GROQ_API_KEY", "")
+        self._claude_key = os.getenv("ANTHROPIC_API_KEY", "")
+        self._gemini_key = os.getenv("GEMINI_API_KEY", "")
             
         #Get user saved Open Source URL from the text file  
         #At this point all this does is pre-populate new instances of the node. 
