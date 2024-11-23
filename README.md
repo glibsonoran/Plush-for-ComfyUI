@@ -287,13 +287,13 @@ Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 ******************************
 ## How to connect to OpenRouter 
 
-You can connect to remote AI serivces that are not preconfigured in Advanced Prompt Enhancer (APE) by following the steps below:
+You can connect to remote AI serivces that are not preconfigured in **Advanced Prompt Enhancer (APE)** by following the steps below:
 
-1) Obtain an API key from the service you want to use, you many have to pay for this.  
+1) Obtain an API key from the service you want to use, you may have to pay for this.  
 
 2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  If you don't know how to create an enviroment variable there are instructions [here](#requirements)
 
-3) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact names the service requires for their API. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.
+3) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.
 
 4) Start ComfyUI.  In the APE node you can setup your connection to the service two different ways: 
 
@@ -304,8 +304,8 @@ You can connect to remote AI serivces that are not preconfigured in Advanced Pro
 
 6) Enter the url for the site you want to connect to in the *LLM_URL* field.  The *OpenAI API Connection* method will require a url that has a `/v1` path.  The *Direct Web Connection* method will require a url that has a `/v1/chat/completions` path.  The following are examples for OpenRouter:
 
-    - **OpenAI API Connection:** LLM_URL = 'https://openrouter.ai/api/v1'
-    - **Direct Web Connection:** LLM_URL = 'https://openrouter.ai/api/v1/chat/completions' 
+    - **OpenAI API Connection:** LLM_URL = `https://openrouter.ai/api/v1`
+    - **Direct Web Connection:** LLM_URL = `https://openrouter.ai/api/v1/chat/completions` 
 
 7) Connect a *ShowText|pysssss* node to the *troublshooting* output of the APE node, then go ahead and run your workflow.  If you have any issues the troubleshooting output should help you diagnose the problem.
 
