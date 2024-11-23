@@ -1,7 +1,9 @@
 # Plush-for-ComfyUI
 ****
 [**How to use Advanced Prompt Enhancer with OpenRouter**](#how-to-connect-to-openrouter) and other remote AI services that are not preconfigured.
+
 **You don't need a paid key to use Advanced Prompt Enhancer with Groq or open source LLM's.  You can use them for free (Groq requires a free key).  But if you want to use it with ChatGPT or Claude3 then:**
+
 [**Click here if you need to setup your API key or an optional Open-source key in an Plush compatible evironment variable**](#requirements)
 
 [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
