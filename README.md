@@ -8,6 +8,13 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+11/23/2024 @7:49am PST *Version 1.21.20*
+*   **Advance Prompt Enhancer (APE), Retries**
+    *   User can select the number of *Tries* the node will make to connect and generate output from an AI Service.  APE will indicate a failure and display the error in the *troubleshooting* output if the process fails after the indicated number of attempts.
+    *   Names of items in the *AI_service* pull down menu have been changed to better reflect that they apply to remote and local services, this may cause errors when you use the updated node in existing workflows.  To fix this simply select a new item name from the pull down menu and run your workflow.
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
 10/20/2024 @5:04pm PST *Version 1.21.19*
 *   **New Utility nodes:**
     *   Type Converter:  Converts various data types from a string.  Also can cross-reference equivalent data type
