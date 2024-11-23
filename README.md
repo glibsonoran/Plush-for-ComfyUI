@@ -292,7 +292,7 @@ You can connect to remote AI serivces that are not preconfigured in Advanced Pro
 
 2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  If you don't know how to create an enviroment variable there are instructions [here](#requirements)
 
-3) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact names the service requires for their API. They should have a web page that shows these names.  Save the text file.
+3) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact names the service requires for their API. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.
 
 4) Start ComfyUI.  In the APE node you can setup your connection to the service two different ways: 
 
