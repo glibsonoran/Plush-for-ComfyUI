@@ -294,7 +294,7 @@ Follow the directions in Option 1, replacing .zshrc with .bash_profile.
 ******************************
 ## How to connect to OpenRouter 
 
-You can connect to remote AI serivces that are not preconfigured in **Advanced Prompt Enhancer (APE)** by following the steps below:
+You can connect to remote AI services that are not preconfigured in **Advanced Prompt Enhancer (APE)** by following the steps below:
 
 1) Obtain an API key from the service you want to use, you may have to pay for this.  
 
@@ -314,7 +314,7 @@ You can connect to remote AI serivces that are not preconfigured in **Advanced P
     - **OpenAI API Connection:** LLM_URL = `https://openrouter.ai/api/v1`
     - **Direct Web Connection:** LLM_URL = `https://openrouter.ai/api/v1/chat/completions` 
 
-7) Connect a *ShowText|pysssss* node to the *troublshooting* output of the APE node, then go ahead and run your workflow.  If you have any issues the troubleshooting output should help you diagnose the problem.
+7) Connect a *ShowText|pysssss* node to the *troubleshooting* output of the APE node, then go ahead and run your workflow.  If you have any issues the troubleshooting output should help you diagnose the problem.
 
 ************************************
 ###  More Requirements:
