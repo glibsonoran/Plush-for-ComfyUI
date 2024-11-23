@@ -398,11 +398,12 @@ class AI_Chooser:
             "ChatGPT": RequestMode.OPENAI,
             "Groq": RequestMode.GROQ,
             "Anthropic": RequestMode.CLAUDE,
-            "LM_Studio": RequestMode.LMSTUDIO,
-            "Local app (URL)": RequestMode.OPENSOURCE,
-            "OpenAI compatible http POST": RequestMode.OPENSOURCE,
-            "http POST Simplified Data": RequestMode.OSSIMPLE,
-            "Oobabooga API-URL": RequestMode.OOBABOOGA
+            "OpenAI API Connection (URL)": RequestMode.OPENSOURCE,
+            "Direct Web Connection (URL)": RequestMode.OPENSOURCE,
+            "LM_Studio (URL)": RequestMode.OPENSOURCE,
+            "Ollama (URL)": RequestMode.OPENSOURCE,
+            "Web Connection Simplified Data (URL)": RequestMode.OSSIMPLE,
+            "Oobabooga API (URL)": RequestMode.OOBABOOGA
         }
         return mode_map.get(user_selection)
         
@@ -871,17 +872,18 @@ class AdvPromptEnhancer:
         #refresh the ui after the initial load.
         return {
             "required": {
-                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","Local app (URL)", "OpenAI compatible http POST (URL)", "http POST Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq"}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type, connections ending with '(URL)' require a URL to be entered"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
                 "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}), 
-                "Optional_model": (cFig.get_optional_models(True), {"default": ""}),                
-                "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7}),                  
+                "Optional_model": (cFig.get_optional_models(True), {"default": "", "tooltip": "Enter these in text file: opt_models.txt"}),                
+                "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7, "tooltip": "temperature"}),                  
                 "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
                 "examples_delimiter":(["Pipe |", "Two newlines", "Two colons ::"], {"default": "Two newlines"}),
-                "LLM_URL": ("STRING",{"default": cFig.lm_url})            
+                "LLM_URL": ("STRING",{"default": cFig.lm_url, "tooltip": "Enter the url for your service here when using connections that end with: (URL)"}),
+                "Number_of_Tries": (["1","2","3","4","5","default"], {"default": "default"})            
                          
             },
 
@@ -908,7 +910,7 @@ class AdvPromptEnhancer:
     CATEGORY = "Plush/Prompt"
 
     def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
-              Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="", image=None, unique_id=None):
+              Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="", image=None, unique_id=None):
 
         if unique_id:
             self.trbl.reset("Advanced Prompt Enhancer, Node #"+unique_id)
@@ -971,15 +973,16 @@ class AdvPromptEnhancer:
                 "image": image,
                 "example_list": example_list,
                 "add_params": Add_Parameter,
+                "tries": Number_of_Tries
         }
         context_output = ""
         ctx_delimiter = "\n" + delimiter +"\n"
 
         context_output = (Examples + ctx_delimiter if Examples else "") + Prompt + ctx_delimiter
 
-        if  AI_service == 'Local app (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
+        if  AI_service == 'OpenAI API Connection (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
  
-            if AI_service == 'Local app (URL)':
+            if AI_service == 'OpenAI API Connection (URL)':
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE
             elif AI_service == "Groq":
                 self.cFig.lm_request_mode = RequestMode.GROQ  
@@ -988,7 +991,7 @@ class AdvPromptEnhancer:
                 self.cFig.lm_request_mode = RequestMode.OLLAMA
 
             if not LLM_URL:
-                self.j_mngr.log_events("'Local app (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                self.j_mngr.log_events("'OpenAI API Connection (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
                 return(llm_result,"", _help, self.trbl.get_troubles()) 
@@ -1025,9 +1028,9 @@ class AdvPromptEnhancer:
             return(claude_result, context_output, _help, self.trbl.get_troubles())
 
         
-        if AI_service == "OpenAI compatible http POST (URL)" or AI_service == "LM_Studio (URL)":
+        if AI_service == "Direct Web Connection (URL)" or AI_service == "LM_Studio (URL)":
             if not LLM_URL:
-                self.j_mngr.log_events("'OpenAI compatible http POST' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                self.j_mngr.log_events("'Direct Web Connection (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
                 return(llm_result, "", _help, self.trbl.get_troubles())  
@@ -1045,9 +1048,9 @@ class AdvPromptEnhancer:
 
             return(llm_result, context_output, _help, self.trbl.get_troubles())            
         
-        if AI_service == "http POST Simplified Data (URL)":
+        if AI_service == "Web Connection Simplified Data (URL)":
             if not LLM_URL:
-                self.j_mngr.log_events("'http POST Simplified Data' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                self.j_mngr.log_events("'Web Connection Simplified Data (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
                                     TroubleSgltn.Severity.WARNING,
                                     True)
                 return(llm_result, "", _help, self.trbl.get_troubles())  
@@ -1215,7 +1218,8 @@ class DalleImage:
                 "image_quality": (["standard", "hd"], {"default": "hd"} ),
                 "style": (["vivid", "natural"], {"default": "natural"} ),
                 "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff})
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "Number_of_Tries": (["1","2","3","4","5","default"], {"default": "default"})
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -1231,7 +1235,7 @@ class DalleImage:
 
     CATEGORY = "Plush/Image_Gen"
 
-    def gogo(self, GPTmodel, prompt, image_size, image_quality, style, batch_size, seed, unique_id=None):
+    def gogo(self, GPTmodel, prompt, image_size, image_quality, style, batch_size, seed, Number_of_Tries:str, unique_id=None):
 
         if unique_id:
             self.trbl.reset('Dall-e Image, Node #' + unique_id)
@@ -1240,6 +1244,7 @@ class DalleImage:
 
 
         _help = self.help_data.dalle_help
+        self.cFig.lm_request_mode = RequestMode.DALLE
         self.ctx.request = rqst.dall_e_request()
         kwargs = { "model": GPTmodel,
                 "prompt": prompt,
@@ -1247,6 +1252,7 @@ class DalleImage:
                 "image_quality": image_quality,
                 "style": style,
                 "batch_size": batch_size,
+                "tries": Number_of_Tries
         }
         batched_images, revised_prompt = self.ctx.execute_request(**kwargs)
 
