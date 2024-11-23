@@ -302,7 +302,7 @@ You can connect to remote AI serivces that are not preconfigured in Advanced Pro
 
 5) Select the model you want to use in the *Optional_models* pull down, these will be the models you entered in the text file in step 3.
 
-6) Enter the url for the site you want to connect to in the 'LLM_URL' field.  The *OpenAI API Connection* method will require a url that has a '/v1' path.  The *Direct Web Connection* method will require a url that has a '/v1/chat/completions' path.  The following are examples for OpenRouter:
+6) Enter the url for the site you want to connect to in the *LLM_URL* field.  The *OpenAI API Connection* method will require a url that has a `/v1` path.  The *Direct Web Connection* method will require a url that has a `/v1/chat/completions` path.  The following are examples for OpenRouter:
 
     - **OpenAI API Connection:** LLM_URL = 'https://openrouter.ai/api/v1'
     - **Direct Web Connection:** LLM_URL = 'https://openrouter.ai/api/v1/chat/completions' 
