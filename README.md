@@ -211,7 +211,7 @@ python -m pip install -r requirements.txt
   
   ### The follwing table lists the Enviroment Variables that Plush recognizes and how the API keys they contain are applied.
 
-  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source (e.g. Tabby API, OpenRouter) |
+  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source/Other (e.g. Tabby API, OpenRouter) |
   | :------ | :------: | :------: | :------: | :------: |
   | `OAI_KEY` |      |      |   **X**   |      |
   | `OPENAI_API_KEY` |      |      |   **X**   |      |
