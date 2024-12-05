@@ -17,7 +17,6 @@ from . import api_requests as rqst
 from .fetch_models import FetchModels, ModelUtils, RequestMode # add .
 
 
-
 #pip install pillow
 #pip install bytesio
 
@@ -883,6 +882,7 @@ class AdvPromptEnhancer:
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
                 "examples_delimiter":(["Pipe |", "Two newlines", "Two colons ::"], {"default": "Two newlines"}),
                 "LLM_URL": ("STRING",{"default": cFig.lm_url, "tooltip": "Enter the url for your service here when using connections that end with: (URL)"}),
+                "Ollama_unload": ("BOOLEAN", {"default": False, "tooltip": "Unload model after completion"}),
                 "Number_of_Tries": (["1","2","3","4","5","default"], {"default": "default"})            
                          
             },
@@ -909,7 +909,7 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush/Prompt"
 
-    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, creative_latitude, tokens, seed, examples_delimiter, Ollama_unload,
               Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="", image=None, unique_id=None):
 
         if unique_id:
@@ -927,6 +927,7 @@ class AdvPromptEnhancer:
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
         
+
         if not isinstance(Add_Parameter, list):
             Add_Parameter = []
 
@@ -1011,9 +1012,14 @@ class AdvPromptEnhancer:
             llm_result = self.ctx.execute_request(**kwargs)
 
             context_output += llm_result
-
+            
+            # Unload model if using Ollama and Ollama_unload is True
+            if AI_service == "Ollama (URL)" and Ollama_unload:
+                unload_ctx = rqst.request_context()
+                unload_ctx.request = rqst.ollama_unload_request()
+                unload_ctx.execute_request(model=remote_model, url=LLM_URL)
+                                          
             return(llm_result, context_output, _help, self.trbl.get_troubles())
-        
 
         if  AI_service == 'Anthropic':
  
@@ -1026,7 +1032,6 @@ class AdvPromptEnhancer:
             context_output += claude_result
 
             return(claude_result, context_output, _help, self.trbl.get_troubles())
-
         
         if AI_service == "Direct Web Connection (URL)" or AI_service == "LM_Studio (URL)":
             if not LLM_URL:
@@ -1088,7 +1093,9 @@ class AdvPromptEnhancer:
 
         llm_result = self.ctx.execute_request(**kwargs)
         context_output += llm_result
-       
+
+                                          
+        
         return(llm_result,context_output, _help, self.trbl.get_troubles())
     
 

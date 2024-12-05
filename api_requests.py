@@ -1256,3 +1256,45 @@ class request_utils:
             return e.message
         else:
             return str(e)
+
+class ollama_unload_request(Request):
+    """Concrete class for Ollama unload requests"""
+    
+    def request_completion(self, **kwargs) -> bool:
+        try:
+            model = kwargs.get('model')
+            llm_url = kwargs.get('url', 'http://localhost:11434')  # Get URL or use default
+            
+            if not model:
+                self.j_mngr.log_events("No model specified for unload", 
+                                     TroubleSgltn.Severity.WARNING,
+                                     True)
+                return False
+
+            # Parse the URL and reconstruct with only the scheme, hostname, and port
+            parsed_url = urlparse(llm_url)
+            base_url = f"{parsed_url.scheme}://{parsed_url.netloc}/api/generate"
+            
+            headers = {'Content-Type': 'application/json'}
+            data = {
+                "model": model,
+                "keep_alive": 0
+            }
+            
+            self.j_mngr.log_events(f"Attempting to unload model using URL: {base_url}", is_trouble=True)
+            response = requests.post(base_url, headers=headers, json=data, timeout=5)
+            
+            if response.status_code == 200:
+                self.j_mngr.log_events(f"Model unload response: {response.text}", is_trouble=True)
+                return True
+            else:
+                self.j_mngr.log_events(f"Model unload failed with status: {response.status_code}", 
+                                     TroubleSgltn.Severity.WARNING,
+                                     True)
+                return False
+            
+        except requests.RequestException as e:
+            self.j_mngr.log_events(f"Model unload request failed: {str(e)}", 
+                                  TroubleSgltn.Severity.WARNING, 
+                                  True)
+            return False
