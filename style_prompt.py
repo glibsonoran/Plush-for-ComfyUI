@@ -1,20 +1,31 @@
-
+# ------------------------
+# Standard Library Imports
+# ------------------------
 import os
 import base64
 from io import BytesIO
-from PIL import Image, ImageOps, TiffImagePlugin, UnidentifiedImageError
-import folder_paths
-import numpy as np
-import torch
 from typing import Optional
 from enum import Enum
+from urllib.parse import urlparse
+
+# -------------------------
+# Third-Party Library Imports
+# -------------------------
+from PIL import Image, ImageOps, TiffImagePlugin, UnidentifiedImageError
+import numpy as np
+import torch
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from openai import OpenAI
 import anthropic
-from .mng_json import json_manager, helpSgltn, TroubleSgltn # add .
+
+# -----------------------
+# Local Module Imports
+# -----------------------
+import folder_paths
+from .mng_json import json_manager, helpSgltn, TroubleSgltn
 from . import api_requests as rqst
-from .fetch_models import FetchModels, ModelUtils, RequestMode # add .
+from .fetch_models import FetchModels, ModelUtils, RequestMode
 
 
 
@@ -836,6 +847,7 @@ class AdvPromptEnhancer:
         self.j_mngr = json_manager()
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
+        self.m_ttl = rqst.ollama_unload_request.ModelTTL #Enum
 
     def get_model(self, GPT_model, Groq_model, Anthropic_model, Ollamm_model, Optional_model, connection_type)->str:
         
@@ -862,24 +874,34 @@ class AdvPromptEnhancer:
 
         return "none"        
     
+    def model_ttl (self, selection:str)->rqst.ollama_unload_request.ModelTTL:
+        """Translates user input from menu to appropriate enum value"""
+        if selection == "Unload After Run":
+            return self.m_ttl.KILL
+        
+        if selection == "Keep Alive Indefinitely":
+            return self.m_ttl.INDEF
+        
+        return self.m_ttl.NOSET
+
+    
 
     @classmethod
     def INPUT_TYPES(cls):
         cFig = cFigSingleton()
         gptfilter = ("gpt","o1")
-        #open source models are too problematic to implement right now in an environment where you 
-        #can't be sure if the local host server (open source) will be running, and where you can't
-        #refresh the ui after the initial load.
+
         return {
             "required": {
-                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type, connections ending with '(URL)' require a URL to be entered"}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type/service, connections ending with '(URL)' require a URL to be entered below"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
                 "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}), 
-                "Optional_model": (cFig.get_optional_models(True), {"default": "", "tooltip": "Enter these in text file: opt_models.txt"}),                
+                "Ollama_model_unload": (["Unload After Run", "Keep Alive Indefinitely", "No Setting"], {"default": "No Setting", "tooltip": "Choose how long this model will stay loaded after completion"}),
+                "Optional_model": (cFig.get_optional_models(True), {"default": "", "tooltip": "Enter these in the text file: 'opt_models.txt' in the Plush directory"}),                
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7, "tooltip": "temperature"}),                  
-                "tokens" : ("INT", {"max": 8000, "min": 20, "step": 10, "default": 500, "display": "number"}), 
+                "tokens" : ("INT", {"max": 20000, "min": 20, "step": 10, "default": 800, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
                 "examples_delimiter":(["Pipe |", "Two newlines", "Two colons ::"], {"default": "Two newlines"}),
                 "LLM_URL": ("STRING",{"default": cFig.lm_url, "tooltip": "Enter the url for your service here when using connections that end with: (URL)"}),
@@ -909,7 +931,7 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush/Prompt"
 
-    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Ollama_model_unload, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
               Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="", image=None, unique_id=None):
 
         if unique_id:
@@ -935,6 +957,7 @@ class AdvPromptEnhancer:
                         True)
 
         remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, AI_service)
+        model_ttl = self.model_ttl(Ollama_model_unload)
       
         if remote_model == "none":
             self.j_mngr.log_events("No model selected. If you're using a local desktop application, most will just use the loaded model.",
@@ -981,7 +1004,9 @@ class AdvPromptEnhancer:
         context_output = (Examples + ctx_delimiter if Examples else "") + Prompt + ctx_delimiter
 
         if  AI_service == 'OpenAI API Connection (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
- 
+            
+            unload_ctx = None #Initialize Model Unload request for use if Ollama request
+
             if AI_service == 'OpenAI API Connection (URL)':
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE
             elif AI_service == "Groq":
@@ -989,6 +1014,9 @@ class AdvPromptEnhancer:
                 LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
             elif AI_service == "Ollama (URL)":
                 self.cFig.lm_request_mode = RequestMode.OLLAMA
+                unload_ctx = rqst.request_context()
+                unload_ctx.request = rqst.ollama_unload_request()
+
 
             if not LLM_URL:
                 self.j_mngr.log_events("'OpenAI API Connection (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
@@ -1011,6 +1039,9 @@ class AdvPromptEnhancer:
             llm_result = self.ctx.execute_request(**kwargs)
 
             context_output += llm_result
+
+            if unload_ctx: #If uload_ctx has been instantiated, execute the user's model unload setting
+                unload_ctx.execute_request(model=remote_model, url=LLM_URL, model_TTL=model_ttl)
 
             return(llm_result, context_output, _help, self.trbl.get_troubles())
         
@@ -1036,6 +1067,11 @@ class AdvPromptEnhancer:
                 return(llm_result, "", _help, self.trbl.get_troubles())  
             
             self.ctx.request = rqst.oai_web_request()
+
+            if urlparse(LLM_URL).path == "/v1":
+                self.j_mngr.log_events("Web connection urls should be either: '/v1/chat/completions' or (Olama) '/api/generate'. ",
+                                       TroubleSgltn.Severity.WARNING,
+                                       True)
             
             if AI_service == "LM_Studio (URL)":
                 self.cFig.lm_request_mode = RequestMode.LMSTUDIO
