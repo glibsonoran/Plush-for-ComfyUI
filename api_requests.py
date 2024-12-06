@@ -13,7 +13,7 @@ import requests
 import openai
 import anthropic
 
-# Local imports
+# Local modules
 from .mng_json import json_manager, TroubleSgltn
 from .fetch_models import RequestMode
 from .utils import ImageUtils
@@ -1014,6 +1014,82 @@ class dall_e_request(Request):
 
         self.trbl.pop_header()
         return batched_images, revised_prompt
+
+
+class ollama_unload_request(Request):
+    """Concrete class for model unload requests"""
+
+    class ModelTTL(Enum):
+        KILL = 0
+        INDEF = -1
+        NOSET = "no_setting"
+
+    def __init__(self):
+        super().__init__()
+        self.trbl = TroubleSgltn()
+
+    def request_completion(self, **kwargs) -> bool:
+
+        req_mode = self.cFig.lm_request_mode
+
+        keep_alive = kwargs.get('model_TTL', self.ModelTTL.NOSET)
+        if not isinstance(keep_alive, self.ModelTTL):
+            self.j_mngr.log_events("Invalid `model_TTL` value provided.", 
+                                    TroubleSgltn.Severity.WARNING, 
+                                    True
+            )
+            return False        
+
+        if keep_alive == self.ModelTTL.NOSET: #Don't change the current TTL setting
+            return True
+        
+        self.trbl.set_process_header("Ollama Unload Model Setting")
+        
+        if req_mode not in {RequestMode.OLLAMA, RequestMode.OPENSOURCE}:
+            self.j_mngr.log_events("Model Unloading does not work with this AI Service type.",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+            return False        
+
+        model = kwargs.get('model')
+
+        if not model:
+            self.j_mngr.log_events("No model specified for unload", 
+                                    TroubleSgltn.Severity.WARNING,
+                                    True)
+            return False
+        
+        llm_url = kwargs.get('url', 'http://localhost:11434')  # Get URL or use default           
+        # replace the URL path with Ollama's native endpoint
+        base_url = self.utils.validate_and_correct_url(llm_url, '/api/generate')
+        headers = self.utils.build_web_header()
+
+        params = {
+            "model": model,
+            "keep_alive": keep_alive.value
+        }
+        try:
+            self.j_mngr.log_events(f"Attempting to set model TTL using URL: {base_url}", is_trouble=True)
+            response = requests.post(base_url, headers=headers, json=params, timeout=5)
+
+        except requests.RequestException as e:
+            self.j_mngr.log_events(f"Model unload request failed: {e.__class__.__name__}: {str(e)}", 
+                                    TroubleSgltn.Severity.WARNING, 
+                                    True)
+            return False
+        
+        response_text = response.text if response.text else "None Provided"
+
+        if response.status_code == 200:
+            self.j_mngr.log_events(f"Model unload setting successful.  Response: {response_text}", is_trouble=True)
+            return True
+        
+        self.j_mngr.log_events(f"Model unload failed with status: {response.status_code}, Response: {response_text}", 
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+        return False
+
+
     
 class request_context:
     def __init__(self)-> None:
