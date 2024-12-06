@@ -9,7 +9,7 @@
 ### Updates:
 12/06/2024 @10:16am PST *Version 1.21.21*
 *   **Advance Prompt Enhancer (APE), Ollama unload models**
-    *   User can select how long Ollama keeps its model(s) alive after the APE inference run is complete.  This can be used to manage RAM/VRAM.  See the *help* output on APE for more details
+    *   User can select how long Ollama keeps its model(s) alive after the APE inference run is complete.  This can be used to manage RAM/VRAM.  See the *help* output on APE for more details. [Thanks to @9nate-drake for suppling most of the code]
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *************
