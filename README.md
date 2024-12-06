@@ -7,6 +7,12 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+12/06/2024 @10"16am PST *Version 1.21.21*
+*   **Advance Prompt Enhancer (APE), Ollama unload models**
+    *   User can select how long Ollama keeps its model(s) alive after the APE inference run is complete.  This can be used to manage RAM/VRAM.  See the *help* output on APE for more details
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
 11/23/2024 @7:49am PST *Version 1.21.20*
 *   **Advance Prompt Enhancer (APE), Retries**
     *   User can select the number of *Tries* the node will make to connect and generate output from an AI Service.  APE will indicate a failure and display the error in the *troubleshooting* output if the process fails after the indicated number of attempts.
