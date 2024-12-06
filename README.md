@@ -7,7 +7,7 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
-12/06/2024 @10"16am PST *Version 1.21.21*
+12/06/2024 @10:16am PST *Version 1.21.21*
 *   **Advance Prompt Enhancer (APE), Ollama unload models**
     *   User can select how long Ollama keeps its model(s) alive after the APE inference run is complete.  This can be used to manage RAM/VRAM.  See the *help* output on APE for more details
 *   **Help.json**
