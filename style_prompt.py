@@ -422,7 +422,7 @@ class AI_Chooser:
     @classmethod
     def INPUT_TYPES(cls):
         cFig=cFigSingleton()
-        gptfilter = ("gpt","o1")
+        gptfilter = ("gpt","o1", "o3")
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
@@ -889,7 +889,7 @@ class AdvPromptEnhancer:
     @classmethod
     def INPUT_TYPES(cls):
         cFig = cFigSingleton()
-        gptfilter = ("gpt","o1")
+        gptfilter = ("gpt", "o1", "o3")
 
         return {
             "required": {
@@ -1614,4 +1614,3 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageInfoExtractor": "Exif Wrangler",
     "Add Parameters": "Add Parameters"
 }
-

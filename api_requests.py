@@ -563,13 +563,26 @@ class oai_object_request(Request):
         if not any([prompt, image, instruction, example_list]):
             return "Photograph of a stained empty box with 'NOTHING' printed on its side in bold letters"
 
-        # Prepare request parameters
         params = {
             "model": GPTmodel,
             "messages": messages,
             "temperature": creative_latitude,
-            "max_tokens": tokens
+            "max_tokens": tokens  
         }
+
+        # The 'o' models have parameter restrictions
+        if "o1" in GPTmodel or "o3" in GPTmodel:
+            self.j_mngr.log_events(
+                "The 'o' models have parameter restrictions. Removing 'max_tokens' and setting 'temperature' to 1",
+                TroubleSgltn.Severity.INFO,
+                True
+            )
+
+            if "max_tokens" in params:
+                del params['max_tokens']
+
+            params['temperature'] = 1
+            
 
         if add_params:
             self.j_mngr.append_params(params, add_params, ['param', 'value'])
@@ -752,14 +765,26 @@ class oai_web_request(Request):
                 True
             )
 
-        # Prepare request parameters
         params = {
             "model": GPTmodel,
             "messages": messages,
             "temperature": creative_latitude,
-            "max_tokens": tokens
+            "max_tokens": tokens  
         }
 
+        # The 'o' models have parameter restrictions
+        if "o1" in GPTmodel or "o3" in GPTmodel:
+            self.j_mngr.log_events(
+                "The 'o' models have parameter restrictions. Removing 'max_tokens' and setting 'temperature' to 1",
+                TroubleSgltn.Severity.INFO,
+                True
+            )
+
+            if "max_tokens" in params:
+                del params['max_tokens']
+
+            params['temperature'] = 1
+            
         if add_params:
             self.j_mngr.append_params(params, add_params, ['param', 'value'])
 
