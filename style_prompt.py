@@ -441,7 +441,7 @@ class CustomKeyVar:
             try:
                 envvar_list = j_mngr.read_lines_of_file(envvar_file, is_critical=True) #Returns a list with any user entered env. variables
             except Exception as e:
-                j_mngr.log_events(f"Unable to read envvar_file.txt file. Error: {e}",
+                j_mngr.log_events(f"Unable to read 'user_envvar.txt' file. Error: {e}",
                                     TroubleSgltn.Severity.ERROR,
                                     True)   
                 return envvar_list
@@ -496,6 +496,8 @@ class CustomKeyVar:
             envvar_list = self.j_mngr.read_lines_of_file(envvar_file)
             if New_Env_Variable not in envvar_list: # Prevent duplicates
                 self.j_mngr.write_string_to_file(env_var + "\n", envvar_file, append=True)
+
+        self.j_mngr.log_events("API Key succesfully retrieved.", is_trouble=True)
 
         return (key,self.trbl.get_troubles())
 
