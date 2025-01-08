@@ -7,6 +7,15 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+01/07/2025 @8:00pm PST *Version 1.21.22*
+*   **[new] Custom API Key node, attaches to Advanced Prompt Enhancer**
+    *   User can create their own named Enviroment Variable to contain the API key they want to use.  This node allows you to extract the key from that environment variable and pass it to Advanced Prompt Enhancer.
+    *   This is restricted to AI Services that require a URL (Those with names ending in '(URL)').  This can't be used for: ChatGPT/OpenAI, Anthropic or Groq.
+*   **[new] Load Remote Models node, Utility node**
+    *   User can automatically load models from the OpenRouter remote service into the `Optional_Models` drop-down using filters and sort.   
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*************
 12/06/2024 @10:16am PST *Version 1.21.21*
 *   **Advance Prompt Enhancer (APE), Ollama unload models**
     *   User can select how long Ollama keeps its model(s) alive after the APE inference run is complete.  This can be used to manage RAM/VRAM.  See the *help* output on APE for more details.
@@ -211,14 +220,15 @@ python -m pip install -r requirements.txt
 ****
 ### Requirements: 
 ##  Your OpenAI API or Open Source Key [optional] (Not required for Exif Wrangler, switch nodes, or Advanced Prompt Enhancer when used with open-source LLM's):
-* For the Style Prompt and Dall-e nodes, you’ll need a valid API key from OpenAI.
+* For the Style Prompt you’ll need a valid API key from OpenAI, Groq or Anthropic.
+* For Dall_e you'll need an API key from OpenAI.
 * For Advanced Prompt Enhancer, you'll need a valid API key if you're going to use it with ChatGPT, Anthropic or Groq models,  if you're only using it with open-source LLM's, you won't need one.
 * Some Open-source products use a free key for security and privacy so you have the option to create one if you want.  Most of these products don't use a key, so don't worry if you don't have one.
 * The OpenAI API & Anthropic keys require a paid account, if you want to use an Open-source key they are typically free.  The Groq API key is free also.   Generate the key from their website.
   
   ### The follwing table lists the Enviroment Variables that Plush recognizes and how the API keys they contain are applied.
 
-  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source/Other (e.g. Tabby API, OpenRouter) |  Remote Other (e.g.: OpenRouter)   |
+  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source/Other (e.g. Tabby API) |  Remote Other (e.g.: OpenRouter)   |
   | :------ | :------: | :------: | :------: | :------: | :-------: |
   | `OAI_KEY` |      |      |   **X**   |      |      |
   | `OPENAI_API_KEY` |      |      |   **X**   |      |      |
@@ -227,7 +237,7 @@ python -m pip install -r requirements.txt
   | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |      |
   | `User-Defined`  |     |      |      |   **X**   |   **X**  |    
   -------------------------------------
-   *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
+   *  **You should set a reasonable $dollar limit on the usage of any paid API key to prevent a large bill if the key is compromised.**  You can usually do this in the account settings on the website.  For Example with OpenAI:
      
      ![DollarLimitCGPT](https://github.com/glibsonoran/Plush-for-ComfyUI/assets/31249593/d26fd380-b3ee-4aee-bf02-393f7485fb50)
   *********
@@ -235,7 +245,9 @@ python -m pip install -r requirements.txt
 
    *  With regard to ChatGPT, you can choose to create a new Environment Variable specific to Plush called: `OAI_KEY` and store the API key there, or if you prefer, you can use the OpenAI standard environment variable: `OPENAI_API_KEY`.
      
-   *  Optionally you can create a key for Open-source products in the Environment Variable `LLM_KEY`.  While Open-source products are generally free to use, some use a key for security and privacy. 
+   *  Optionally you can create a key for Open-source products in the Environment Variable `LLM_KEY`.  While Open-source products are generally free to use, some use a key for security and privacy.
+ 
+   *  You can also name and create your own user-defined environment variable in Advanced Prompt Enhancer to use with Opensource and Remote models that are not predefined.
 
    *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the 'OAI_KEY' variable will allow you to generate a separate key for Plush and track those costs separately if your other OpenAI API apps are using the standard variable.  Either way you'll need to have at least one of the two enviroment variables defined with a valid active key if you want to use ChatGPT as an inference engine.  For Open-source products, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT connections.  Enviroment Variables for other supported AI services are shown in the table above.
 
@@ -243,7 +255,7 @@ python -m pip install -r requirements.txt
 
 ##  How to Setup Your Environment Variables
 
-An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value. For a paid ChatGPT key you can set the name of the variable to: `OAI_KEY` or `OPENAI_API_KEY`. If you're using an Open-source product that requires or can use a key (most do not), or a remote serivce that's not preconfigured, use the environment variable: `LLM_KEY`. Refer to the table above for other services. The example below only refers to 'OAI_KEY' but you can substitute the environment variable name that applies to you per the [table](https://github.com/glibsonoran/Plush-for-ComfyUI/blob/main/README.md#your-openai-api-or-open-source-key-optional-not-required-for-exif-wrangler-switch-nodes-or-advanced-prompt-enhancer-when-used-with-open-source-llms) above. 
+An environment variable is a variable that is set on your operating system, rather than within your application. It consists of a name and value. For a paid ChatGPT key for example you can set the name of the variable to: `OAI_KEY` or `OPENAI_API_KEY`. If you're using an Open-source product that requires or can use a key (most do not), or a remote serivce that's not preconfigured, use the environment variable: `LLM_KEY` or create and name your own Enviroment Variable for use with Advanced Prompt Enhancer. Refer to the table above for other services. The example below only refers to 'OAI_KEY' but you can substitute the environment variable name that applies to you per the [table](https://github.com/glibsonoran/Plush-for-ComfyUI/blob/main/README.md#your-openai-api-or-open-source-key-optional-not-required-for-exif-wrangler-switch-nodes-or-advanced-prompt-enhancer-when-used-with-open-source-llms) above. 
 
 Note that after you set your Enviroment Variable, you will have to **reboot your machine** in order for it to take effect.
 ##  Windows Set-up
