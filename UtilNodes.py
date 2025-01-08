@@ -510,6 +510,7 @@ class OpenRouterModels:
             self.j_mngr.remove_lines_by_criteria(file_path=write_file, delete_criteria=Service_Name)
 
         self.j_mngr.write_list_to_file(model_list, write_file, append=True)
+        self.j_mngr.log_events(f"Models were written to: {write_file}", is_trouble=True)
 
         return(self.trbl.get_troubles(),)
  
