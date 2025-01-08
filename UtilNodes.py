@@ -1,7 +1,13 @@
-
-from .mng_json import json_manager, helpSgltn, TroubleSgltn
+#Standard Libraries
 import random
+
+#Third Party Libraries
 import torch
+
+#Local Module references
+from .mng_json import json_manager, helpSgltn, TroubleSgltn
+from .fetch_models import FetchModels, RequestMode
+from .style_prompt import cFigSingleton
 
 class Tagger:
     def __init__(self)-> None:
@@ -426,8 +432,87 @@ class typeConvert:
         out_tuple = tuple(out_list) + (_help, self.trbl.get_troubles())
 
         return out_tuple    
+    
 
 
+class OpenRouterModels:
+
+    def __init__(self):
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+        self.ftch = FetchModels()
+        self.cFig = cFigSingleton()
+        self._model_container = None #Cached object per node session
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "required": {
+                "Service_Name": (["OpenRouter"], {"default": "OpenRouter", "tooltip": "Select the Service you want to load models from."}),
+                "File_Name": (["test_model_load.txt", "opt_models.txt"], {"default": "test_model_load.txt", "tooltip": "Select the file you want to load models into"}),
+                "Include_Filter": ("STRING", {"multiline": True, "tooltip": "Enter criteria for including models in the list. Separate items with a comma(s)"}),
+                "Exclude_Filter": ("STRING", {"multiline": True, "tooltip": "Enter criteria for excluding models from the list. Separate items with a comma(s)"}),
+                "Remove_Prior_Sevice_Name_Entries": ("BOOLEAN", {"default": True, "tooltip": "Remove entries in the text file that include the current Service Name"}),
+                "Sort_Models": ("BOOLEAN", {"default": True})
+            },
+
+        } 
+    
+    RETURN_TYPES = ("STRING", )
+    RETURN_NAMES = ("Troubleshooting", )
+    
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, Service_Name, File_Name, Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
+
+        self.trbl.reset("OpenRouter Models")
+        
+        if Include_Filter:
+            Include_Filter = self.j_mngr.create_iterable(Include_Filter)
+        if Exclude_Filter:
+            Exclude_Filter = self.j_mngr.create_iterable(Exclude_Filter)
+
+        if not self._model_container or not self._model_container.has_data:  
+            self.j_mngr.log_events("Fetching models names from Open Router", is_trouble=True)
+            self._model_container = self.ftch.fetch_models(request_type=RequestMode.OPENROUTER, key=self.cFig.lm_key)
+
+            # Early exit if no models were fetched
+            if not self._model_container.has_data:
+                self.j_mngr.log_events(f"No models were returned from service: {Service_Name}",
+                                        TroubleSgltn.Severity.WARNING,
+                                        is_trouble=True)
+                return (self.trbl.get_troubles(),)
+            
+        else:  #If model_container has data, reuse it
+            self.j_mngr.log_events("Using cached model list", is_trouble=True)
+ 
+        model_list = self._model_container.get_models(sort_it=Sort_Models, include_filter=Include_Filter, exclude_filter=Exclude_Filter, with_none=False)
+
+        if not model_list:  # No models met the filter criteria
+            self.j_mngr.log_events("Filtered model list is empty; skipping file write.", 
+                               TroubleSgltn.Severity.INFO, is_trouble=True)
+            return (self.trbl.get_troubles(),)
+
+            # Prepend service name
+        model_list = [f"{Service_Name} :: {model}" for model in model_list]
+
+        self.j_mngr.log_events(f"Writing models names to file: {File_Name}", is_trouble=True)
+        write_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir,File_Name)
+
+        if Remove_Prior_Sevice_Name_Entries:
+            self.j_mngr.log_events(f"Removing existing lines that include the text: {Service_Name}",is_trouble=True )
+            self.j_mngr.remove_lines_by_criteria(file_path=write_file, delete_criteria=Service_Name)
+
+        self.j_mngr.write_list_to_file(model_list, write_file, append=True)
+
+        return(self.trbl.get_troubles(),)
+ 
 
 class mulTextSwitch:
 
@@ -634,7 +719,8 @@ NODE_CLASS_MAPPINGS = {
     "Random Mixer": mixer,
     "Type Converter": typeConvert,
     "Image Mixer": imgMixer,
-    "Random Image Output": randomImgOut
+    "Random Image Output": randomImgOut,
+    "Load Remote Models": OpenRouterModels
 
 
 }
@@ -648,7 +734,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 "Random Mixer": "Random Mixer",
 "Type Converter": "Plush - Type Converter",
 "Image Mixer": "Image Mixer",
-"Random Image Output": "Random Image Output"
+"Random Image Output": "Random Image Output",
+"Load Remote Models": "Load Remote Models"
 
 
 }

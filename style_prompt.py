@@ -18,6 +18,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 from openai import OpenAI
 import anthropic
+#import google.generativeai as genai
 
 # -----------------------
 # Local Module Imports
@@ -25,8 +26,7 @@ import anthropic
 import folder_paths
 from .mng_json import json_manager, helpSgltn, TroubleSgltn
 from . import api_requests as rqst
-from .fetch_models import FetchModels, ModelUtils, RequestMode
-
+from .fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
 
 
 #pip install pillow
@@ -49,9 +49,12 @@ class cFigSingleton:
             cls._instance = super().__new__(cls)
             cls._lm_client = None
             cls._anthropic_client = None
+            cls._gemini_client = None
             cls._lm_url = ""
             cls._lm_request_mode = None
             cls._lm_key = ""
+            cls._custom_key = ""
+            cls._custom_key_change = False #Flag only
             cls._groq_key = ""
             cls._claude_key = ""
             cls._gemini_key = ""
@@ -61,6 +64,7 @@ class cFigSingleton:
             cls._gemini_models = None
             cls._ollama_models = None
             cls._optional_models = None
+            cls._openrouter_models = None
             cls._written_url = ""
             cls.j_mngr = json_manager()
             cls._model_fetch = FetchModels()
@@ -143,15 +147,25 @@ class cFigSingleton:
                 self._anthropic_client = anthropic.Anthropic(api_key = self._claude_key)
             except Exception as e:
                 self.j_mngr.log_events(f"Invalid or missing Anthropic API key. Please note, keys must be kept in an environment variable.{e}",                                       
-                                       severity=TroubleSgltn.Severity.ERROR)     
+                                       severity=TroubleSgltn.Severity.ERROR)    
+                
+        if self._gemini_key:
+            try:
+                #genai.configure(api_key=self._gemini_key)
+                self._gemini_key = ""  #Placeholder until gemini api is ready
+            except Exception as e:
+                self.j_mngr.log_events(f"Invalid or missing Gemini API key. Please note, keys must be kept in an environment variable.{e}",                                       
+                                       severity=TroubleSgltn.Severity.ERROR)    
+                
                 
                 
         self._fig_gpt_models = self._model_fetch.fetch_models(RequestMode.OPENAI, self._fig_key)
         self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
         self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key)
-        self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
+        if self.gemini_key:
+            self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
         self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")  
-        self._optional_models = self._model_fetch.fetch_models(RequestMode.OPENSOURCE, "")          
+        self._optional_models = self._model_fetch.fetch_models(RequestMode.OPENSOURCE, "")    
    
     def get_chat_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._fig_gpt_models, sort_it, filter_str)      
@@ -162,15 +176,16 @@ class cFigSingleton:
     def get_claude_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._claude_models, sort_it, filter_str)   
 
-    def get_gemini_models(self, sort_it:bool=False, filter_str:tuple=())->list:       
-        return self._model_prep.prep_models_list(self._gemini_models, sort_it, filter_str)   
+    def get_gemini_models(self)->ModelContainer:       
+        return self._gemini_models   
 
     def get_ollama_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._ollama_models, sort_it, filter_str)    
 
     def get_optional_models(self, sort_it:bool=False, filter_str:tuple=())->list: 
         return self._model_prep.prep_models_list(self._optional_models, sort_it, filter_str)   
-        
+    
+            
     def _set_llm_client(self, url:str, request_type:RequestMode=RequestMode.OPENSOURCE)-> bool:
         
         if not self.is_lm_server_up() or not url:
@@ -188,13 +203,14 @@ class cFigSingleton:
         
 
         if request_type in (RequestMode.OOBABOOGA, RequestMode.OPENSOURCE):
-            if not self._lm_key:
-                self.j_mngr.log_events("Setting Openai client with URL, no key.",
-                    is_trouble=True)
-            else:
-                key = self._lm_key
+            key = self._custom_key or self._lm_key #key will equal first 'truthy' value
+            if key:
                 self.j_mngr.log_events("Setting Openai client with URL and key.",
-                    is_trouble=True)
+                    is_trouble=True)                
+            else:
+                self.j_mngr.log_events("Setting Openai client with URL, no key.",
+                    is_trouble=True)                
+
         elif request_type == RequestMode.GROQ:
             if not self._groq_key:
                 self.j_mngr.log_events("Attempting to connect to Groq with no key",
@@ -240,15 +256,12 @@ class cFigSingleton:
     
     @lm_url.setter
     def lm_url(self, url: str):
-        if url != self._lm_url or not self._lm_client:  # Check if the new URL is different to avoid unnecessary operations
-
+        if url != self._lm_url or not self._lm_client or self._custom_key_change:  # Check if the new URL is different to avoid unnecessary operations
+            
             self._lm_url = url
-            # Reset client and models only if a new URL is provided
             self._lm_client = None
-            #self._lm_models = []
             if url:  # If the new URL is not empty, update the client
                 self._set_llm_client(url, self._lm_request_mode)
-
     
     
     def is_lm_server_up(self):  #should be util in api_requests.py
@@ -301,6 +314,21 @@ class cFigSingleton:
     @property
     def lm_key(self)-> str:
         return self._lm_key
+
+    @property
+    def custom_key(self)->str:
+        return self._custom_key
+    
+    @custom_key.setter
+    def custom_key(self, key:str)->None:
+        #Inject key value from User-defined Env. Variable
+        if key != self._custom_key:
+            self._custom_key_change = True
+            self._custom_key = key 
+        else:
+            self._custom_key_change = False
+
+
     
     @property
     def groq_key(self)->str:
@@ -392,6 +420,86 @@ class cFigSingleton:
 
 #********************End Singleton*********************
 
+class CustomKeyVar:
+
+    def __init__(self):
+        #instantiate Configuration and Help data classes
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        j_mngr = json_manager()
+
+        def get_envvar_list():
+            envvar_list =['error']
+            envvar_file = j_mngr.append_filename_to_path(j_mngr.script_dir,"user_envvar.txt")
+            try:
+                envvar_list = j_mngr.read_lines_of_file(envvar_file, is_critical=True) #Returns a list with any user entered env. variables
+            except Exception as e:
+                j_mngr.log_events(f"Unable to read envvar_file.txt file. Error: {e}",
+                                    TroubleSgltn.Severity.ERROR,
+                                    True)   
+                return envvar_list
+            return envvar_list
+
+
+        return {
+            "required": {
+                "Environment_Variable": (get_envvar_list(), {"default": "-New Env. Variable", "tooltip": "Choose to enter a new Env. Variable below, or choose an existing one from the list"}),
+                "New_Env_Variable": ("STRING", {"multiline": False, "default": "", "tooltip": "Enter the name of a new Environment Variable that contains your API Key."}),                                 
+            }
+        } 
+
+    RETURN_TYPES = ("STRING","STRING")
+    RETURN_NAMES = ("Custom_ApiKey", "troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush/Prompt"  
+
+    def gogo(self, Environment_Variable, New_Env_Variable)->tuple:
+
+        self.trbl.reset("Custom API Key")
+
+        env_var = ""
+        if Environment_Variable == "-New Env. Variable":
+            env_var = New_Env_Variable
+            if not New_Env_Variable:
+                self.j_mngr.log_events("You specified '-New Env Variable' but didn't provide one in the field.", 
+                                       TroubleSgltn.Severity.ERROR,
+                                       True)
+        else:
+            env_var = Environment_Variable
+
+        key = os.getenv(env_var,"missing",) #Fetch the api Key from the User-def Env. Var.
+
+        if key == "missing":
+            self.j_mngr.log_events(f"Environment Variable missing or misspelled: {env_var}",
+                TroubleSgltn.Severity.ERROR,
+                True)
+            return ("", self.trbl.get_troubles())
+        if not key:
+            self.j_mngr.log_events(f"Environment Variable not found: {env_var}",
+                TroubleSgltn.Severity.ERROR,
+                True)
+            return ("", self.trbl.get_troubles()  )
+        
+        if Environment_Variable == "-New Env. Variable":
+            envvar_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, "user_envvar.txt")
+            envvar_list = self.j_mngr.read_lines_of_file(envvar_file)
+            if New_Env_Variable not in envvar_list: # Prevent duplicates
+                self.j_mngr.write_string_to_file(env_var + "\n", envvar_file, append=True)
+
+        return (key,self.trbl.get_troubles())
+
+
 
     
 class AI_Chooser:
@@ -422,7 +530,7 @@ class AI_Chooser:
     @classmethod
     def INPUT_TYPES(cls):
         cFig=cFigSingleton()
-        gptfilter = ("gpt","o1", "o3")
+        gptfilter = ("gpt","o1","o3")
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
@@ -889,13 +997,14 @@ class AdvPromptEnhancer:
     @classmethod
     def INPUT_TYPES(cls):
         cFig = cFigSingleton()
-        gptfilter = ("gpt", "o1", "o3")
+        gptfilter = ("gpt","o1", "o3")
 
         return {
             "required": {
                 "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type/service, connections ending with '(URL)' require a URL to be entered below"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
+                #"Google_Gemini_model": (cFig.get_gemini_models().get_models(), {"default": "none"}),
                 "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
                 "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}), 
                 "Ollama_model_unload": (["Unload After Run", "Keep Alive Indefinitely", "No Setting"], {"default": "No Setting", "tooltip": "Choose how long this model will stay loaded after completion"}),
@@ -904,7 +1013,7 @@ class AdvPromptEnhancer:
                 "tokens" : ("INT", {"max": 20000, "min": 20, "step": 10, "default": 800, "display": "number"}), 
                 "seed": ("INT", {"default": 9, "min": 0, "max": 0xffffffffffffffff}),
                 "examples_delimiter":(["Pipe |", "Two newlines", "Two colons ::"], {"default": "Two newlines"}),
-                "LLM_URL": ("STRING",{"default": cFig.lm_url, "tooltip": "Enter the url for your service here when using connections that end with: (URL)"}),
+                "LLM_URL": ("STRING",{"default": "", "tooltip": "Enter the url for your service here when using connections that end with: (URL)"}),  #Removed "default": "cFig.lm_url"
                 "Number_of_Tries": (["1","2","3","4","5","default"], {"default": "default"})            
                          
             },
@@ -917,6 +1026,7 @@ class AdvPromptEnhancer:
                 "Examples_or_Context": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Prompt": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Add_Parameter": ("LIST", {"default": None, "forceInput": True}),
+                "Custom_ApiKey":("STRING",{"default": "", "forceInput": True}),
                 "image" : ("IMAGE", {"default": None})                          
                 
             }
@@ -932,7 +1042,7 @@ class AdvPromptEnhancer:
     CATEGORY = "Plush/Prompt"
 
     def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Ollama_model_unload, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
-              Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Examples_or_Context:str ="", image=None, unique_id=None):
+              Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Custom_ApiKey:str="", Examples_or_Context:str ="", image=None, unique_id=None):
 
         if unique_id:
             self.trbl.reset("Advanced Prompt Enhancer, Node #"+unique_id)
@@ -942,12 +1052,15 @@ class AdvPromptEnhancer:
         _help = self.help_data.adv_prompt_help
 
 
-        # set the value of unconnected inputs to None
+        # fix/validate the values of any unconnected inputs
         Instruction = Enhancer.undefined_to_none(Instruction)
         Prompt = Enhancer.undefined_to_none(Prompt)
         Examples = Enhancer.undefined_to_none(Examples_or_Context)
         LLM_URL = Enhancer.undefined_to_none(LLM_URL)
         image = Enhancer.undefined_to_none(image)
+        if Custom_ApiKey is None or Custom_ApiKey == "undefined":
+            Custom_ApiKey = ""  
+        self.cFig.custom_key = Custom_ApiKey 
         
         if not isinstance(Add_Parameter, list):
             Add_Parameter = []
@@ -985,7 +1098,7 @@ class AdvPromptEnhancer:
 
         if Examples:
             example_list = self.j_mngr.build_context(Examples, delimiter)
-            
+        
         kwargs = { "model": remote_model,
                 "creative_latitude": creative_latitude,
                 "tokens": tokens,
@@ -1014,6 +1127,8 @@ class AdvPromptEnhancer:
                 LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
             elif AI_service == "Ollama (URL)":
                 self.cFig.lm_request_mode = RequestMode.OLLAMA
+                if not LLM_URL:
+                    LLM_URL = 'http://localhost:11434/v1'  #If URL unspecified
                 unload_ctx = rqst.request_context()
                 unload_ctx.request = rqst.ollama_unload_request()
 
@@ -1025,7 +1140,7 @@ class AdvPromptEnhancer:
                 return(llm_result,"", _help, self.trbl.get_troubles()) 
 
             # set the url so the function making the request will have a properly initialized object.               
-            self.cFig.lm_url = LLM_URL
+            self.cFig.lm_url = LLM_URL 
             
             if not self.cFig.lm_client:
                 self.j_mngr.log_events("Open Source LLM server is not running.  Aborting request.",
@@ -1060,11 +1175,16 @@ class AdvPromptEnhancer:
 
         
         if AI_service == "Direct Web Connection (URL)" or AI_service == "LM_Studio (URL)":
+
             if not LLM_URL:
-                self.j_mngr.log_events("'Direct Web Connection (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
-                                    TroubleSgltn.Severity.WARNING,
-                                    True)
-                return(llm_result, "", _help, self.trbl.get_troubles())  
+                if AI_service == "LM_Studio (URL)":
+                    LLM_URL = "http://localhost:1234/v1/chat/completions" #Set default URL if user doesn't provide one
+                    kwargs['url'] = LLM_URL
+                else: 
+                    self.j_mngr.log_events("'Direct Web Connection (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
+                                        TroubleSgltn.Severity.WARNING,
+                                        True)
+                    return(llm_result, "", _help, self.trbl.get_troubles())  
             
             self.ctx.request = rqst.oai_web_request()
 
@@ -1074,7 +1194,7 @@ class AdvPromptEnhancer:
                                        True)
             
             if AI_service == "LM_Studio (URL)":
-                self.cFig.lm_request_mode = RequestMode.LMSTUDIO
+                self.cFig.lm_request_mode = RequestMode.LMSTUDIO                    
             else:
                 self.cFig.lm_request_mode = RequestMode.OPENSOURCE
 
@@ -1602,7 +1722,8 @@ NODE_CLASS_MAPPINGS = {
     "AdvPromptEnhancer": AdvPromptEnhancer,
     "DalleImage": DalleImage,
     "Plush-Exif Wrangler" :ImageInfoExtractor,
-    "Add Parameters": addParameters
+    "Add Parameters": addParameters,
+    "Custom API Key": CustomKeyVar
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -1612,5 +1733,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "AdvPromptEnhancer": "Advanced Prompt Enhancer",
     "DalleImage": "OAI Dall_e Image",
     "ImageInfoExtractor": "Exif Wrangler",
-    "Add Parameters": "Add Parameters"
+    "Add Parameters": "Add Parameters",
+    "CustomKeyVar": "Custom API Key"
 }
+

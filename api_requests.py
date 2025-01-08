@@ -582,7 +582,6 @@ class oai_object_request(Request):
                 del params['max_tokens']
 
             params['temperature'] = 1
-            
 
         if add_params:
             self.j_mngr.append_params(params, add_params, ['param', 'value'])
@@ -835,7 +834,8 @@ class oai_web_request(Request):
         if request_type == self.mode.OPENAI:
             return self.cFig.key
         elif request_type in [self.mode.OPENSOURCE, self.mode.LMSTUDIO]:
-            return self.cFig.lm_key
+            key = self.cFig.custom_key or self.cFig.lm_key #Will populate with first 'truthy' value
+            return key
         elif request_type == self.mode.GROQ:
             return self.cFig.groq_key
         return ""
@@ -1113,8 +1113,7 @@ class ollama_unload_request(Request):
                             TroubleSgltn.Severity.WARNING,
                             True)
         return False
-
-
+    
     
 class request_context:
     def __init__(self)-> None:

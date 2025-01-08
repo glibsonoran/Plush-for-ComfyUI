@@ -1,11 +1,15 @@
 
-
+#Standard Libraries
 import sys
-#from .mng_json import json_manager
-from .mng_json import json_manager
 
+#Third Pary Libraries
 #Diagnostic version print to detect incompatible openai versions
 import openai
+
+#Local Modules references
+from .mng_json import json_manager
+
+
 
 
 print(f"Plush - Running on python installation: {sys.executable}, ver: {sys.version}")
@@ -17,7 +21,7 @@ if jmanager.on_startup(False):
 else:
     jmanager.log_events("config.json was not updated")
 
-__version__ ="1.21.21"
+__version__ ="1.21.22"
 print('Plush - Version:', __version__)
 
 

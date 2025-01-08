@@ -1,13 +1,24 @@
-import requests   
+# =======================
+#  Standard Libraries
+# =======================
 from enum import Enum
-from requests.adapters import HTTPAdapter, Retry 
-#from typing import Optional
-from .mng_json import json_manager, TroubleSgltn 
+from typing import Optional, Dict
 from io import BytesIO
+import base64
+
+# =======================
+#  Third-Party Libraries
+# =======================
+import requests
+from requests.adapters import HTTPAdapter, Retry
 from PIL import Image, ImageOps
 import torch
-import base64
 import numpy as np
+
+# =======================
+#  Local Modules
+# =======================
+from .mng_json import json_manager, TroubleSgltn
 
 class ImageFormat(Enum):
     B64_IMAGE = "b64-image"  # Base64 encoded image (JPEG/PNG)
@@ -42,13 +53,13 @@ class CommUtils:
                               True)
         return False  
     
-    def get_data(self, endpoint:str="", timeout:int=8, retries:int=1, data_type:str="" )-> requests.Response | None:
+    def get_data(self, endpoint:str="", timeout:int=8, retries:int=1, data_type:str="", headers:Optional[Dict[str,str]]=None )-> requests.Response | None:
         session = requests.Session()
         gretries = Retry(total=retries, backoff_factor=0, status_forcelist=[500, 502, 503, 504])
         session.mount('http://', HTTPAdapter(max_retries=gretries))
         stat_code = 0
         try:
-            response = session.get(endpoint, timeout=timeout)
+            response = session.get(endpoint, timeout=timeout, headers=headers,)
             stat_code = response.status_code
             response.raise_for_status()  # Raises an HTTPError if the response status code indicates an error
             return response
@@ -301,4 +312,4 @@ class ImageUtils:
 
         self.j_mngr.log_events(f"No images found in the response under key '{response_key}'")
         return None
-            
+           
