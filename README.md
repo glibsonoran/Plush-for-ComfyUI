@@ -8,11 +8,11 @@
 ****
 ### Updates:
 01/07/2025 @8:00pm PST *Version 1.21.22*
-*   **[new] Custom API Key node, attaches to Advanced Prompt Enhancer**
+*   **[new node] `Custom API Key` node, attaches to Advanced Prompt Enhancer**
     *   User can create their own named Enviroment Variable to contain the API key they want to use.  This node allows you to extract the key from that environment variable and pass it to Advanced Prompt Enhancer.
     *   This is restricted to AI Services that require a URL (Those with names ending in '(URL)').  This can't be used for: ChatGPT/OpenAI, Anthropic or Groq.
-*   **[new] Load Remote Models node, Utility node**
-    *   User can automatically load models from the OpenRouter remote service into the `Optional_Models` drop-down using filters and sort.   
+*   **[new node] `Load Remote Models` node, Utility node**
+    *   User can automatically load models from the OpenRouter remote service into the `Optional_Models` drop-down using filters and sort.  This node requires that the `Custom API Key` node be attached and the appropriate Env. Variable name entered. 
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *************
