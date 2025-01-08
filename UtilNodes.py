@@ -465,7 +465,7 @@ class OpenRouterModels:
     
     FUNCTION = "gogo"
 
-    OUTPUT_NODE = False
+    OUTPUT_NODE = True
 
     CATEGORY = "Plush/Utils"
 
