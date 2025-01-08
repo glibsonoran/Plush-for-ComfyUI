@@ -405,7 +405,7 @@ class json_manager:
         return deleted_count
     
 
-    def remove_lines_by_criteria(self, file_path, delete_criteria: str) -> int:
+    def remove_lines_by_criteria(self, file_path, delete_criteria: str, is_critical:bool=False) -> int:
         """
         Removes lines from a file if they do not begin with '#' and contain the specified delete_criteria.
         Comment lines (starting with '#') are always preserved.
@@ -414,13 +414,31 @@ class json_manager:
         :param delete_criteria: Value to check; lines containing this value are removed.
         :return: The count of deleted lines.
         """
+        # Ensure file_path is a Path object
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
+
+            # Check if the file exists
+        if not file_path.is_file():
+            message = f"File not created yet: {file_path}"
+            if is_critical:
+                raise FileNotFoundError(message)
+            else:
+                self.log_events(
+                message,
+                TroubleSgltn.Severity.INFO,
+                True
+                )
+            return None  # exit gracefully
+
+
         deleted_count = 0
         updated_lines = []
         try:
             with open(file_path, "r", encoding='utf-8') as file:
                 for line in file:
-                    stripped_line = line.strip()
-                    if stripped_line.startswith("#") or delete_criteria not in stripped_line:
+                    stripped_line = line.strip().lower()
+                    if stripped_line.startswith("#") or delete_criteria.lower() not in stripped_line:
                         updated_lines.append(line)
                     else:
                         deleted_count += 1
@@ -772,7 +790,19 @@ class json_manager:
         if not isinstance(file_path, Path):
             file_path = Path(file_path)
             file_path.parent.mkdir(parents=True, exist_ok=True)
+
         try:
+        # If appending, check if file exists and if it ends with a newline
+            if append and file_path.is_file() and file_path.stat().st_size > 0:
+                with open(file_path, 'rb') as check_file:
+                    # Jump to the last byte of the file
+                    check_file.seek(-1, 2)
+                    last_char = check_file.read(1)
+                    # If the last character is not a newline, append one
+                if last_char != b'\n':
+                    with open(file_path, 'ab') as fix_file:
+                        fix_file.write(b'\n')
+
             with open(file_path, mode, encoding='utf-8') as file:
                 for item in input_list:
                     if not filter_value or filter_value in item:
