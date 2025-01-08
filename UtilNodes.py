@@ -457,7 +457,9 @@ class OpenRouterModels:
                 "Remove_Prior_Sevice_Name_Entries": ("BOOLEAN", {"default": True, "tooltip": "Remove entries in the text file that include the current Service Name"}),
                 "Sort_Models": ("BOOLEAN", {"default": True})
             },
-
+            "optional" :{
+                "Custom_ApiKey":("KEY",{"default": "", "forceInput": True}),
+            }
         } 
     
     RETURN_TYPES = ("STRING", )
@@ -469,9 +471,15 @@ class OpenRouterModels:
 
     CATEGORY = "Plush/Utils"
 
-    def gogo(self, Service_Name, File_Name, Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
+    def gogo(self, Service_Name, File_Name, Custom_ApiKey:str="", Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
 
         self.trbl.reset("OpenRouter Models")
+
+        if not Custom_ApiKey:
+            self.j_mngr.log_events("You must attach the Plush 'Custom API Key' node and enter a valid Env. Variable name. Error: No API Key provided",
+                                   TroubleSgltn.Severity.ERROR,
+                                   True)
+            return(self.trbl.get_troubles(),)
         
         if Include_Filter:
             Include_Filter = self.j_mngr.create_iterable(Include_Filter)
@@ -480,7 +488,7 @@ class OpenRouterModels:
 
         if not self._model_container or not self._model_container.has_data:  
             self.j_mngr.log_events("Fetching models names from Open Router", is_trouble=True)
-            self._model_container = self.ftch.fetch_models(request_type=RequestMode.OPENROUTER, key=self.cFig.lm_key)
+            self._model_container = self.ftch.fetch_models(request_type=RequestMode.OPENROUTER, key=Custom_ApiKey)
 
             # Early exit if no models were fetched
             if not self._model_container.has_data:
