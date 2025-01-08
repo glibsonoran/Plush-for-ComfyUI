@@ -455,7 +455,7 @@ class CustomKeyVar:
             }
         } 
 
-    RETURN_TYPES = ("STRING","STRING")
+    RETURN_TYPES = ("KEY","STRING")
     RETURN_NAMES = ("Custom_ApiKey", "troubleshooting")
 
     FUNCTION = "gogo"
@@ -1028,7 +1028,7 @@ class AdvPromptEnhancer:
                 "Examples_or_Context": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Prompt": ("STRING",{"multiline": True, "default": "", "forceInput": True}),
                 "Add_Parameter": ("LIST", {"default": None, "forceInput": True}),
-                "Custom_ApiKey":("STRING",{"default": "", "forceInput": True}),
+                "Custom_ApiKey":("KEY",{"default": "", "forceInput": True}),
                 "image" : ("IMAGE", {"default": None})                          
                 
             }
