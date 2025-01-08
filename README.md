@@ -218,14 +218,14 @@ python -m pip install -r requirements.txt
   
   ### The follwing table lists the Enviroment Variables that Plush recognizes and how the API keys they contain are applied.
 
-  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source/Other (e.g. Tabby API, OpenRouter) |
-  | :------ | :------: | :------: | :------: | :------: |
-  | `OAI_KEY` |      |      |   **X**   |      |
-  | `OPENAI_API_KEY` |      |      |   **X**   |      |
-  | `LLM_KEY` |      |      |      |   **X**   |
-  | `GROQ_API_KEY` |      |   **X**   |      |      |
-  | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |
-  | 'User-Defined'  |     |      |      |   **X**   |    
+  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source/Other (e.g. Tabby API, OpenRouter) |  Remote Other (e.g.: OpenRouter)   |
+  | :------ | :------: | :------: | :------: | :------: | :-------: |
+  | `OAI_KEY` |      |      |   **X**   |      |      |
+  | `OPENAI_API_KEY` |      |      |   **X**   |      |      |
+  | `LLM_KEY` |      |      |      |   **X**   |  **X**  |
+  | `GROQ_API_KEY` |      |   **X**   |      |      |      |
+  | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |      |
+  | `User-Defined`  |     |      |      |   **X**   |   **X**  |    
   -------------------------------------
    *  **You should set a reasonable $dollar limit on the usage of your OpenAI API key to prevent a large bill if the key is compromised.**  You can do this in the account setting at the OpenAI website.
      
