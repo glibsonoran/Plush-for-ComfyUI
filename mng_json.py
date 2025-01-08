@@ -1,4 +1,6 @@
-
+# ------------------------
+# Standard Library Imports
+# ------------------------
 import json
 import os
 import shutil
@@ -22,7 +24,7 @@ class TroubleSgltn:
     Nodes that use this class should initialize with TroubleSgltn.reset('my_process') at the top of the main method at the start of the run. 
     If you want a more granular listing of the processes being logged you can append a new process header using set_process_header.
     The node's main method can then query the .get_troubles() method at the end of the run to fetch all stored log messages 
-    and present them to the user in the return tuple: 'return(result, TroubleSgltn.get_trouble()').
+    and present them to the user in the return tuple: 'return(result, TroubleSgltn.get_troubles()').
     """
     _instance = None
 
@@ -401,6 +403,44 @@ class json_manager:
                             True)
             return None
         return deleted_count
+    
+
+    def remove_lines_by_criteria(self, file_path, delete_criteria: str) -> int:
+        """
+        Removes lines from a file if they do not begin with '#' and contain the specified delete_criteria.
+        Comment lines (starting with '#') are always preserved.
+
+        :param file_path: Path to the file to process.
+        :param delete_criteria: Value to check; lines containing this value are removed.
+        :return: The count of deleted lines.
+        """
+        deleted_count = 0
+        updated_lines = []
+        try:
+            with open(file_path, "r", encoding='utf-8') as file:
+                for line in file:
+                    stripped_line = line.strip()
+                    if stripped_line.startswith("#") or delete_criteria not in stripped_line:
+                        updated_lines.append(line)
+                    else:
+                        deleted_count += 1
+        except Exception as e:
+            self.log_events(f"Error reading file: {file_path}: {e}",
+                            TroubleSgltn.Severity.WARNING,
+                            True)
+            return None
+
+        try:
+            with open(file_path, "w", encoding='utf-8') as file:
+                file.writelines(updated_lines)
+        except Exception as e:
+            self.log_events(f"Error writing updated file: {file_path}: {e}",
+                            TroubleSgltn.Severity.ERROR,
+                            True)
+            return None
+
+        return deleted_count
+
 
     
     def generate_unique_filename(self, extension: str, base: str="")->str:
@@ -557,6 +597,43 @@ class json_manager:
             return None
         
 
+    def create_untracked_files(self, files_info:list):
+        """
+        Create untracked files for each item in files_info, 
+        using each item's specified template.
+
+        :param files_info: An iterable (like a list) of dictionaries. 
+                        Each dict should have keys 'filename', 'template', target_dir and 'type'
+                        e.g.: [{"filename": "my_file.txt", "template": "my_template.txt", "target_dir": self.script_dir, "type": "untracked_file"},].
+        """
+
+        # Iterate over each specified file/template pair
+        for file_info in files_info:
+            template_file = file_info["template"]
+            untracked_file = file_info["filename"]
+            target_dir = file_info.get("target_dir", self.script_dir)
+            _type = file_info.get("type", "Untracked File")
+
+            # Construct the full paths
+            template_path = self.append_filename_to_path(target_dir, template_file)
+            untracked_path = self.append_filename_to_path(target_dir, untracked_file)
+
+            # Copy the template into the new untracked file
+            result = self.copy_template_file(template_path, untracked_path)
+
+            # Log what happened
+            if result:
+                self.log_events(
+                    f"{_type} file successfully created or already exists: {untracked_file}"
+                )
+            else:
+                self.log_events(
+                    f"Creation of {_type} file failed. {untracked_file} does not exist",
+                    TroubleSgltn.Severity.WARNING
+                )
+
+        
+
     def copy_template_file(self, template: str, new_file: str, overwrite: bool = False, is_critical: bool = False) -> bool:
         """
         Copies a template file to a new location with a new file name.
@@ -584,7 +661,9 @@ class json_manager:
 
             # Check if the template file exists
             if not template_path.exists():
-                raise FileNotFoundError(f"Template file '{template}' not found.")
+                self.log_events(f"Template file: {template} not found.  {new_file} was not created.")                
+                if is_critical:
+                    raise FileNotFoundError(f"Template file '{template}' not found.")
 
             # Create parent directories for the new file if they don't exist
             new_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -641,22 +720,30 @@ class json_manager:
                                 TroubleSgltn.Severity.ERROR)
         return None
 
-    def write_string_to_file(self, data: str, file_path: Union[str,Path], is_critical: bool=False)->bool:
+    def write_string_to_file(self, data: str, file_path: Union[str,Path], is_critical: bool=False, append:bool=False)->bool:
         """
-        Writes any string data to a file, makes the file if it doesn't exist.  
-        Will also write empty strings, clearing the file content.  Including JSON strings. 
+        Writes any string data to a file, makes the file if it doesn't exist.  Makes the target directory if 
+        it doesn't exist.  
+        Will also write empty strings, clearing the file content if append=False.  Including JSON strings. 
 
         Args:
             data (str): The string to write to the file.
             file_path (str): The path and name of the file to write.
             is_critical (bool): If True, raises exceptions for errors
+            append (bool): If False will overwrite existing file with new data.
+                If True will append new data to the end of existing file.
 
         Returns:
             bool: True if the write operation was successful, False otherwise.
         """
+        mode = 'a' if append else 'w'
+
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
 
         try:
-            with open(file_path, 'w', encoding='utf-8') as file:
+            with open(file_path, mode, encoding='utf-8') as file:
                 file.write(data)
             return True
         except (IOError, OSError) as e:
@@ -664,8 +751,38 @@ class json_manager:
                             TroubleSgltn.Severity.WARNING,
                             True)
             if is_critical:
-                raise
+                raise e
             return False
+        
+
+    def write_list_to_file(self, input_list: List[str], file_path: str, filter_value: str = "", is_critical: bool = False, append: bool = False) -> None:
+        """
+        Writes each item from input_list to the specified file, one per line.
+        If filter_value is provided, only items containing filter_value are written.
+        Errors are logged if is_critical is False; otherwise, they are raised.
+
+        :param input_list: List of items to write to the file.
+        :param file_path: Path and file name for the file to which items will be written.
+        :param filter_value: String to filter items; only items containing this value are written.
+        :param is_critical: If True, errors are raised; if False, errors are logged.
+        :param append: If True, appends to the file instead of overwriting it.
+        """
+        mode = 'a' if append else 'w'
+
+        if not isinstance(file_path, Path):
+            file_path = Path(file_path)
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(file_path, mode, encoding='utf-8') as file:
+                for item in input_list:
+                    if not filter_value or filter_value in item:
+                        file.write(f"{item.rstrip()}\n")
+        except Exception as e:
+            if is_critical:
+                raise e
+            else:
+                self.log_events(f"Error writing list to file.  Error: {e}")
+
 
 
 
@@ -1474,6 +1591,54 @@ class json_manager:
         return dict_list
     
 
+    def create_iterable(self, input_str: str, return_type: str = 'list', delimiter: str = ','):
+        """
+        Converts a delimited string into an iterable (list, tuple, set, or deque).
+
+        Parameters:
+            input_str (str): The input string to convert.
+            return_type (str): The type of iterable to return ('list', 'tuple', 'set', 'deque', 'generator').
+            delimiter (str): The delimiter to split the string on.
+
+        Returns:
+            list, tuple, set, deque, or generator: The resulting iterable.
+
+        Raises:
+            ValueError: If input_str is not a string, is empty, or return_type is invalid.
+        """
+        from collections import deque
+
+        if not isinstance(input_str, str):
+            json_manager.log_events("create_iterable value passed is not a string",
+                                    TroubleSgltn.Severity.ERROR,
+                                    True)
+        if not input_str.strip():  # Check for empty or whitespace-only string
+            json_manager.log_events("create_iterable value passed is empty or only whitespace",
+                                    TroubleSgltn.Severity.ERROR,
+                                    True)
+
+        # Split the string by the specified delimiter and strip each item of whitespace
+        items = [item.strip() for item in input_str.split(delimiter) if item.strip()]
+
+        # Return the appropriate iterable type
+        if return_type == 'list':
+            return items
+        elif return_type == 'tuple':
+            return tuple(items)
+        elif return_type == 'set':
+            return set(items)
+        elif return_type == 'deque':
+            return deque(items)
+        elif return_type == 'generator':
+            return (item for item in items)
+        else:
+            json_manager.log_events("create_iterable invalid retun_type param. Must be one of: 'list', 'tuple', 'set', 'deque', 'generator' ",
+                                    TroubleSgltn.Severity.ERROR,
+                                    True)
+
+
+    
+
 
     def build_context(
         self,
@@ -1854,7 +2019,15 @@ class json_manager:
                             TroubleSgltn.Severity.ERROR)
             
 
-        #Create untracked files to hold users entered data
+        # Create untracked files to hold user entered data in files that won't be overwritten by Git
+        # e.g.: [{"filename": "my_file.txt", "template": "my_template.txt", "target_dir": self.script_dir, "type": "untracked_file"},]
+        untracked_files_list  = [
+            {"filename": "opt_models.txt", "template": "models_template.txt", "target_dir": self.script_dir, "type": "Optional Models"},
+            {"filename": "user_envvar.txt", "template": "envvar_template.txt", "target_dir": self.script_dir, "type": "Custom Env Variables" }
+         ]    
+        self.create_untracked_files(untracked_files_list)
+
+        """
         untracked_type = "Optional Models"
         untracked_file = 'opt_models.txt'
         untracked_path = self.append_filename_to_path(self.script_dir, untracked_file)
@@ -1866,7 +2039,7 @@ class json_manager:
         else:
             self.log_events(f"Creation of {untracked_type} file failed. {untracked_file} does not exist",
                             TroubleSgltn.Severity.WARNING)
-
+        """
 
         # Check for config.json
         if not os.path.exists(self.config_file):

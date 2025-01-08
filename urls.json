@@ -1,3 +1,5 @@
 {
-"ollama_url": "http://localhost:11434/api/tags"
+"ollama_url": "http://localhost:11434/api/tags",
+"openrouter_models": "https://openrouter.ai/api/v1/models",
+"gemini_models": "https://generativelanguage.googleapis.com/v1beta/models"
 }
