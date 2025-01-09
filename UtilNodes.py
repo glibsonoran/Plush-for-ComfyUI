@@ -9,6 +9,16 @@ from .mng_json import json_manager, helpSgltn, TroubleSgltn
 from .fetch_models import FetchModels, RequestMode
 from .style_prompt import cFigSingleton
 
+
+class AnyType(str):
+    """A special type that can be connected to any other types. Credit to pythongosssss"""
+
+    def __ne__(self, __value: object) -> bool:
+        return False
+
+any_type = AnyType("*")
+
+
 class Tagger:
     def __init__(self)-> None:
         self.trbl = TroubleSgltn()
@@ -673,6 +683,26 @@ class jsonParse:
 
         return (*[values.get(k, "") for k in [key_1, key_2, key_3, key_4, key_5]], p_json,_help,self.trbl.get_troubles())
     
+class TextAny:
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "Text": ("STRING", {"default": '', "multiline": True}),
+            }
+        }
+
+    RETURN_TYPES = (any_type,)
+    RETURN_NAMES = ("any",)
+    FUNCTION = "gogo"
+    CATEGORY = "Plush/Utils"
+
+    def gogo(self, Text):
+        #Connects to any data type
+        return (Text,)
+
+    
 
 class ShowInfo_md:
     @classmethod
@@ -729,7 +759,8 @@ NODE_CLASS_MAPPINGS = {
     "Type Converter": typeConvert,
     "Image Mixer": imgMixer,
     "Random Image Output": randomImgOut,
-    "Load Remote Models": OpenRouterModels
+    "Load Remote Models": OpenRouterModels,
+    "Text (Any)": TextAny
 
 
 }
@@ -744,7 +775,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 "Type Converter": "Plush - Type Converter",
 "Image Mixer": "Image Mixer",
 "Random Image Output": "Random Image Output",
-"Load Remote Models": "Load Remote Models"
-
+"Load Remote Models": "Load Remote Models",
+"TextAny": "Text (Any input)"
 
 }
