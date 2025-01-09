@@ -12,7 +12,9 @@
     *   User can create their own named Enviroment Variable to contain the API key they want to use.  This node allows you to extract the key from that environment variable and pass it to Advanced Prompt Enhancer.
     *   This is restricted to AI Services that require a URL (Those with names ending in '(URL)').  This can't be used for: ChatGPT/OpenAI, Anthropic or Groq.
 *   **[new node] `Load Remote Models` node, Utility node**
-    *   User can automatically load models from the OpenRouter remote service into the `Optional_Models` drop-down using filters and sort.  This node requires that the `Custom API Key` node be attached and the appropriate Env. Variable name entered. 
+    *   User can automatically load models from the OpenRouter remote service into the `Optional_Models` drop-down using filters and sort.  This node requires that the `Custom API Key` node be attached and the appropriate Env. Variable name entered.
+*   **[new node} `Text (Any)` node, attaches to any input type.**
+    *   A simple text node that will attach to any type of input.  If you want to convert `Optional Models` to an input and type in single model names rather than a drop down, use this node.
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *************
