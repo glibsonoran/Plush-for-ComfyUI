@@ -319,7 +319,7 @@ You can connect to remote AI services that are not preconfigured in **Advanced P
 
 1) Obtain an API key from the service you want to use, you may have to pay for this.  
 
-2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  Alternatively you can create an Environment Variable using your own custom name and attach the PLush `Custom API Key` node to Advanced Prompt Enhancer to access it.   If you don't know how to create an enviroment variable there are instructions [here](#how-to-setup-your-environment-variables)
+2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  Alternatively you can create an Environment Variable using your own custom name and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer to access it.   If you don't know how to create an enviroment variable there are instructions [here](#how-to-setup-your-environment-variables)
 
 3) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact model names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.  Alternatively you can enter individual model names directly by converting the APE *Optional Models* drop-down widget to an input and attaching the Plush `Text (Any)` node to it.
 
@@ -328,7 +328,7 @@ You can connect to remote AI services that are not preconfigured in **Advanced P
     - By choosing: *OpenAI API Connection (URL)* in the AI_service pull down
     - By choosing: *Direct Web Connection (URL)* in the AI_service pull down
 
-6) Select the model you want to use in the *Optional_models* pull down, these will be the models you entered in the text file in step 3.
+6) Select the model you want to use in the *Optional_models* pull down, these will be the models you entered in the text file in step 3.  If instead you chose to enter individual model names using the Plush `Text (Any)`node, enter your model name in the field.
 
 7) Enter the url for the site you want to connect to in the *LLM_URL* field.  The *OpenAI API Connection* method will require a url that has a `/v1` path.  The *Direct Web Connection* method will require a url that has a `/v1/chat/completions` path.  The following are examples for OpenRouter:
 
