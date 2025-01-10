@@ -319,24 +319,28 @@ You can connect to remote AI services that are not preconfigured in **Advanced P
 
 1) Obtain an API key from the service you want to use, you may have to pay for this.  
 
-2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  If you don't know how to create an enviroment variable there are instructions [here](#how-to-setup-your-environment-variables)
-   *    Alternatively you can create an Environment Variable using your own custom name and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer to access it.  
+2) Create your Environment Variable and enter your API key:
+   *    If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  
+   *    Alternatively you can create an Environment Variable using your own custom name and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer to access it.
+   *    If you don't know how to create an enviroment variable there are instructions [here](#how-to-setup-your-environment-variables)
 
-4) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact model names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.  Alternatively you can enter individual model names directly by converting the APE *Optional Models* drop-down widget to an input and attaching the Plush `Text (Any)` node to it.
+4) Enter your model names:
+   *    Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact model names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.
+   *    Alternatively you can enter individual model names directly by converting the APE *Optional Models* drop-down widget to an input and attaching the Plush `Text (Any)` node to it.
 
-5) Start ComfyUI.  In the APE node you can setup your connection to the service two different ways: 
+6) Start ComfyUI.  In the APE node you can setup your connection to the service two different ways: 
 
     - By choosing: *OpenAI API Connection (URL)* in the AI_service pull down
     - By choosing: *Direct Web Connection (URL)* in the AI_service pull down
 
-6) Select the model you want to use in the *Optional_models* pull down, these will be the models you entered in the text file in step 3.  If instead you chose to enter individual model names using the Plush `Text (Any)`node, enter your model name in the field.
+7) Select the model you want to use in the *Optional_models* pull down, these will be the models you entered in the text file in step 3.  If instead you chose to enter individual model names using the Plush `Text (Any)`node, enter your model name in the field.
 
-7) Enter the url for the site you want to connect to in the *LLM_URL* field.  The *OpenAI API Connection* method will require a url that has a `/v1` path.  The *Direct Web Connection* method will require a url that has a `/v1/chat/completions` path.  The following are examples for OpenRouter:
+8) Enter the url for the site you want to connect to in the *LLM_URL* field.  The *OpenAI API Connection* method will require a url that has a `/v1` path.  The *Direct Web Connection* method will require a url that has a `/v1/chat/completions` path.  The following are examples for OpenRouter:
 
     - **OpenAI API Connection:** LLM_URL = `https://openrouter.ai/api/v1`
     - **Direct Web Connection:** LLM_URL = `https://openrouter.ai/api/v1/chat/completions` 
 
-8) Connect a *ShowText|pysssss* node to the *troubleshooting* output of the APE node, then go ahead and run your workflow.  If you have any issues the troubleshooting output should help you diagnose the problem.
+9) Connect a *ShowText|pysssss* node to the *troubleshooting* output of the APE node, then go ahead and run your workflow.  If you have any issues the troubleshooting output should help you diagnose the problem.
 
 ************************************
 ###  More Requirements:
