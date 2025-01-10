@@ -319,9 +319,10 @@ You can connect to remote AI services that are not preconfigured in **Advanced P
 
 1) Obtain an API key from the service you want to use, you may have to pay for this.  
 
-2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  Alternatively you can create an Environment Variable using your own custom name and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer to access it.   If you don't know how to create an enviroment variable there are instructions [here](#how-to-setup-your-environment-variables)
+2) If you know how to create environment variables, create one named: `LLM_KEY` and enter your API key.  If you don't know how to create an enviroment variable there are instructions [here](#how-to-setup-your-environment-variables)
+   *    Alternatively you can create an Environment Variable using your own custom name and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer to access it.  
 
-3) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact model names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.  Alternatively you can enter individual model names directly by converting the APE *Optional Models* drop-down widget to an input and attaching the Plush `Text (Any)` node to it.
+4) Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact model names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.  Alternatively you can enter individual model names directly by converting the APE *Optional Models* drop-down widget to an input and attaching the Plush `Text (Any)` node to it.
 
 5) Start ComfyUI.  In the APE node you can setup your connection to the service two different ways: 
 
