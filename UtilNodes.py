@@ -370,7 +370,7 @@ class typeConvert:
         return {
             "optional": {
                 "Text": ("STRING", {"multiline": True, "forceInput": True}),
-                "Cross_reference_types": ("BOOLEAN", {"default": False})
+                "Cross_reference_types": ("BOOLEAN", {"default": True})
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -411,7 +411,10 @@ class typeConvert:
                 out_list[2] = round(inferred_value)  # Store the rounded integer equivalent
 
         elif isinstance(inferred_value, int):
-            out_list[2] = inferred_value  # Store the integer value
+            if isinstance(inferred_value, bool): #If it's also a boolean convert to an int
+                out_list[2] = int(inferred_value) 
+            else:
+                out_list[2] = inferred_value  # Store the integer value
             if cxt:
                 out_list[1] = float(inferred_value)  # Store the float equivalent (int.0)
 
@@ -660,6 +663,12 @@ class jsonParse:
         self.trbl.reset("Extract JSON")
         _help = self.help_data.extract_json_help
         s_json = json_string.strip()
+
+        #Some nodes strip off curly braces.
+        if not s_json.startswith('{'):
+            s_json = '{' + s_json
+        if not s_json.endswith('}'):
+            s_json = s_json + '}'
 
         # Create a list and exclude empty strings
         key_list = [var for var in [key_1, key_2, key_3, key_4, key_5] if var]
