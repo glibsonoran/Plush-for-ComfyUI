@@ -464,7 +464,7 @@ class OpenRouterModels:
         return {
             "required": {
                 "Service_Name": (["OpenRouter"], {"default": "OpenRouter", "tooltip": "Select the Service you want to load models from."}),
-                "File_Name": (["test_model_load.txt", "opt_models.txt"], {"default": "test_model_load.txt", "tooltip": "Select the file you want to load models into"}),
+                "Output_to": (["Test_Output","Optional Models List"], {"default": "Test_Output", "tooltip": "Select the drop-down list data file or the test output and send the model list to it."}),
                 "Include_Filter": ("STRING", {"multiline": True, "tooltip": "Enter criteria for including models in the list. Separate items with a comma(s)"}),
                 "Exclude_Filter": ("STRING", {"multiline": True, "tooltip": "Enter criteria for excluding models from the list. Separate items with a comma(s)"}),
                 "Remove_Prior_Sevice_Name_Entries": ("BOOLEAN", {"default": True, "tooltip": "Remove entries in the text file that include the current Service Name"}),
@@ -475,8 +475,8 @@ class OpenRouterModels:
             }
         } 
     
-    RETURN_TYPES = ("STRING", )
-    RETURN_NAMES = ("Troubleshooting", )
+    RETURN_TYPES = ("STRING","STRING")
+    RETURN_NAMES = ("Test_Output","Troubleshooting")
     
     FUNCTION = "gogo"
 
@@ -484,15 +484,20 @@ class OpenRouterModels:
 
     CATEGORY = "Plush/Utils"
 
-    def gogo(self, Service_Name, File_Name, Custom_ApiKey:str="", Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
+    def gogo(self, Service_Name, Output_to, Custom_ApiKey:str="", Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
 
         self.trbl.reset("OpenRouter Models")
+
+        output = ""
+        dest_file = ""
+        if Output_to == "Optional Models List":
+            dest_file = "opt_models.txt"
 
         if not Custom_ApiKey:
             self.j_mngr.log_events("You must attach the Plush 'Custom API Key' node and enter a valid Env. Variable name. Error: No API Key provided",
                                    TroubleSgltn.Severity.ERROR,
                                    True)
-            return(self.trbl.get_troubles(),)
+            return(output,self.trbl.get_troubles(),)
         
         if Include_Filter:
             Include_Filter = self.j_mngr.create_iterable(Include_Filter)
@@ -508,7 +513,7 @@ class OpenRouterModels:
                 self.j_mngr.log_events(f"No models were returned from service: {Service_Name}",
                                         TroubleSgltn.Severity.WARNING,
                                         is_trouble=True)
-                return (self.trbl.get_troubles(),)
+                return (output, self.trbl.get_troubles(),)
             
         else:  #If model_container has data, reuse it
             self.j_mngr.log_events("Using cached model list", is_trouble=True)
@@ -516,24 +521,31 @@ class OpenRouterModels:
         model_list = self._model_container.get_models(sort_it=Sort_Models, include_filter=Include_Filter, exclude_filter=Exclude_Filter, with_none=False)
 
         if not model_list:  # No models met the filter criteria
-            self.j_mngr.log_events("Filtered model list is empty; skipping file write.", 
+            self.j_mngr.log_events("Filtered model list is empty; no output.", 
                                TroubleSgltn.Severity.INFO, is_trouble=True)
-            return (self.trbl.get_troubles(),)
+            return (output, self.trbl.get_troubles(),)
 
             # Prepend service name
         model_list = [f"{Service_Name} :: {model}" for model in model_list]
 
-        self.j_mngr.log_events(f"Writing models names to file: {File_Name}", is_trouble=True)
-        write_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir,File_Name)
+        self.j_mngr.log_events(f"Sending model list to Output/File: {Output_to}", is_trouble=True)
 
-        if Remove_Prior_Sevice_Name_Entries:
-            self.j_mngr.log_events(f"Removing existing lines that include the text: {Service_Name}",is_trouble=True )
-            self.j_mngr.remove_lines_by_criteria(file_path=write_file, delete_criteria=Service_Name)
+        if not Output_to == "Test_Output":
+            write_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, dest_file)
+            output = f"Output sent to file: {Output_to}"
 
-        self.j_mngr.write_list_to_file(model_list, write_file, append=True)
-        self.j_mngr.log_events(f"Models were written to: {write_file}", is_trouble=True)
+            if Remove_Prior_Sevice_Name_Entries:
+                self.j_mngr.log_events(f"Removing existing lines that include the text: {Service_Name}",is_trouble=True )
+                self.j_mngr.remove_lines_by_criteria(file_path=write_file, delete_criteria=Service_Name)
 
-        return(self.trbl.get_troubles(),)
+            self.j_mngr.write_list_to_file(model_list, write_file, append=True)
+            self.j_mngr.log_events(f"Models were written to: {write_file}", is_trouble=True)
+
+        else: #User is sending output to the node's output rather than a file
+
+            output = "\n".join(model_list)
+
+        return(output,self.trbl.get_troubles(),)
  
 
 class mulTextSwitch:
