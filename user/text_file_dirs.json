@@ -1,0 +1,4 @@
+{
+	"parameter files": "$output/PlushFiles/**/*param*.txt",
+	"image meta-data files": "$output/PlushFiles/**/*ew*.txt"
+}

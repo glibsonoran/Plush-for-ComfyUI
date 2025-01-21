@@ -24,14 +24,15 @@ else:
 __version__ ="1.21.22"
 print('Plush - Version:', __version__)
 
+WEB_DIRECTORY = "./web"
 
 #********************************************************************************
 from .style_prompt import NODE_CLASS_MAPPINGS as styClassMappings, NODE_DISPLAY_NAME_MAPPINGS as styDisplay
 from .UtilNodes import NODE_CLASS_MAPPINGS as utilClassMappings, NODE_DISPLAY_NAME_MAPPINGS as utilDisplay
-#from .TestNodes import NODE_CLASS_MAPPINGS as testClassMappings, NODE_DISPLAY_NAME_MAPPINGS as testDisplay
+from .text_files import NODE_CLASS_MAPPINGS as textClassMappings, NODE_DISPLAY_NAME_MAPPINGS as textDisplay
 
-NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings}
-NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay}
+NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings, **textClassMappings}
+NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay, **textDisplay}
 
 #NODE_CLASS_MAPPINGS = {**styClassMappings, **utilClassMappings, **testClassMappings}
 #NODE_DISPLAY_NAME_MAPPINGS = {**styDisplay, **utilDisplay, **testDisplay}
