@@ -152,7 +152,7 @@ class Tagger:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, unique_id, text, Beginning_tags, Middle_tags, End_tags, Prefer_middle_tag_after_period)-> tuple:
         _help = self.help_data.tagger_help
@@ -206,7 +206,7 @@ class randomOut:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, Text, unique_id, seed, randomized_outputs=0):
         random.seed(seed)
@@ -249,7 +249,7 @@ class randomImgOut:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, Image, unique_id, seed, randomized_outputs=0):
         random.seed(seed)
@@ -296,7 +296,7 @@ class mixer:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, unique_id, seed, Text_1:str="", Text_2:str="", Text_3:str="", Text_4:str="", Text_5:str=""):
 
@@ -342,7 +342,7 @@ class imgMixer:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, unique_id, seed, Image_1:str="", Image_2:str="", Image_3:str="", Image_4:str="", Image_5:str=""):
 
@@ -355,6 +355,54 @@ class imgMixer:
         out_tuple = tuple(valid_input[:5])
 
         return out_tuple    
+
+
+class removeText:
+    def __init__(self):
+        self.trbl = TroubleSgltn()
+        self.j_mngr = json_manager()
+        self.help_data = helpSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        return {
+            "required": {
+                "Opening_tag": ("STRING", {"multiline": False, "tooltip": "Enter the character(s) that start the text block you want to remove"}),
+                "Closing_tag": ("STRING", {"multiline": False, "tooltip": "Enter the character(s) that end the text block you want to remove"}), 
+                "Open_tag_instance": ("INT", {"default": 1, "min": 1, "max": 550, "tooltip": "Enter which instance of the Opening_tag you want to use"}), 
+                "Close_tag_instance": ("INT", {"default": 1, "min": 1, "max": 550, "tooltip": "Enter which instance of the Closing_tag you want to use"}),                              
+                "Remove_tags": ("BOOLEAN", {"default": True})
+            },
+            "optional" :{
+                "Text":("STRING",{"default": "", "forceInput": True}),
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            }
+        } 
+    
+    RETURN_TYPES = ("STRING","STRING", "STRING")
+    RETURN_NAMES = ("Text" ,"Removed_text" ,"Troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush🧸/Utils"
+
+    def gogo (self, Text, Opening_tag, Closing_tag, unique_id, Open_tag_instance, Close_tag_instance, Remove_tags:bool)->tuple:
+
+        self.trbl.reset(f"Remove Text, Node: {unique_id}")
+
+        clean_text, removed_text = self.j_mngr.remove_text(Text, Opening_tag, Closing_tag, Open_tag_instance, Close_tag_instance, Remove_tags)
+
+        if clean_text:
+            self.j_mngr.log_events("Sucessfully removed text", is_trouble=True)
+
+        return(clean_text, removed_text, self.trbl.get_troubles())
+
+
 
 
 class typeConvert:
@@ -384,7 +432,7 @@ class typeConvert:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, unique_id, Cross_reference_types:bool=False,  Text:str=""):
 
@@ -482,7 +530,7 @@ class OpenRouterModels:
 
     OUTPUT_NODE = True
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, Service_Name, Output_to, Custom_ApiKey:str="", Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
 
@@ -527,6 +575,7 @@ class OpenRouterModels:
 
             # Prepend service name
         model_list = [f"{Service_Name} :: {model}" for model in model_list]
+        model_count = len(model_list)
 
         self.j_mngr.log_events(f"Sending model list to Output/File: {Output_to}", is_trouble=True)
 
@@ -539,9 +588,10 @@ class OpenRouterModels:
                 self.j_mngr.remove_lines_by_criteria(file_path=write_file, delete_criteria=Service_Name)
 
             self.j_mngr.write_list_to_file(model_list, write_file, append=True)
-            self.j_mngr.log_events(f"Models were written to: {write_file}", is_trouble=True)
+            self.j_mngr.log_events(f"{model_count} models were written to: {write_file}", is_trouble=True)
 
         else: #User is sending output to the node's output rather than a file
+            self.j_mngr.log_events(f"{model_count} models were output.", is_trouble=True)
 
             output = "\n".join(model_list)
 
@@ -574,7 +624,7 @@ class mulTextSwitch:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, active_input, Input_1=None, Input_2=None, Input_3=None):
 
@@ -623,7 +673,7 @@ class ImgTextSwitch:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, active_input, Text_1=None, Image_1=None, Text_2=None, Image_2=None, Text_3=None, Image_3=None):
 
@@ -669,7 +719,7 @@ class jsonParse:
     FUNCTION = "gogo"
     RETURN_NAMES = ("string_1", "string_2", "string_3", "string_4", "string_5", "JSON_Obj", "help", "Troubleshooting")
     RETURN_TYPES = ("STRING", "STRING", "STRING", "STRING", "STRING", "DICTIONARY","STRING","STRING")
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, json_string: str, key_1: str, key_2: str, key_3: str, key_4: str, key_5: str,):
         self.trbl.reset("Extract JSON")
@@ -717,7 +767,7 @@ class TextAny:
     RETURN_TYPES = (any_type,)
     RETURN_NAMES = ("any",)
     FUNCTION = "gogo"
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def gogo(self, Text):
         #Connects to any data type
@@ -745,7 +795,7 @@ class ShowInfo_md:
     OUTPUT_NODE = True
     OUTPUT_IS_LIST = (True,)
 
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     def notify(self, md_text, unique_id=None, extra_pnginfo=None):
         text = md_text
@@ -781,22 +831,24 @@ NODE_CLASS_MAPPINGS = {
     "Image Mixer": imgMixer,
     "Random Image Output": randomImgOut,
     "Load Remote Models": OpenRouterModels,
-    "Text (Any)": TextAny
+    "Text (Any)": TextAny,
+    "Remove Text": removeText
 
 
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-"mulTextSwitch": "MultiLine Text Switch",
-"ImgTextSwitch": "Image & Text Switch",
-"Tagger": "Tagger",
-"ParseJSON": "Extract JSON data",
-"Random Output": "Random Output",
-"Random Mixer": "Random Mixer",
-"Type Converter": "Plush - Type Converter",
-"Image Mixer": "Image Mixer",
-"Random Image Output": "Random Image Output",
-"Load Remote Models": "Load Remote Models",
-"TextAny": "Text (Any input)"
+"mulTextSwitch": "MultiLine Text Switch🧸",
+"ImgTextSwitch": "Image & Text Switch🧸",
+"Tagger": "Tagger🧸",
+"ParseJSON": "Extract JSON data🧸",
+"Random Output": "Random Output🧸",
+"Random Mixer": "Random Mixer🧸",
+"Type Converter": "Plush - Type Converter🧸",
+"Image Mixer": "Image Mixer🧸",
+"Random Image Output": "Random Image Output🧸",
+"Load Remote Models": "Load Remote Models🧸",
+"Text (Any)": "Text (Any input)🧸",
+"Remove Text": "Remove Text Block🧸"
 
 }
