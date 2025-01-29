@@ -7,6 +7,15 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+01/28/2025 @5:00pm PST *Version 1.21.23*
+*   **[new node] `Remove Text Block` Node for removing unwanted text**
+    *   If you're using a *thinking* model that displays all its *thoughts*, you can use this to remove that text and just output the prompt or whatever you want.
+    *   The new DeepSeekR1 is now more widely available, and its llama 70b distill is available on Groq for free.  These models output their *Test-time Reasoning* typically within tags: `<think> </think>`.  This node allows you to specify the text you want to remove by entering the opening and closing tags.
+*   **[new node] `Load Saved Files`**
+    *   Plush lets you name and save two types of files: Parameter files & Image meta data output files.  This node allows you to find and load these files into whatever node you want.  So if you saved a parameter setup that for a particular model using the *save file* feature in Plush, you can load it back up when you use that model again.  [see /Plush-for-ComfyUI/Example_Workflows/How_to_retrieve_and_use_saved_parameter_files.png] for an example of how this works.  
+*   **[new node} `Text (Any)` node, attaches to any input type.**
+    *   A simple text node that will attach to any type of input.  If you want to convert `Optional Models` to an input and type in single model names rather than a drop down, use this node.
+*********************   
 01/07/2025 @8:00pm PST *Version 1.21.22*
 *   **[new node] `Custom API Key` node, attaches to Advanced Prompt Enhancer**
     *   User can create their own named Enviroment Variable to contain the API key they want to use.  This node allows you to extract the key from that environment variable and pass it to Advanced Prompt Enhancer.
