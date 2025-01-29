@@ -372,7 +372,8 @@ class removeText:
                 "Closing_tag": ("STRING", {"multiline": False, "tooltip": "Enter the character(s) that end the text block you want to remove"}), 
                 "Open_tag_instance": ("INT", {"default": 1, "min": 1, "max": 550, "tooltip": "Enter which instance of the Opening_tag you want to use"}), 
                 "Close_tag_instance": ("INT", {"default": 1, "min": 1, "max": 550, "tooltip": "Enter which instance of the Closing_tag you want to use"}),                              
-                "Remove_tags": ("BOOLEAN", {"default": True})
+                "Remove_tags": ("BOOLEAN", {"default": True}),
+                "Pass_Through_on_error": ("BOOLEAN", {"default": True})
             },
             "optional" :{
                 "Text":("STRING",{"default": "", "forceInput": True}),
@@ -391,7 +392,7 @@ class removeText:
 
     CATEGORY = "Plush🧸/Utils"
 
-    def gogo (self, Text, Opening_tag, Closing_tag, unique_id, Open_tag_instance, Close_tag_instance, Remove_tags:bool)->tuple:
+    def gogo (self, Text, Opening_tag, Closing_tag, unique_id, Open_tag_instance, Close_tag_instance, Pass_Through_on_error:bool, Remove_tags:bool)->tuple:
 
         self.trbl.reset(f"Remove Text, Node: {unique_id}")
 
@@ -399,6 +400,11 @@ class removeText:
 
         if clean_text:
             self.j_mngr.log_events("Sucessfully removed text", is_trouble=True)
+        elif Pass_Through_on_error:
+            self.j_mngr.log_events("Removal Failed, but original text was passed through",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+            clean_text = Text
 
         return(clean_text, removed_text, self.trbl.get_troubles())
 
