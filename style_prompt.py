@@ -18,12 +18,14 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 from openai import OpenAI
 import anthropic
+from aiohttp import web
 #import google.generativeai as genai
 
 # -----------------------
 # Local Module Imports
 # -----------------------
 import folder_paths
+from server import PromptServer
 from .mng_json import json_manager, helpSgltn, TroubleSgltn
 from . import api_requests as rqst
 from .fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
@@ -31,6 +33,7 @@ from .fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
 
 #pip install pillow
 #pip install bytesio
+
 
 #Enum for style_prompt user input modes
 class InputMode(Enum):
@@ -419,8 +422,152 @@ class cFigSingleton:
         return None
 
 #********************End Singleton*********************
+#Module level functions to create binding endpoint and
+#load drop down list values from file
+def _load_env_var_list() -> list:
+
+    # Inactive Experimental Code
+
+    """
+    Core function to load the environment variable list.
+    Returns a list with either the env vars or ['error'] if something goes wrong.
+    """
+    j_mngr = json_manager()
+    envvar_list = ['error']
+    
+    try:
+        envvar_file = j_mngr.append_filename_to_path(j_mngr.script_dir, "user_envvar.txt")
+        user_vars = j_mngr.read_lines_of_file(envvar_file, is_critical=True)
+        if user_vars:
+            envvar_list = user_vars
+    except Exception as e:
+        j_mngr.log_events(f"Unable to read 'user_envvar.txt' file. Error: {e}",
+                         TroubleSgltn.Severity.ERROR,
+                         True)
+    
+    return envvar_list
+
+@PromptServer.instance.routes.get("/plush_for_comfy/envvar_list")
+async def handle_envvar_list_request(request):
+
+    # Inactive Experimental Code
+
+    j_mngr = json_manager()
+    
+    # Get any new variable from query params
+    new_var = request.query.get('new_var')
+    save_triggered = request.query.get('save_triggered', 'false') == 'true'
+    
+    if new_var and save_triggered:
+        # Check if it exists in environment
+        key = os.getenv(new_var, "missing")
+        if key != "missing" and key:  # Valid env var
+            # Read current list
+            envvar_file = j_mngr.append_filename_to_path(j_mngr.script_dir, "user_envvar.txt")
+            envvar_list = j_mngr.read_lines_of_file(envvar_file)
+            
+            # Add if not duplicate
+            if new_var not in envvar_list:
+                success = j_mngr.write_string_to_file(new_var + "\n", envvar_file, append=True)
+                if success:
+                    j_mngr.log_events("New environment variable saved.", is_trouble=True)
+            else:
+                j_mngr.log_events("Environment variable already exists in list.", 
+                                TroubleSgltn.Severity.WARNING,
+                                True)
+        else:
+            j_mngr.log_events(f"Environment Variable '{new_var}' not found in system.", 
+                            TroubleSgltn.Severity.ERROR,
+                            True)
+    
+    # Return updated list
+    vars_list = _load_env_var_list()
+    return web.json_response(vars_list)
+
+class xCustomKeyVar:
+
+    #Inactive Experimental Code
+
+    def __init__(self):
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "Environment_Variable": (_load_env_var_list(), {
+                    "default": "-New Env. Variable", 
+                    "tooltip": "Choose to enter a new Env. Variable below, or choose an existing one from the list"
+                }),
+                "New_Env_Variable": ("STRING", {
+                    "multiline": False, 
+                    "default": "Enter new Variable", 
+                    "tooltip": "Enter the name of a new Environment Variable that contains your API Key."
+                }),
+                "Push_to_Save": ("BOOLEAN", {
+                                "default": False,
+                                "label_on": "⟳ Pushing to save...", 
+                                "label_off": "⟳ Push to save entry",
+                                "plush.binding": [{
+                                    "source": "Push_to_Save",  # Watch for button press
+                                    "callback": [{
+                                        "type": "fetch",
+                                         "url": "/plush_for_comfy/envvar_list?new_var={$node.widgets.New_Env_Variable.text}&save_triggered=true",
+                                        "then": [{
+                                            "type": "set",
+                                            "target": "$node.widgets.Environment_Variable.options.text",
+                                            "value": "$result"
+                                        }]
+                                    }]
+                                }]
+                            }),
+                                },
+                                "hidden": {
+                                    "unique_id": "UNIQUE_ID",
+                                    "extra_pnginfo": "EXTRA_PNGINFO"
+                                },
+                            }
+
+    RETURN_TYPES = ("KEY", "STRING")
+    RETURN_NAMES = ("Custom_ApiKey", "troubleshooting")
+    FUNCTION = "gogo"
+    OUTPUT_NODE = False
+    CATEGORY = "Plush🧸/Prompt"
+
+    def gogo(self, Environment_Variable, New_Env_Variable, Push_to_Save, unique_id=None, extra_pnginfo=None)->tuple:
+        self.trbl.reset(f"Custom API Key, Node # {unique_id}")
+        env_var = ""
+        if Environment_Variable == "-New Env. Variable":
+            env_var = New_Env_Variable
+            if not New_Env_Variable:
+                self.j_mngr.log_events("You specified '-New Env Variable' but didn't provide one in the field.",
+                                     TroubleSgltn.Severity.ERROR,
+                                     True)
+        else:
+            env_var = Environment_Variable
+
+        key = os.getenv(env_var, "missing")
+        if key == "missing":
+            self.j_mngr.log_events(f"Environment Variable missing or misspelled: {env_var}",
+                TroubleSgltn.Severity.ERROR,
+                True)
+            return ("", self.trbl.get_troubles())
+        if not key:
+            self.j_mngr.log_events(f"Environment Variable not found: {env_var}",
+                TroubleSgltn.Severity.ERROR,
+                True)
+            return ("", self.trbl.get_troubles())
+        
+        self.j_mngr.log_events("API Key successfully retrieved.", is_trouble=True)
+        return (key, self.trbl.get_troubles())
+
 
 class CustomKeyVar:
+
+    #Active, pending success of experimental code
 
     def __init__(self):
         #instantiate Configuration and Help data classes
@@ -431,7 +578,7 @@ class CustomKeyVar:
 
 
     @classmethod
-    def INPUT_TYPES(cls):
+    def INPUT_TYPES(cls):# -> dict[str, dict[str, Any]]:
 
         j_mngr = json_manager()
 
@@ -462,7 +609,7 @@ class CustomKeyVar:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Prompt"  
+    CATEGORY = "Plush🧸/Prompt"  
 
     def gogo(self, Environment_Variable, New_Env_Variable)->tuple:
 
@@ -553,7 +700,7 @@ class AI_Chooser:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Prompt"  
+    CATEGORY = "Plush🧸/Prompt"  
 
     def gogo(self, unique_id, AI_Service, ChatGPT_model, Groq_model, Anthropic_model):  
 
@@ -680,7 +827,7 @@ class Enhancer:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Prompt"
+    CATEGORY = "Plush🧸/Prompt"
  
 
     def gogo(self, creative_latitude, tokens, style, artist, prompt_style, max_elements, style_info, AI_Selection=None, prompt="", image=None, unique_id=None):
@@ -781,6 +928,9 @@ class addParameters:
                 "File_name": ("STRING", {"default": ""})
                                                           
             },
+#           "optional": {
+#              "text": ("STRING", {"default": None, "forceinput": True})
+#         },
 
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -795,7 +945,7 @@ class addParameters:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Prompt"  
+    CATEGORY = "Plush🧸/Prompt"  
 
     def gogo(self, Parameters, Save_to_file, File_name:bool, unique_id=None):
 
@@ -889,7 +1039,7 @@ class addParams:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Prompt"  
+    CATEGORY = "Plush🧸/Prompt"  
 
     def gogo(self, Parameter_type, Param_Name, Param_Value, Is_JSON: bool, Add_Parameters=None, unique_id=None):
 
@@ -1041,7 +1191,7 @@ class AdvPromptEnhancer:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Prompt"
+    CATEGORY = "Plush🧸/Prompt"
 
     def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Ollama_model_unload, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
               Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Custom_ApiKey:str="", Examples_or_Context:str ="", image=None, unique_id=None):
@@ -1391,7 +1541,7 @@ class DalleImage:
 
     OUTPUT_NODE = False
 
-    CATEGORY = "Plush/Image_Gen"
+    CATEGORY = "Plush🧸/Image_Gen"
 
     def gogo(self, GPTmodel, prompt, image_size, image_quality, style, batch_size, seed, Number_of_Tries:str, unique_id=None):
 
@@ -1473,7 +1623,7 @@ class ImageInfoExtractor:
                 }
         }
     
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
 
     RETURN_TYPES = ("STRING","STRING","STRING")
     RETURN_NAMES = ("Image_info","help","troubleshooting")
@@ -1730,12 +1880,12 @@ NODE_CLASS_MAPPINGS = {
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "Enhancer": "Style Prompt",
-    "AI Chooser": "AI_Chooser",
-    "AdvPromptEnhancer": "Advanced Prompt Enhancer",
-    "DalleImage": "OAI Dall_e Image",
-    "ImageInfoExtractor": "Exif Wrangler",
-    "Add Parameters": "Add Parameters",
-    "CustomKeyVar": "Custom API Key"
+    "Enhancer": "Style Prompt🧸",
+    "AI Chooser": "AI_Chooser🧸",
+    "AdvPromptEnhancer": "Advanced Prompt Enhancer🧸",
+    "DalleImage": "OAI Dall_e Image🧸",
+    "Plush-Exif Wrangler": "Exif Wrangler🧸",
+    "Add Parameters": "Add Parameters🧸",
+    "Custom API Key": "Custom API Key🧸"
 }
 

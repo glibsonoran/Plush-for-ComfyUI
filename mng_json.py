@@ -814,6 +814,117 @@ class json_manager:
                 self.log_events(f"Error writing list to file.  Error: {e}")
 
 
+    def number_suffix (self, number:int)->str:
+        """
+        Produces the proper ordinal suffix for an integer
+
+        Parameters:
+        number (int): the number to be evaluated for a suffix
+
+        Returns: A string with the proper ordinal suffix
+        """
+
+        if not isinstance(number, int):
+            self.log_events(f"{number} is not an integer.",
+                            TroubleSgltn.Severity.ERROR,
+                            True)
+            return ""
+        
+        sxs = ['st', 'nd', 'rd']
+        
+        # Handle 11, 12, 13 specially
+        if 11 <= number % 100 <= 13:
+            return 'th'
+            
+        # Subtract 1 to convert to 0-based indexing
+        if 1 <= (number % 10) <= 3:
+            return sxs[(number % 10) - 1]
+            
+        return 'th'
+
+
+    def remove_text(self, input_str: str, open_tag: str, close_tag: str, open_tag_instance: int, close_tag_instance: int, exclude_tags: bool) -> str:
+        """
+        Remove text between specified instances of opening and closing tags in a string.
+        
+        Args:
+            input_str (str): The input string to process
+            open_tag (str): The opening tag to search for
+            close_tag (str): The closing tag to search for
+            open_tag_instance (int): Which instance of the opening tag to use (1-based indexing)
+            close_tag_instance (int): Which instance of the closing tag to use (1-based indexing)
+            exclude_tags (bool): Whether to exclude the tags from the output
+            
+        Returns:
+            str: The processed string less the text between the specified tags
+            
+        Raises:
+            ValueError: If tags are not found, tag instances are invalid, or if close_tag appears before open_tag
+        """
+        
+        if not input_str or not open_tag or not close_tag:
+            self.log_events("No input text, or no opening/closing tags was entered", 
+                            TroubleSgltn.Severity.ERROR,
+                            True)
+            return ("","")
+        
+        if open_tag_instance < 1 or close_tag_instance < 1:
+            self.log_events("Opening and closing tag instances must be greater than 0",
+                            TroubleSgltn.Severity.ERROR,
+                            True)
+            return ("","")
+        
+        # Find the nth instance of open_tag
+        open_index = -1
+        open_count = 0
+        current_pos = 0
+        
+        while open_count < open_tag_instance and current_pos < len(input_str):
+            found_pos = input_str.find(open_tag, current_pos)
+            if found_pos == -1:
+                self.log_events(f"Could not find {open_tag_instance}{self.number_suffix(open_tag_instance)} instance of open tag '{open_tag}'",
+                                TroubleSgltn.Severity.ERROR,
+                                True)
+                return ("","")
+            open_count += 1
+            if open_count == open_tag_instance:
+                open_index = found_pos
+            current_pos = found_pos + 1
+        
+        # Find the nth instance of close_tag after open_index
+        close_index = -1
+        close_count = 0
+        current_pos = open_index + len(open_tag)
+        
+        while close_count < close_tag_instance and current_pos < len(input_str):
+            found_pos = input_str.find(close_tag, current_pos)
+            if found_pos == -1:
+                self.log_events(f"Could not find {close_tag_instance}{self.number_suffix(close_tag_instance)} instance of close tag '{close_tag}'",
+                                TroubleSgltn.Severity.ERROR,
+                                True)
+                return ("", "")
+            close_count += 1
+            if close_count == close_tag_instance:
+                close_index = found_pos
+            current_pos = found_pos + 1
+        
+        # Verify close tag comes after open tag
+        if close_index < open_index:
+            self.log_events("Closing tag must come after opening tag in the input text.",
+                            TroubleSgltn.Severity.ERROR,
+                            True)
+            return ("","")
+        
+        # Build result string based on exclude_tags flag
+        if exclude_tags:
+            # Remove everything between and including the tags
+            return (input_str[:open_index] + input_str[close_index + len(close_tag):], input_str[open_index:close_index + len(close_tag)])
+
+        # Keep the tags but remove the content between them
+        return (input_str[:open_index + len(open_tag)] + input_str[close_index:], input_str[open_index + len(open_tag):close_index])
+
+
+
 
 
     def update_json_data(self, upd_data: dict, cfg_data: dict):

@@ -126,7 +126,7 @@ class TextFileNode:
     """Base class for text file operations"""
     RETURN_TYPES = ("STRING", "STRING",)  # (content, troubles)
     RETURN_NAMES = ("saved_file", "troubleshooting")
-    CATEGORY = "Plush/Utils"
+    CATEGORY = "Plush🧸/Utils"
     file = None
 
     @classmethod
@@ -289,10 +289,10 @@ class SaveText(TextFileNode):
 
 NODE_CLASS_MAPPINGS = {
     "LoadText|plush": LoadText,
-    "SaveText|plush": SaveText,
+   # "SaveText|plush": SaveText,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "LoadText|plush": "Load Saved Files 🧸",
-    "SaveText|plush": "Save Files 🧸",
+   # "SaveText|plush": "Save Files 🧸",
 }
