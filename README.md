@@ -12,7 +12,7 @@
     *   If you're using a *thinking* model that displays all its *thoughts*, you can use this to remove that text and just output the prompt or whatever you want.
     *   The new DeepSeekR1 is now more widely available, and its llama 70b distill is available on Groq for free.  These models output their *Test-time Reasoning* typically within tags: `<think> </think>`.  This node allows you to specify the text you want to remove by entering the opening and closing tags.
 *   **[new node] `Load Saved Files`**
-    *   Plush lets you name and save two types of files: Parameter files & Image meta data output files.  This node allows you to find and load these files into whatever node you want.  So if you saved a parameter setup that for a particular model using the *save file* feature in Plush, you can load it back up when you use that model again.  [see `/Plush-for-ComfyUI/Example_Workflows/How_to_retrieve_and_use_saved_parameter_files.png` for an example of how this works].  
+    *   Plush lets you name and save two types of files: Parameter files & Image meta data output files.  This node allows you to find and load these files into whatever node you want.  So if you saved a parameter setup for a particular model using the *save file* feature in Plush, you can load it back up when you use that model again.  [see `/Plush-for-ComfyUI/Example_Workflows/How_to_retrieve_and_use_saved_parameter_files.png` for an example of how this works].  
 *********************   
 01/07/2025 @8:00pm PST *Version 1.21.22*
 *   **[new node] `Custom API Key` node, attaches to Advanced Prompt Enhancer**
