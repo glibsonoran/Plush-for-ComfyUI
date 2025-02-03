@@ -1454,6 +1454,11 @@ class DalleImage:
         else:  # Fallback if no alpha channel is present
             mask = torch.zeros((1, tensor_image.shape[2], tensor_image.shape[3]), dtype=torch.float32)  # [N, H, W]
 
+        # Move tensors to GPU if available
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        tensor_image = tensor_image.to(device)
+        mask = mask.to(device)
+
         return tensor_image, mask
     
 
@@ -1474,6 +1479,11 @@ class DalleImage:
         j_mngr = json_manager()
         j_mngr.log_events("Converting Torch Tensor image to b64 Image file",
                           is_trouble=True)
+        
+        # Move tensor to CPU CUDA doesn't work with numpy and PIL
+        if tensor.is_cuda:
+            tensor = tensor.cpu()
+
     # Convert tensor to PIL Image
         if tensor.ndim == 4:
             tensor = tensor.squeeze(0)  # Remove batch dimension if present
@@ -1500,6 +1510,11 @@ class DalleImage:
         Returns:
             BytesIO: BytesIO object containing the image data.
         """
+
+            # Move to CPU if needed
+        if tensor.is_cuda:
+            tensor = tensor.cpu()
+
         # Convert tensor to PIL Image
         if tensor.ndim == 4:
             tensor = tensor.squeeze(0)  # Remove batch dimension if present
