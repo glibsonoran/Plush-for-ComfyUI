@@ -2,7 +2,7 @@
 #  Standard Libraries
 # =======================
 from enum import Enum
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 from io import BytesIO
 import base64
 
@@ -54,6 +54,29 @@ class CommUtils:
         return False  
     
     def get_data(self, endpoint:str="", timeout:int=8, retries:int=1, data_type:str="", headers:Optional[Dict[str,str]]=None )-> requests.Response | None:
+
+        """
+        Sends a GET request to the specified endpoint with configurable timeout, retry logic, and headers.
+
+        Parameters:
+            endpoint (str): The API endpoint URL to send the GET request to.
+            timeout (int): The maximum number of seconds to wait for a response before timing out. Default is 8.
+            retries (int): The number of times to retry the request in case of failure due to certain HTTP errors (500, 502, 503, 504). Default is 1.
+            data_type (str): A descriptive label for the type of data being fetched, used for logging purposes.
+            headers (Optional[Dict[str, str]]): A dictionary of additional HTTP headers to include in the request.
+
+        Returns:
+            requests.Response | None: The response object if the request is successful, or None if an error occurs.
+
+        Raises:
+            requests.RequestException: Handled internally. Logs an error message and returns None if a request failure occurs.
+
+        Notes:
+            - Implements automatic retry logic for transient server errors.
+            - Logs a warning if the request fails, including the HTTP status code and error details.
+        """
+
+
         session = requests.Session()
         gretries = Retry(total=retries, backoff_factor=0, status_forcelist=[500, 502, 503, 504])
         session.mount('http://', HTTPAdapter(max_retries=gretries))
@@ -68,6 +91,56 @@ class CommUtils:
             self.j_mngr.log_events(f"Unable to fetch data for: {data_type}.  Server returned code: {stat_code}. Error: {e} ",
             TroubleSgltn.Severity.WARNING,
             True)
+            return None
+        
+
+    def post_data(
+        self,
+        endpoint: str = "",
+        timeout: int = 8,
+        retries: int = 1,
+        data_type: str = "",
+        json: Optional[Dict[str, Any]] = None,
+        data: Optional[Dict[str, Any]] = None,
+        headers: Optional[Dict[str, str]] = None,
+        show_errors: bool = True
+        ) -> requests.Response | None:
+        """
+        Sends a POST request to the specified endpoint, supporting both JSON and form-encoded data.
+
+        Parameters:
+            endpoint (str): The API endpoint URL.
+            timeout (int): Timeout duration in seconds (default: 8).
+            retries (int): Number of retries on failure (default: 1).
+            data_type (str): A label for logging purposes.
+            json (Optional[Dict[str, Any]]): JSON payload (application/json).
+            data (Optional[Dict[str, Any]]): Form-encoded data (application/x-www-form-urlencoded).
+            headers (Optional[Dict[str, str]]): Additional headers.
+
+        Returns:
+            requests.Response | None: The response object if successful, otherwise None.
+
+        Notes:
+            - Implements automatic retry logic for transient server errors.
+            - Logs a warning if the request fails, including the HTTP status code and error details.
+        """
+        session = requests.Session()
+        gretries = Retry(total=retries, backoff_factor=0, status_forcelist=[500, 502, 503, 504])
+        session.mount('http://', HTTPAdapter(max_retries=gretries))
+
+        stat_code = 0
+        try:
+            response = session.post(endpoint, timeout=timeout, headers=headers, json=json if json else None, data=data if data else None)
+            stat_code = response.status_code
+            response.raise_for_status()  # Raises an HTTPError if the response status code indicates an error
+            return response
+
+        except requests.RequestException as e:
+            self.j_mngr.log_events(
+                f"Unable to post data for: {data_type}. Server returned code: {stat_code}. Error: {e}",
+                TroubleSgltn.Severity.WARNING,
+                show_errors
+            )
             return None
         
     def write_url(self, url:str) -> bool:
@@ -179,6 +252,10 @@ class ImageUtils:
         """
         self.j_mngr.log_events("Converting Torch Tensor image to b64 Image file",
                           is_trouble=True)
+        
+        if tensor.is_cuda:  # Check if the tensor is on GPU
+            tensor = tensor.cpu()  # Move tensor to CPU
+
     # Convert tensor to PIL Image
         if tensor.ndim == 4:
             tensor = tensor.squeeze(0)  # Remove batch dimension if present
@@ -205,6 +282,10 @@ class ImageUtils:
         Returns:
             BytesIO: BytesIO object containing the image data.
         """
+
+        if tensor.is_cuda:  # Check if the tensor is on GPU
+            tensor = tensor.cpu()  # Move tensor to CPU
+
         # Convert tensor to PIL Image
         if tensor.ndim == 4:
             tensor = tensor.squeeze(0)  # Remove batch dimension if present
@@ -228,6 +309,7 @@ class ImageUtils:
         Returns:
             torch.Tensor: The image tensor.
         """
+
         # Load the image data from bytes into a PIL Image
         image = Image.open(BytesIO(image_data))
         
