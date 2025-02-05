@@ -234,6 +234,7 @@ python -m pip install -r requirements.txt
 * For Advanced Prompt Enhancer, you'll need a valid API key if you're going to use it with ChatGPT, Anthropic or Groq models,  if you're only using it with open-source LLM's, you won't need one.
 * Some Open-source products use a free key for security and privacy so you have the option to create one if you want.  Most of these products don't use a key, so don't worry if you don't have one.
 * The OpenAI API & Anthropic keys require a paid account, if you want to use an Open-source key they are typically free.  The Groq API key is free also.   Generate the key from their website.
+* User-Defined Envronment variables can be used with Advanced Prompt Enhancer when the `Custom API Key` node is attached
   
   ### The follwing table lists the Enviroment Variables that Plush recognizes and how the API keys they contain are applied.
 
