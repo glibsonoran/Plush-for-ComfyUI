@@ -259,7 +259,7 @@ python -m pip install -r requirements.txt
  
    *  You can also name and create your own user-defined environment variable in Advanced Prompt Enhancer to use with Opensource and Remote models that are not predefined.
 
-   *  Plush looks for the 'OAI_KEY' variable first, if it's not there it looks for 'OPENAI_API_KEY'.  Using the 'OAI_KEY' variable will allow you to generate a separate key for Plush and track those costs separately if your other OpenAI API apps are using the standard variable.  Either way you'll need to have at least one of the two enviroment variables defined with a valid active key if you want to use ChatGPT as an inference engine.  For Open-source products, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT connections.  Enviroment Variables for other supported AI services are shown in the table above.
+   *  For Open-source products, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT/Anthropic/Groq Services.  Alternatively if you define your own environment variable and attach the Plush `Custom API Key` to Advanced Prompt Enhancer it will use the key under you custom name for all non-ChatGPT/Anthropic/Groq AI Services.  Enviroment Variables for other supported AI services are shown in the table above.
 
    *  If you need to make a new environment variable, see the following instructions on how to create it and set its value to your API key:
 
