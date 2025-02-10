@@ -259,7 +259,7 @@ python -m pip install -r requirements.txt
  
    *  You can also name and create your own user-defined environment variable in Advanced Prompt Enhancer to use with Opensource and Remote models that are not predefined.
 
-   *  For local Open-source products/Remote Services that are not predefined and any connection made where you supply the URL, once you populate 'LLM_KEY' with your key value, it will automatically be applied to all non-ChatGPT/Anthropic/Groq Services.  Alternatively if you define your own environment variable and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer it will use the key under your custom name for all non-ChatGPT/Anthropic/Groq AI Services.  As shown in the table above.
+   *  For local Open-source products/Remote Services that are not predefined and any connection made where you supply the URL, once you populate 'LLM_KEY' with your key value, it will automatically be applied to these Services.  Alternatively if you define your own environment variable and attach the Plush `Custom API Key` node to Advanced Prompt Enhancer it will use the key under your custom name for these Services, as shown in the table above.
 
    *  If you need to make a new environment variable, see the following instructions on how to create it and set its value to your API key:
 
