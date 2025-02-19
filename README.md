@@ -7,6 +7,12 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+02/18/2025 @4:37pm PST *Version 1.21.24*
+*   **Misc Code changes**
+*   **Expanded Remote Inference Services for `Load Remote Models` node**
+*   **`Misc_urls.json` is now the file that contains the path to get Ollama models and can be changed for custom configs.**
+   *   This is now an untracked file so your customizations will not be overwritten.   
+*********************   
 01/28/2025 @5:00pm PST *Version 1.21.23*
 *   **[new node] `Remove Text Block` Node for removing unwanted text**
     *   If you're using a *thinking* model that displays all its *thoughts*, you can use this to remove that text and just output the prompt or whatever you want.
