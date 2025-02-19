@@ -510,18 +510,25 @@ class OpenRouterModels:
         self.help_data = helpSgltn()
         self.ftch = FetchModels()
         self.cFig = cFigSingleton()
+        self.cServ = ""
         self._model_container = None #Cached object per node session
 
     @classmethod
     def INPUT_TYPES(cls):
 
+        # Instantiate the JSON manager and load the keys.
+        j_mngr = json_manager()
+        url_file_name = j_mngr.append_filename_to_path(j_mngr.script_dir, 'model_urls.json')
+        url_data = j_mngr.load_json(url_file_name)
+        model_keys = list(url_data.keys()) if url_data else []        
+
         return {
             "required": {
-                "Service_Name": (["OpenRouter"], {"default": "OpenRouter", "tooltip": "Select the Service you want to load models from."}),
+                "Service_Name": (model_keys, {"default": "", "tooltip": "Select the Service you want to load models from."}),
                 "Output_to": (["Test_Output","Optional Models List"], {"default": "Test_Output", "tooltip": "Select the drop-down list data file or the test output and send the model list to it."}),
                 "Include_Filter": ("STRING", {"multiline": True, "tooltip": "Enter criteria for including models in the list. Separate items with a comma(s)"}),
                 "Exclude_Filter": ("STRING", {"multiline": True, "tooltip": "Enter criteria for excluding models from the list. Separate items with a comma(s)"}),
-                "Remove_Prior_Sevice_Name_Entries": ("BOOLEAN", {"default": True, "tooltip": "Remove entries in the text file that include the current Service Name"}),
+                "Remove_Prior_Service_Name_Entries": ("BOOLEAN", {"default": True, "tooltip": "Remove entries in the text file that include the current Service Name"}),
                 "Sort_Models": ("BOOLEAN", {"default": True})
             },
             "optional" :{
@@ -538,9 +545,14 @@ class OpenRouterModels:
 
     CATEGORY = "Plush🧸/Utils"
 
-    def gogo(self, Service_Name, Output_to, Custom_ApiKey:str="", Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Sevice_Name_Entries:bool=True, Sort_Models:bool=True):
+    def gogo(self, Service_Name, Output_to, Custom_ApiKey:str="", Include_Filter:str="", Exclude_Filter:str="",Remove_Prior_Service_Name_Entries:bool=True, Sort_Models:bool=True):
 
         self.trbl.reset("OpenRouter Models")
+
+        def fetch_models(request_mode:RequestMode, service_nm:str, api_key:str)->object:
+            self.j_mngr.log_events(f"Fetching models names from {Service_Name}", is_trouble=True)
+            kwargs={"service":service_nm}
+            return self.ftch.fetch_models(request_type=request_mode, key=api_key, **kwargs)            
 
         output = ""
         dest_file = ""
@@ -558,9 +570,12 @@ class OpenRouterModels:
         if Exclude_Filter:
             Exclude_Filter = self.j_mngr.create_iterable(Exclude_Filter)
 
-        if not self._model_container or not self._model_container.has_data:  
-            self.j_mngr.log_events("Fetching models names from Open Router", is_trouble=True)
-            self._model_container = self.ftch.fetch_models(request_type=RequestMode.OPENROUTER, key=Custom_ApiKey)
+        if not self._model_container or not self._model_container.has_data:  #Model Container is empty or not instantiated
+            #self.j_mngr.log_events(f"Fetching models names from {Service_Name}", is_trouble=True)
+            #kwargs={"service":Service_Name}
+            #self._model_container = self.ftch.fetch_models(request_type=RequestMode.REMOTE, key=Custom_ApiKey, **kwargs)
+            self._model_container = fetch_models(RequestMode.REMOTE, Service_Name, Custom_ApiKey)
+            self.cServ = Service_Name
 
             # Early exit if no models were fetched
             if not self._model_container.has_data:
@@ -569,8 +584,14 @@ class OpenRouterModels:
                                         is_trouble=True)
                 return (output, self.trbl.get_troubles(),)
             
-        else:  #If model_container has data, reuse it
+        elif Service_Name == self.cServ:  #If model_container has data, and the service hasn't changed reuse it
             self.j_mngr.log_events("Using cached model list", is_trouble=True)
+
+        else: # model container has data but the user has changed to a different service
+            self._model_container = fetch_models(RequestMode.REMOTE, Service_Name, Custom_ApiKey)
+            self.cServ = Service_Name
+
+
  
         model_list = self._model_container.get_models(sort_it=Sort_Models, include_filter=Include_Filter, exclude_filter=Exclude_Filter, with_none=False)
 
@@ -589,7 +610,7 @@ class OpenRouterModels:
             write_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, dest_file)
             output = f"Output sent to file: {Output_to}"
 
-            if Remove_Prior_Sevice_Name_Entries:
+            if Remove_Prior_Service_Name_Entries:
                 self.j_mngr.log_events(f"Removing existing lines that include the text: {Service_Name}",is_trouble=True )
                 self.j_mngr.remove_lines_by_criteria(file_path=write_file, delete_criteria=Service_Name)
 

@@ -25,6 +25,7 @@ from aiohttp import web
 # Local Module Imports
 # -----------------------
 import folder_paths
+import nodes
 from server import PromptServer
 from .mng_json import json_manager, helpSgltn, TroubleSgltn
 from . import api_requests as rqst
