@@ -570,19 +570,9 @@ class oai_object_request(Request):
             "max_tokens": tokens  
         }
 
-        # The 'o' models have parameter restrictions
-        if "o1" in GPTmodel or "o3" in GPTmodel:
-            self.j_mngr.log_events(
-                "The 'o' models have parameter restrictions. Removing 'max_tokens' and setting 'temperature' to 1",
-                TroubleSgltn.Severity.INFO,
-                True
-            )
-
-            if "max_tokens" in params:
-                del params['max_tokens']
-
-            params['temperature'] = 1
-
+        # Certain models have parameter restrictions     
+        params = self.utils.model_param_adjust(params, GPTmodel)
+            
         if add_params:
             self.j_mngr.append_params(params, add_params, ['param', 'value'])
 
@@ -771,18 +761,9 @@ class oai_web_request(Request):
             "max_tokens": tokens  
         }
 
-        # The 'o' models have parameter restrictions
-        if "o1" in GPTmodel or "o3" in GPTmodel:
-            self.j_mngr.log_events(
-                "The 'o' models have parameter restrictions. Removing 'max_tokens' and setting 'temperature' to 1",
-                TroubleSgltn.Severity.INFO,
-                True
-            )
+        # Certain models have parameter restrictions        
+        params = self.utils.model_param_adjust(params, GPTmodel)
 
-            if "max_tokens" in params:
-                del params['max_tokens']
-
-            params['temperature'] = 1
             
         if add_params:
             self.j_mngr.append_params(params, add_params, ['param', 'value'])
@@ -1142,6 +1123,31 @@ class request_utils:
     def __init__(self)-> None:
         self.j_mngr = json_manager()
         self.mode = RequestMode
+
+
+    def model_param_adjust(self, params: dict, model: str) -> dict:
+        adj_models = ['o1', 'o3']
+        if any(m in model for m in adj_models):
+            self.j_mngr.log_events(
+                "The 'o' models have parameter restrictions. Removing 'max_tokens' and setting 'temperature' to 1",
+                TroubleSgltn.Severity.INFO,
+                True
+            )
+            
+            # Handle temperature parameter
+            if 'temperature' in params:
+                params['temperature'] = 1
+            
+            # Handle max_tokens parameter
+            if 'max_tokens' in params:
+                #params['max_completion_tokens'] = params.pop('max_tokens')
+                params.pop('max_tokens', None)
+                
+            return params
+        
+        return params  
+
+
 
     def build_data_multi(self, prompt:str, instruction:str="", examples:list=None, image:str=None):
         """

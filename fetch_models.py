@@ -33,6 +33,7 @@ class RequestMode(Enum):
     OLLAMA = 9
     DALLE = 10
     OPENROUTER = 11
+    REMOTE = 12
 
 class ModelFetchStrategy(ABC):
  
@@ -43,6 +44,61 @@ class ModelFetchStrategy(ABC):
     @abstractmethod
     def fetch_models(self, key, api_obj, **kwargs):
         pass
+
+    def extract_nested_value(self, data, key_path: str):
+        """
+        Extract nested values from a dict (or list of dicts) using a dot-delimited key path.
+        Supports wildcards using '*' to iterate over all keys in a dict or all items in a list.
+        
+        For example, with key_path "models.text.*.name" it will:
+        - Go to data["models"]
+        - Then data["models"]["text"]
+        - Then iterate over all values in that dict (because of '*')
+        - Then extract each value's "name" key
+    """
+        keys = key_path.split(".")
+
+        def _extract(obj, keys):
+            if not keys:
+                return obj
+
+            current_key = keys[0]
+
+            # Handle the wildcard: iterate over all elements of the current object.
+            if current_key == "*":
+                results = []
+                if isinstance(obj, dict):
+                    for val in obj.values():
+                        extracted = _extract(val, keys[1:])
+                        if extracted is not None:
+                            results.append(extracted)
+                elif isinstance(obj, list):
+                    for item in obj:
+                        extracted = _extract(item, keys[1:])
+                        if extracted is not None:
+                            results.append(extracted)
+                return results
+
+            # Not a wildcard: proceed normally.
+            else:
+                if isinstance(obj, dict):
+                    value = obj.get(current_key)
+                    if value is None:
+                        return None
+                    return _extract(value, keys[1:])
+                elif isinstance(obj, list):
+                    # When the current object is a list, apply the same key to every element.
+                    results = []
+                    for item in obj:
+                        extracted = _extract(item, keys)
+                        if extracted is not None:
+                            results.append(extracted)
+                    return results
+                else:
+                    # If it's not a dict or list, we can't traverse further.
+                    return None
+
+        return _extract(data, keys)
 
 #*****************Containers****************************
 #Create container for models that are generated in non-standard formats
@@ -58,7 +114,7 @@ class ModelsContainer:
 class ModelContainer:
     
     #A self-extracting container for model ids
-    def __init__(self, models:list[str],request_mode:RequestMode=RequestMode.OPENROUTER)->None:
+    def __init__(self, models:list[str],request_mode:RequestMode=RequestMode.REMOTE)->None:
         self._models = models
         self._request_mode = request_mode
 
@@ -193,7 +249,7 @@ class FetchOllama(ModelFetchStrategy):
             imported api object and doesn't require a key.  Ollama is a local app
             that requires a model name be passed in the request."""
         
-        url = self.utils.url_file("urls.json", "ollama_url")
+        url = self.utils.url_file("misc_urls.json", "ollama_url")
         t_response = self.comm.is_lm_server_up(url,1,2)
         if t_response:
             response = self.comm.get_data(url, retries=2)
@@ -251,42 +307,65 @@ class FetchOptional(ModelFetchStrategy):
                                    TroubleSgltn.Severity.ERROR,
                                    True)        
             return ModelsContainer(model_list)#empty model list
-        
-class FetchOpenRouter(ModelFetchStrategy):
-    def __init__(self)->None:
+
+
+class FetchRemote(ModelFetchStrategy):
+    def __init__(self) -> None:
         super().__init__()  # Ensures common setup from ModelFetchStrategy
         self.comm = CommUtils()
+  
 
-    def fetch_models(self, key:str, api_obj, **kwargs) -> ModelContainer:
-
+    def fetch_models(self, key: str, api_obj, **kwargs) -> ModelContainer:
         header = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {key}" 
-        }  
-
-        url = self.utils.url_file("urls.json", "openrouter_models")
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {key}"
+        }
         model_list = []
+        remote_service = kwargs.get('service', None)
 
-        response = self.comm.get_data(url,timeout=4, headers=header)
+        if remote_service is None:
+            self.j_mngr.log_events("Remote model not defined in JSON.", TroubleSgltn.Severity.WARNING)
+            return ModelContainer(model_list, RequestMode.REMOTE)
 
-        if response.status_code == 200:
-            models = response.json().get('data', [])
-            for model in models:
-                model_id = model.get('id', 'Unknown ID')
-                model_list.append(model_id) 
+        url = self.utils.url_file("model_urls.json", f"{remote_service}.url")
+        data_struc = self.utils.url_file("model_urls.json", f"{remote_service}.data_struc")
+
+        # Use a default structure if not defined.
+        if not data_struc:
+            data_struc = "data.id"
+
+        response = self.comm.get_data(url, timeout=4, headers=header)
+        if response and response.status_code == 200:
+            response_json = response.json()
+
+            # Use our helper to extract model IDs according to the flexible dot notation.
+            model_ids = self.extract_nested_value(response_json, data_struc)
+
+            # If the extraction returns a list (or even nested lists), flatten it.
+            if isinstance(model_ids, list):
+                flat_ids = []
+                for item in model_ids:
+                    if isinstance(item, list):
+                        flat_ids.extend(item)
+                    else:
+                        flat_ids.append(item)
+                model_ids = flat_ids
+            else:
+                # Wrap a single value in a list.
+                model_ids = [model_ids] if model_ids is not None else []
+
+            # Replace any None values with a default string, if desired.
+            for model_id in model_ids:
+                model_list.append(model_id if model_id is not None else 'Unknown ID')
 
             if model_list:
-                return ModelContainer(model_list, RequestMode.OPENROUTER)
-                #model_list.sort()
-                #write_file = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir,'model_test.txt')
-                #self.j_mngr.write_list_to_file(model_list, write_file)
+                return ModelContainer(model_list, RequestMode.REMOTE)
 
-            self.j_mngr.log_events("OpenRouter model list was empty.", TroubleSgltn.Severity.WARNING)
-            return ModelContainer(model_list, RequestMode.OPENROUTER)
-
-        self.j_mngr.log_events(f"Failed to retrieve OpenRouter models. Status code: {response.status_code}", TroubleSgltn.Severity.ERROR)
-        return ModelContainer(model_list, RequestMode.OPENROUTER)
-
+            self.j_mngr.log_events(f"{remote_service} model list was empty.", TroubleSgltn.Severity.WARNING)
+            return ModelContainer(model_list, RequestMode.REMOTE)
+        response_code = response.status_code if response else 'N/A'
+        self.j_mngr.log_events(f"Failed to retrieve {remote_service} models. Status code: {response_code}", TroubleSgltn.Severity.ERROR, True)
+        return ModelContainer(model_list, RequestMode.REMOTE)
 
 
 class FetchModels:
@@ -318,8 +397,8 @@ class FetchModels:
         elif request_type in (RequestMode.OPENSOURCE, RequestMode.OSSIMPLE):
             self.strategy = FetchOptional()
 
-        elif request_type == RequestMode.OPENROUTER:
-            self.strategy = FetchOpenRouter()
+        elif request_type == RequestMode.REMOTE:
+            self.strategy = FetchRemote()    
 
         if self.strategy:
             return self.strategy.fetch_models(key, api_obj, **kwargs)
@@ -359,7 +438,33 @@ class ModelUtils:
 
         return prepped_models
     
-    def url_file(self, file_name:str, field_name:str) -> str:
+    def url_file(self, file_name: str, field_name: str) -> str:
+        # Build the full path to your JSON file.
+        url_file_name = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, file_name)
+        
+        # Load the JSON data.
+        url_data = self.j_mngr.load_json(url_file_name)
+        if not url_data:
+            return ''
+        
+        # Split the field name on '.' to support nested keys.
+        keys = field_name.split('.')
+        value = url_data
+        
+        # Traverse the nested dictionaries.
+        for key in keys:
+            if isinstance(value, dict):
+                value = value.get(key)
+                if value is None:
+                    return ''  # Return empty if the key isn't found.
+            else:
+                return ''  # Return empty if the current value is not a dict.
+        
+        # Optionally, ensure that you're returning a string.
+        return str(value) if value is not None else ''
+
+    
+    def x_url_file(self, file_name:str, field_name:str) -> str:
         url_file_name = self.j_mngr.append_filename_to_path(self.j_mngr.script_dir, file_name)
         url_data = self.j_mngr.load_json(url_file_name)
         if url_data:

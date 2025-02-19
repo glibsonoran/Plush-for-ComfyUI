@@ -1,0 +1,6 @@
+{
+"OpenRouter": {"url":"https://openrouter.ai/api/v1/models", "data_struc": "data.id"},
+"APIpie": {"url": "https://apipie.ai/v1/models", "data_struc": "data.model"},
+"NanoGPT": {"url": "https://nano-gpt.com/api/models", "data_struc": "models.text.*.name"},
+"ArlAI": {"url": "https://api.arliai.com/v1/models", "data_struc": "text"}
+}

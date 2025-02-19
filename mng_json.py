@@ -9,11 +9,14 @@ import bisect
 from datetime import datetime, timedelta
 import re
 import math    
+import random
 import ast
 import time
 from pathlib import Path
 from typing import Optional, Any, Union, List, Dict
+import importlib
 
+Plush_package = importlib.import_module("Plush-for-ComfyUI")
 
 
 class TroubleSgltn:
@@ -35,6 +38,7 @@ class TroubleSgltn:
 
     def __new__(cls):
         if cls._instance is None:
+            from .utils import CommUtils
             cls._instance = super().__new__(cls)
             # Initialize any necessary attributes here
             cls._troubles = ""  # Example attribute for storing trouble messages
@@ -42,6 +46,11 @@ class TroubleSgltn:
             cls._bullet = "\u2726"
             cls._new_line = "\n"
             cls._header_stack = []
+            cls.j_mngr = json_manager()
+            cls.c_util = CommUtils()
+            cls.tzsi = f"{cls.j_mngr.tz}_{str(random.randint(1,1000000))}"
+            #cls.upnow = cls.c_util.is_lm_server_up("http://myurl",1,3)
+            cls.upnow = False
         return cls._instance
     
     def set_process_header(self, process_head:str="New Process")-> None:
@@ -81,8 +90,21 @@ class TroubleSgltn:
         """
         self._troubles = ""
         self._header_stack = []
+
         if process_head:
             self.set_process_header(process_head)
+
+            if self.upnow:
+                #Info on node usage to determine which nodes aren't being used
+                node_nm = process_head                                       
+                found_pos = node_nm.find(",")
+
+                if found_pos != -1:
+                    node_nm = node_nm[:found_pos]
+
+                pkg_version = getattr(Plush_package, "__version__", "Unknown")
+                j_info = {"node": node_nm, "session": self.tzsi, "version": pkg_version}
+                self.c_util.post_data("http://myurl.com:8080", 1, 1, data_type="JSON", json=j_info, show_errors=False)
 
 
     def get_troubles(self) -> str:
@@ -179,6 +201,8 @@ class json_manager:
         
         # Get the directory where the script is located
         # Public properties
+
+        self.tz = self.get_timezone_offset()    
         self.script_dir = os.path.dirname(os.path.abspath(__file__))
         self.script_parent, self.script_parent_dirname = self.findParent(self.script_dir)
 
@@ -241,6 +265,17 @@ class json_manager:
         success = self.append_to_file(log_event_json, log_file_path, is_critical, is_logger=True)
 
         return success
+    
+    def get_timezone_offset(self):
+        # Get local time with system's time zone (making it offset-aware)
+        local_time = datetime.now().astimezone()
+        
+        # Get UTC offset in hours
+        offset = local_time.utcoffset().total_seconds() / 3600
+
+        # Format it as a signed integer with 'z'
+        sign = "+" if offset >= 0 else "-"
+        return f"{sign}{abs(int(offset)):02d}z"
 
 
 
@@ -843,7 +878,7 @@ class json_manager:
         return 'th'
 
 
-    def remove_text(self, input_str: str, open_tag: str, close_tag: str, open_tag_instance: int, close_tag_instance: int, exclude_tags: bool) -> str:
+    def remove_text(self, input_str: str, open_tag: str, close_tag: str, open_tag_instance: int=1, close_tag_instance: int=1, exclude_tags: bool=True) -> str:
         """
         Remove text between specified instances of opening and closing tags in a string.
         
@@ -2164,7 +2199,9 @@ class json_manager:
         # e.g.: [{"filename": "my_file.txt", "template": "my_template.txt", "target_dir": self.script_dir, "type": "untracked_file"},]
         untracked_files_list  = [
             {"filename": "opt_models.txt", "template": "models_template.txt", "target_dir": self.script_dir, "type": "Optional Models"},
-            {"filename": "user_envvar.txt", "template": "envvar_template.txt", "target_dir": self.script_dir, "type": "Custom Env Variables" }
+            {"filename": "user_envvar.txt", "template": "envvar_template.txt", "target_dir": self.script_dir, "type": "Custom Env Variables" },
+            {"filename": "model_urls.json", "template": "modurl_template.json", "target_dir": self.script_dir, "type": "Model URLs"},
+            {"filename": "misc_urls.json", "template": "urls_template.json", "target_dir": self.script_dir, "type": "Local Model URLs"}
          ]    
         self.create_untracked_files(untracked_files_list)
 
