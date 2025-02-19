@@ -11,7 +11,7 @@
 *   **Misc Code changes**
 *   **Expanded Remote Inference Services for `Load Remote Models` node**
 *   **`Misc_urls.json` is now the file that contains the path to get Ollama models and can be changed for custom configs.**
-   *   This is now an untracked file so your customizations will not be overwritten.   
+    *   This is now an untracked file so your customizations will not be overwritten.   
 *********************   
 01/28/2025 @5:00pm PST *Version 1.21.23*
 *   **[new node] `Remove Text Block` Node for removing unwanted text**
