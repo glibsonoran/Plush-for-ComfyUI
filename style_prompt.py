@@ -165,7 +165,7 @@ class cFigSingleton:
                 
         self._fig_gpt_models = self._model_fetch.fetch_models(RequestMode.OPENAI, self._fig_key)
         self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
-        self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key)
+        self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key,api_obj=self.anthropic_client)
         if self.gemini_key:
             self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
         self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")  
@@ -177,8 +177,11 @@ class cFigSingleton:
     def get_groq_models(self, sort_it:bool=False, filter_str:tuple=()):
         return self._model_prep.prep_models_list(self._groq_models, sort_it, filter_str)      
 
-    def get_claude_models(self, sort_it:bool=False, filter_str:tuple=())->list:
-        return self._model_prep.prep_models_list(self._claude_models, sort_it, filter_str)   
+    def get_claude_models(self):
+        if self._claude_models is None:
+            # Initialize with an empty container if none exists
+            self._claude_models = ModelContainer([], RequestMode.CLAUDE)
+        return self._claude_models
 
     def get_gemini_models(self)->ModelContainer:       
         return self._gemini_models   
@@ -687,7 +690,7 @@ class AI_Chooser:
                 "AI_Service": (["ChatGPT", "Groq", "Anthropic"], {"default": "ChatGPT"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
-                "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}),                                  
+                "Anthropic_model": (cFig.get_claude_models().get_models(False, exclude_filter=("2.0", "2.1")), {"default": ""}),                                  
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -1158,7 +1161,7 @@ class AdvPromptEnhancer:
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
                 #"Google_Gemini_model": (cFig.get_gemini_models().get_models(), {"default": "none"}),
-                "Anthropic_model": (cFig.get_claude_models(True), {"default": ""}), 
+                "Anthropic_model": (cFig.get_claude_models().get_models(False, exclude_filter=("2.0", "2.1")), {"default": ""}), 
                 "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}), 
                 "Ollama_model_unload": (["Unload After Run", "Keep Alive Indefinitely", "No Setting"], {"default": "No Setting", "tooltip": "Choose how long this model will stay loaded after completion"}),
                 "Optional_model": (cFig.get_optional_models(True), {"default": "", "tooltip": "Enter these in the text file: 'opt_models.txt' in the Plush directory"}),                

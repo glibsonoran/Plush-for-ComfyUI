@@ -180,6 +180,7 @@ class FetchByProperty(ModelFetchStrategy):
                                 TroubleSgltn.Severity.WARNING,
                                 True)
             return None
+        
 
         return models
 
@@ -307,6 +308,64 @@ class FetchOptional(ModelFetchStrategy):
                                    TroubleSgltn.Severity.ERROR,
                                    True)        
             return ModelsContainer(model_list)#empty model list
+        
+class FetchByURL(ModelFetchStrategy):
+    def __init__(self) -> None:
+        super().__init__()  # Ensures common setup from ModelFetchStrategy
+        self.comm = CommUtils()
+  
+
+    def fetch_models(self, key: str, api_obj, **kwargs):
+        url = kwargs.get('url', None)
+        header = kwargs.get('header', {})
+        remote_service = kwargs.get('service', "")
+        requires_key = kwargs.get('key_req', True)       
+        id_path = kwargs.get('id_path', 'data.*.id')  # Get the path to find model IDs directly from kwargs
+        request_mode = kwargs.get('request_mode', RequestMode.REMOTE)
+        
+        self.j_mngr.log_events(f"Starting FetchByURL with url: {url};   header: {header};  key: {key}")
+        
+        if header is None:
+            header = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {key}"
+            }
+            
+        # Initialize with empty ModelContainer
+        model_list = ModelContainer([], request_mode)
+        
+        if url is None:
+            self.j_mngr.log_events(f"No model fetch url provided for: {remote_service}.", TroubleSgltn.Severity.WARNING)
+            return model_list
+        
+        if requires_key and not key:
+            self.j_mngr.log_events(f"No key provided for model fetch from: {remote_service}.", TroubleSgltn.Severity.WARNING)
+            return model_list
+            
+        response = self.comm.get_data(url, timeout=4, headers=header)
+        self.j_mngr.log_events(f"Response: {response}")
+        
+        if response and response.status_code == 200:
+            json_data = response.json()
+            
+            model_ids = []
+            # If id_path is provided, use it to extract model IDs
+            if id_path:
+                model_ids = self.extract_nested_value(json_data, id_path)
+                # If model_ids is a list of lists (due to wildcards), flatten it
+                if model_ids and isinstance(model_ids[0], list):
+                    model_ids = [item for sublist in model_ids for item in sublist]
+            
+            model_list = ModelContainer(model_ids, request_mode)
+        else:
+            response_code = response.status_code if response else 'N/A'
+            self.j_mngr.log_events(f"Failed to retrieve {remote_service} models. Status code: {response_code}", 
+                                    TroubleSgltn.Severity.ERROR, True)
+        
+        if not model_list.has_data:
+            self.j_mngr.log_events(f"{remote_service} model list was empty.", TroubleSgltn.Severity.WARNING)
+        
+        return model_list
 
 
 class FetchRemote(ModelFetchStrategy):
@@ -384,9 +443,23 @@ class FetchModels:
             self.strategy = FetchByMethod()
 
         elif request_type == RequestMode.CLAUDE:
+            header = {
+                "x-api-key": key,
+                "anthropic-version": "2023-06-01"
+            }
+
+            kwargs = { "url": "https://api.anthropic.com/v1/models",
+                    "header": header,
+                    "service": "Anthropic",
+                    "key_req": True,
+                    "request_mode": request_type
+            }
+            self.strategy = FetchByURL()
+            """
             if not api_obj:            
                 api_obj = ['claude-3-haiku-20240307', 'claude-3-5-haiku-latest','claude-3-sonnet-20240229', 'claude-3-5-sonnet-20240620', 'claude-3-5-sonnet-latest', 'claude-3-opus-20240229']
             self.strategy = FetchContainer()
+            """
         
         elif request_type == RequestMode.GEMINI:
             self.strategy = FetchGemini()
