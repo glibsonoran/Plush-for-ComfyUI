@@ -321,9 +321,7 @@ class FetchByURL(ModelFetchStrategy):
         remote_service = kwargs.get('service', "")
         requires_key = kwargs.get('key_req', True)       
         id_path = kwargs.get('id_path', 'data.*.id')  # Get the path to find model IDs directly from kwargs
-        request_mode = kwargs.get('request_mode', RequestMode.REMOTE)
-        
-        self.j_mngr.log_events(f"Starting FetchByURL with url: {url};   header: {header};  key: {key}")
+        request_mode = kwargs.get('request_mode', RequestMode.REMOTE)        
         
         if header is None:
             header = {
