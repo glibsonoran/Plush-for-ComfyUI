@@ -251,14 +251,15 @@ python -m pip install -r requirements.txt
   
   ### The follwing table lists the Enviroment Variables that Plush recognizes and how the API keys they contain are applied.
 
-  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT | Open Source/Other (e.g. Tabby API) |  Remote Other (e.g.: OpenRouter)   |
-  | :------ | :------: | :------: | :------: | :------: | :-------: |
-  | `OAI_KEY` |      |      |   **X**   |      |      |
-  | `OPENAI_API_KEY` |      |      |   **X**   |      |      |
-  | `LLM_KEY` |      |      |      |   **X**   |  **X**  |
-  | `GROQ_API_KEY` |      |   **X**   |      |      |      |
-  | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |      |
-  | `User-Defined`  |     |      |      |   **X**   |   **X**  |    
+  | Enviroment Variable | Anthropic | Groq | OpenAI ChatGPT |Google Gemini | Open Source/Other (e.g. Tabby API) |  Remote Other (e.g.: OpenRouter)   |
+  | :------ | :------: | :------: | :------: | :------: | :-------: | :-------: |
+  | `OAI_KEY` |      |      |   **X**   |      |      |      |
+  | `OPENAI_API_KEY` |      |      |   **X**   |      |      |      |
+  | `LLM_KEY` |      |      |      |      |  **X**  |  **X**    |
+  | `GROQ_API_KEY` |      |   **X**   |      |      |      |      |
+  | `ANTHROPIC_API_KEY` |   **X**   |      |      |      |      |      |
+  | `GEMINI_API_KEY` |      |      |      |  **X**    |      |      |
+  | `User-Defined`  |     |      |      |      |   **X**  |  **X**    |   
   -------------------------------------
    *  **You should set a reasonable $dollar limit on the usage of any paid API key to prevent a large bill if the key is compromised.**  You can usually do this in the account settings on the website.  For Example with OpenAI:
      
