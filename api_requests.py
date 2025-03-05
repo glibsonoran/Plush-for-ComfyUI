@@ -4,7 +4,7 @@ import time
 import json
 import re
 from enum import Enum
-from typing import Callable, Any, Optional, Type, Union, List, Tuple
+from typing import Callable, Any, Optional, Type, List, Tuple
 from urllib.parse import urlparse, urlunparse
 
 # Third-party libraries
@@ -14,9 +14,14 @@ import openai
 import anthropic
 
 # Local modules
-from .mng_json import json_manager, TroubleSgltn
-from .fetch_models import RequestMode
-from .utils import ImageUtils
+try:
+    from .mng_json import json_manager, TroubleSgltn
+    from .fetch_models import RequestMode
+    from .utils import ImageUtils, CommUtils
+except ImportError:
+    from mng_json import json_manager, TroubleSgltn
+    from fetch_models import RequestMode
+    from utils import ImageUtils, CommUtils
 
 
 class ImportedSgltn:
@@ -36,17 +41,17 @@ class ImportedSgltn:
         if not self._initialized: #pylint: disable=access-member-before-definition
             self._initialized = True
             self._cfig = None
-            self._dalle = None
             self.get_imports()
 
     def get_imports(self):
         """Import and initialize singleton instances from style_prompt"""
         # Guard against re-importing if already done
-        if self._cfig is None or self._dalle is None:
-            from .style_prompt import cFigSingleton, DalleImage
+        if self._cfig is None:
+            try:
+                from .style_prompt import cFigSingleton
+            except ImportError:
+                from style_prompt import cFigSingleton
             self._cfig = cFigSingleton
-            self._dalle = DalleImage
-
 
     @property
     def cfig(self):
@@ -55,12 +60,6 @@ class ImportedSgltn:
             self.get_imports()
         return self._cfig()
 
-    @property
-    def dalle(self):
-        """Returns the DALLE instance"""
-        if self._dalle is None:
-            self.get_imports()
-        return self._dalle()
        
 class RetryConfig:
     """Configuration for retry behavior"""
@@ -363,6 +362,13 @@ class RetryConfigFactory:
                     openai.RateLimitError,
                     openai.APIStatusError
                 ]
+            ),
+            RequestMode.GEMINI: RetryConfig(
+                max_retries=3,
+                base_delay=1.0,
+                max_delay=8.0,
+                retryable_exceptions=web_exceptions,
+                retryable_http_status_codes=[408, 429, 500, 502, 503, 504]
             )
         }
         return configs.get(request_type, RetryConfig())
@@ -382,8 +388,8 @@ class Request(ABC):
         self.utils = request_utils()
         self.cFig = self.imps.cfig
         self.mode = RequestMode
-        self.dalle = self.imps.dalle
         self.j_mngr = json_manager()
+        self.img_u = ImageUtils()
         
         # Initialize retry configuration and handler
         retry_config = RetryConfigFactory.create_config(self.cFig.lm_request_mode)
@@ -427,23 +433,6 @@ class Request(ABC):
     def request_completion(self, **kwargs) -> Any:
         pass
 
-    def _process_image(self, image: Optional[Union[str, torch.Tensor]]) -> Optional[str]:
-        """Common image processing logic"""
-        if not image:
-            return None
-
-        if isinstance(image, torch.Tensor):
-            image = self.dalle.tensor_to_base64(image)
-            
-        if not isinstance(image, str):
-            self.j_mngr.log_events(
-                "Image file is invalid. Image will be disregarded in the generated output.",
-                TroubleSgltn.Severity.WARNING,
-                True
-            )
-            return None
-            
-        return image
 
     def _log_completion_metrics(self, response: Any, response_type: str = "standard"):
         """Common logging for completion metrics"""
@@ -511,6 +500,16 @@ class oai_object_request(Request):
                 client = self.cFig.lm_client
             else:
                 error_message = "Groq OpenAI api object is not ready for use, no URL provided."
+
+        elif request_type == self.mode.GEMINI:
+            if self.cFig.lm_url:
+                self.j_mngr.log_events(
+                    "Setting client to OpenAI Gemini LLM object",
+                    is_trouble=True
+                )
+                client = self.cFig.lm_client
+            else:
+                error_message = "Groq OpenAI api object is not ready for use, no URL provided."                
                 
         elif request_type == self.mode.OPENAI:
             if self.cFig.key:
@@ -550,14 +549,11 @@ class oai_object_request(Request):
         if not client:
             return "Unable to process request, client initialization failed"
 
-        # Process image if present
-        image = self._process_image(image)
-
         # Build messages based on presence of image
-        if not image:
-            messages = self.utils.build_data_basic(prompt, example_list, instruction)
+        if image is not None:
+            messages = self.utils.build_data_multi(prompt, instruction, example_list, image)            
         else:
-            messages = self.utils.build_data_multi(prompt, instruction, example_list, image)
+            messages = self.utils.build_data_basic(prompt, example_list, instruction)
 
         # Handle empty input case
         if not any([prompt, image, instruction, example_list]):
@@ -634,9 +630,6 @@ class claude_request(Request):
             )
             return "Invalid or missing Anthropic API key"
 
-        # Process image if present
-        image = self._process_image(image)
-
         # Build messages
         messages = self.utils.build_data_claude(prompt, example_list, image)
 
@@ -695,6 +688,7 @@ class claude_request(Request):
 
         return claude_response
     
+    
 
 class oai_web_request(Request):
     """Concrete class for OpenAI-compatible web requests"""
@@ -724,15 +718,13 @@ class oai_web_request(Request):
             )
 
         # Process image if present
-        if image and request_type == self.mode.OSSIMPLE:
+        if image is not None and request_type == self.mode.OSSIMPLE:
             self.j_mngr.log_events(
                 "The AI Service using 'Simplified Data' can't process an image. The image will be disregarded in generated output.",
                 TroubleSgltn.Severity.INFO,
                 True
             )
             image = None
-        else:
-            image = self._process_image(image)
 
         # Get appropriate key for request type
         key = self._get_key_for_request_type(request_type)
@@ -819,6 +811,8 @@ class oai_web_request(Request):
             return key
         elif request_type == self.mode.GROQ:
             return self.cFig.groq_key
+        elif request_type == self.mode.GEMINI:
+            return self.cFig.gemini_key
         return ""
 
 class ooba_web_request(Request):
@@ -988,7 +982,7 @@ class dall_e_request(Request):
 
                     b64Json = response.data[0].b64_json
                     if b64Json:
-                        png_image, _ = self.dalle.b64_to_tensor(b64Json)
+                        png_image, _ = self.img_u.b64_to_tensor(b64Json)
                         images_list.append(png_image)
                     else:
                         self.j_mngr.log_events(
@@ -1123,7 +1117,8 @@ class request_utils:
     def __init__(self)-> None:
         self.j_mngr = json_manager()
         self.mode = RequestMode
-
+        self.img_u = ImageUtils()
+        self.imps = ImportedSgltn()
 
     def model_param_adjust(self, params: dict, model: str) -> dict:
         adj_models = ['o1', 'o3']
@@ -1148,8 +1143,49 @@ class request_utils:
         return params  
 
 
+    def build_data_multi(self, 
+                         prompt: str, 
+                         instruction: str = "", 
+                         examples: list = None, 
+                         image: torch.Tensor | str | list[torch.Tensor] | list[str] = None):
+        """
+        Builds a list of message dicts, aggregating 'role:user' content into a list under 'content' key.
+        Supports multiple images.
+        
+        - image: A single Base64-encoded string or a list of them.
+        - prompt: String to be included as 'text' type content under 'user' role.
+        - examples: List of additional example dicts to be included.
+        - instruction: Instruction string to be included under 'system' role.
+        """
+        messages = []
+        user_role = {"role": "user", "content": None}
+        user_content = []
 
-    def build_data_multi(self, prompt:str, instruction:str="", examples:list=None, image:str=None):
+        if instruction:
+            messages.append({"role": "system", "content": instruction})         
+
+        if examples:
+            messages.extend(examples)
+
+        if prompt:
+            user_content.append({"type": "text", "text": prompt})
+
+        processed_images = self.process_image(image)  # Now supports multiple images
+        if processed_images:
+            if isinstance(processed_images, list):
+                user_content.extend(processed_images)  # Add multiple images
+            else:
+                user_content.append(processed_images)  # Add single image
+
+        if user_content:
+            user_role['content'] = user_content   
+            messages.append(user_role)
+
+        return messages
+
+
+
+    def x_build_data_multi(self, prompt:str, instruction:str="", examples:list=None, image:str=None):
         """
         Builds a list of message dicts, aggregating 'role:user' content into a list under 'content' key.
         - image: Base64-encoded string or None. If string, included as 'image_url' type content.
@@ -1231,7 +1267,44 @@ class request_utils:
 
         return messages 
     
-    def build_data_claude(self, prompt:str, examples:list=None, image:str=None)-> list:
+
+    def build_data_claude(self, 
+                          prompt: str, 
+                          examples: list = None, 
+                          image: torch.Tensor | str | list[torch.Tensor] | list[str] = None) -> list:
+        """
+        Builds a list of message dicts, aggregating 'role:user' content into a list under 'content' key.
+        Supports multiple images.
+        
+        - image: A single Base64-encoded string or a list of them.
+        - prompt: String to be included as 'text' type content under 'user' role.
+        - examples: List of additional example dicts to be included.
+        """
+        messages = []
+        user_role = {"role": "user", "content": None}
+        user_content = []
+
+        if examples:
+            messages.extend(examples)
+
+        processed_images = self.process_image(image, RequestMode.CLAUDE)
+        if processed_images:
+            if isinstance(processed_images, list):
+                user_content.extend(processed_images)  # Add multiple images
+            else:
+                user_content.append(processed_images)  # Add single image
+
+        if prompt:
+            user_content.append({"type": "text", "text": prompt})
+
+        if user_content:     
+            user_role['content'] = user_content    
+            messages.append(user_role)
+
+        return messages
+
+    
+    def x_build_data_claude(self, prompt:str, examples:list=None, image:str=None)-> list:
         """
         Builds a list of message dicts, aggregating 'role:user' content into a list under 'content' key.
         - image: Base64-encoded string or None. If string, included as 'image_url' type content.
@@ -1258,9 +1331,68 @@ class request_utils:
             messages.append(user_role)
 
         return messages
+    
+    def process_image(self, 
+                      image: torch.Tensor | str | list[torch.Tensor] | list[str], 
+                      request_type: RequestMode = RequestMode.OPENAI):
+        """
+        Processes image input (tensor, Base64 string, or list) into the proper request format.
+
+        Args:
+            image (torch.Tensor, str, or list): A raw tensor, Base64 string, or a list of either.
+            request_type (RequestMode): Determines the API format (Claude, OpenAI, etc.).
+
+        Returns:
+            dict or list: A processed image dictionary (for a single image) or a list (for multiple).
+        """
+        if image is None:
+            self.j_mngr.log_events("No input image was received")
+            return None
+
+        # **Case 1: If image is a tensor, convert it to Base64**
+        if isinstance(image, torch.Tensor):  
+            N = self.img_u.extract_batch_size(image)  # Extract batch size
+            self.j_mngr.log_events(f"Image size extracted as: {N}")
+            # Convert each tensor to Base64 using self.img_u.tensor_to_b64()
+            base64_images = [self.img_u.tensor_to_base64(image[i]) for i in range(N)]
+
+            # Recursively process the Base64 images
+            self.j_mngr.log_events(f"Base64 Image Preview: {image[:100]}", TroubleSgltn.Severity.INFO)
+            return self.process_image(base64_images, request_type)
+
+        # **Case 2: If it's a list, process each item recursively**
+        if isinstance(image, list):
+            # Check if we have mixed types (both tensors and strings), which is likely an error
+            if not all(isinstance(img, (torch.Tensor, str)) for img in image):
+                self.j_mngr.log_events("Error: List contains unsupported types.", TroubleSgltn.Severity.ERROR, True)
+                return None  # Or raise an exception if preferred
+
+            # Recursively process each item (whether tensor or Base64 string)
+            return [self.process_image(img, request_type) for img in image]
+
+        # **Case 3: If it's already a Base64 string, return in correct format**
+        if isinstance(image, str):
+            if request_type == self.mode.CLAUDE:
+                return {
+                    "type": "image",
+                    "source": {
+                        "type": "base64",
+                        "media_type": "image/png",
+                        "data": image
+                    }
+                }
+            return {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{image}"
+                }
+            }
+
+        self.j_mngr.log_events("Image file is invalid.", TroubleSgltn.Severity.WARNING, True)
+        return None
 
 
-    def process_image(self, image: str, request_type:RequestMode=RequestMode.OPENAI) :
+    def x_process_image(self, image: str, request_type:RequestMode=RequestMode.OPENAI) :
         if not image:
             return None
         

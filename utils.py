@@ -18,7 +18,10 @@ import numpy as np
 # =======================
 #  Local Modules
 # =======================
-from .mng_json import json_manager, TroubleSgltn
+try:
+    from .mng_json import json_manager, TroubleSgltn
+except ImportError:
+    from mng_json import json_manager, TroubleSgltn
 
 class ImageFormat(Enum):
     B64_IMAGE = "b64-image"  # Base64 encoded image (JPEG/PNG)
@@ -394,4 +397,20 @@ class ImageUtils:
 
         self.j_mngr.log_events(f"No images found in the response under key '{response_key}'")
         return None
+    
+    def extract_batch_size(self, tensor: torch.Tensor) -> int:
+        """
+        Extracts the batch size (N) from a PyTorch tensor.
+        
+        Args:
+            tensor (torch.Tensor): The image tensor in [N, H, W, C] format.
+
+        Returns:
+            int: The number of images (batch size).
+        """
+
+        if tensor.ndim != 4:
+            raise ValueError(f"Expected a 4D tensor [N, H, W, C], but got shape {tensor.shape}")
+        
+        return tensor.shape[0]  # Return batch size (N)
            

@@ -16,7 +16,10 @@ from pathlib import Path
 from typing import Optional, Any, Union, List, Dict
 import importlib
 
-Plush_package = importlib.import_module("Plush-for-ComfyUI")
+try:
+    Plush_package = importlib.import_module("Plush-for-ComfyUI")
+except ImportError:
+    pass
 
 
 class TroubleSgltn:
@@ -38,7 +41,10 @@ class TroubleSgltn:
 
     def __new__(cls):
         if cls._instance is None:
-            from .utils import CommUtils
+            try:
+                from .utils import CommUtils
+            except ImportError:
+                from utils import CommUtils
             cls._instance = super().__new__(cls)
             # Initialize any necessary attributes here
             cls._troubles = ""  # Example attribute for storing trouble messages
