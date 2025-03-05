@@ -10,7 +10,7 @@
 03/05/2025 @2:09pm PST *Version 1.21.25*
 *   **The `Advanced Prompt Enhancer` and `AI Chooser` nodes have had their UI's modified.  After updating the suite make sure you use the ComfyUI Node popup menu and select `Reload Node` for any existing workflows that use these nodes so you don't get any errors.**
 *   **You can now input multiple images**: The image input of the `Advanced Prompt Enhancer` and `Style Prompt` nodes now accept multiple images.  To use this feature you'll have to first batch the images using the standard ComfyUI node: `Batch Images`.  This node comes with the suite and doesn't require a download.  Just a warning this will increase your input tokens by a lot.  Some services and models can't accept more than one image.  Even with models that do accept more than one, I'd caution against sending more than two.  One use of this is to create a prompt that combine elements of both images.
-*   **Gemini is now a first-class AI Service in both `Advanced Prompt Enhancer` and `AI Chooser`**  There's a field that presents the full is of Gemini models and Gemini can be selected directly in the AI_Service field in both nodes.  To use this service you'll need to have a Gemini API key and store it in a variable namded: `GEMINI_API_KEY`
+*   **Gemini is now a first-class AI Service in both `Advanced Prompt Enhancer` and `AI Chooser`**  There's a field that presents the full list of Gemini models and Gemini can be selected directly in the AI_Service field in both nodes.  To use this service you'll need to have a Gemini API key and store it in a variable namded: `GEMINI_API_KEY`
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *********************   
