@@ -2,8 +2,6 @@
 # Standard Library Imports
 # ------------------------
 import os
-import base64
-from io import BytesIO
 from typing import Optional
 from enum import Enum
 from urllib.parse import urlparse
@@ -11,9 +9,7 @@ from urllib.parse import urlparse
 # -------------------------
 # Third-Party Library Imports
 # -------------------------
-from PIL import Image, ImageOps, TiffImagePlugin, UnidentifiedImageError
-import numpy as np
-import torch
+from PIL import Image, TiffImagePlugin, UnidentifiedImageError
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from openai import OpenAI
@@ -24,12 +20,17 @@ from aiohttp import web
 # -----------------------
 # Local Module Imports
 # -----------------------
-import folder_paths
-import nodes
-from server import PromptServer
-from .mng_json import json_manager, helpSgltn, TroubleSgltn
-from . import api_requests as rqst
-from .fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
+try:
+    import folder_paths
+    import nodes
+    from server import PromptServer
+    from .mng_json import json_manager, helpSgltn, TroubleSgltn
+    from . import api_requests as rqst
+    from .fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
+except ImportError:
+    from mng_json import json_manager, helpSgltn, TroubleSgltn
+    import api_requests as rqst
+    from fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
 
 
 #pip install pillow
@@ -153,7 +154,7 @@ class cFigSingleton:
                 self.j_mngr.log_events(f"Invalid or missing Anthropic API key. Please note, keys must be kept in an environment variable.{e}",                                       
                                        severity=TroubleSgltn.Severity.ERROR)    
                 
-        if self._gemini_key:
+        if not self._gemini_key:
             try:
                 #genai.configure(api_key=self._gemini_key)
                 self._gemini_key = ""  #Placeholder until gemini api is ready
@@ -166,16 +167,18 @@ class cFigSingleton:
         self._fig_gpt_models = self._model_fetch.fetch_models(RequestMode.OPENAI, self._fig_key)
         self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
         self._claude_models = self._model_fetch.fetch_models(RequestMode.CLAUDE, self._claude_key,api_obj=self.anthropic_client)
-        if self.gemini_key:
-            self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
+        self._gemini_models = self._model_fetch.fetch_models(RequestMode.GEMINI, self._gemini_key)
         self._ollama_models =  self._model_fetch.fetch_models(RequestMode.OLLAMA, "")  
         self._optional_models = self._model_fetch.fetch_models(RequestMode.OPENSOURCE, "")    
    
     def get_chat_models(self, sort_it:bool=False, filter_str:tuple=())->list:
         return self._model_prep.prep_models_list(self._fig_gpt_models, sort_it, filter_str)      
       
-    def get_groq_models(self, sort_it:bool=False, filter_str:tuple=()):
-        return self._model_prep.prep_models_list(self._groq_models, sort_it, filter_str)      
+    def get_groq_models(self):
+        if self._groq_models is None:
+            # Initialize with an empty container if none exists
+            self._groq_models = ModelContainer([], RequestMode.GROQ)
+        return self._groq_models    
 
     def get_claude_models(self):
         if self._claude_models is None:
@@ -183,11 +186,19 @@ class cFigSingleton:
             self._claude_models = ModelContainer([], RequestMode.CLAUDE)
         return self._claude_models
 
-    def get_gemini_models(self)->ModelContainer:       
-        return self._gemini_models   
+    def get_gemini_models(self)->ModelContainer:    
 
-    def get_ollama_models(self, sort_it:bool=False, filter_str:tuple=())->list:
-        return self._model_prep.prep_models_list(self._ollama_models, sort_it, filter_str)    
+        if self._gemini_models is None:
+            # Initialize with an empty container if none exists
+            self._gemini_models = ModelContainer([], RequestMode.GEMINI)
+        return self._gemini_models
+    
+    def get_ollama_models(self)->ModelContainer:
+
+        if self._ollama_models is None:
+            # Initialize with an empty container if none exists
+            self._ollama_models = ModelContainer([], RequestMode.OLLAMA)
+        return self._ollama_models  
 
     def get_optional_models(self, sort_it:bool=False, filter_str:tuple=())->list: 
         return self._model_prep.prep_models_list(self._optional_models, sort_it, filter_str)   
@@ -210,29 +221,45 @@ class cFigSingleton:
         
 
         if request_type in (RequestMode.OOBABOOGA, RequestMode.OPENSOURCE):
-            key = self._custom_key or self._lm_key #key will equal first 'truthy' value
-            if key:
-                self.j_mngr.log_events("Setting Openai client with URL and key.",
-                    is_trouble=True)                
-            else:
-                self.j_mngr.log_events("Setting Openai client with URL, no key.",
-                    is_trouble=True)                
+            key = self._custom_key or self._lm_key  # key will be the first truthy value
+            message = (
+                "Setting Openai client with URL and key." 
+                if key else 
+                "Setting Openai client with URL, no key."
+            )
+            self.j_mngr.log_events(message, is_trouble=True)
 
         elif request_type == RequestMode.GROQ:
-            if not self._groq_key:
-                self.j_mngr.log_events("Attempting to connect to Groq with no key",
-                                       TroubleSgltn.Severity.ERROR,
-                                       True)
-            else:
-                key = self._groq_key
-                self.j_mngr.log_events("Setting Openai client with URL and Groq key.",
-                                       is_trouble=True)
+            key = self._groq_key
+            if not key:
+                self.j_mngr.log_events(
+                    "Attempting to connect to Groq with no key",
+                    TroubleSgltn.Severity.ERROR,
+                    True
+                )
+
+        elif request_type == RequestMode.GEMINI:
+            key = self._gemini_key
+            if not key:
+                self.j_mngr.log_events(
+                    "Attempting to connect to Gemini with no key",
+                    TroubleSgltn.Severity.ERROR,
+                    True
+                )
+
+        else:
+            key = self._groq_key
+            self.j_mngr.log_events(
+                "Setting Openai client with URL and Groq key.",
+                is_trouble=True
+    )
+
 
         
         try:
-            lm_client = lm_object(base_url=url, api_key=key) 
+            self._lm_client = lm_object(base_url=url, api_key=key) 
             self._lm_url = url
-            self._lm_client = lm_client
+
         except Exception as e:
             self.j_mngr.log_events(f"Unable to create LLM client object using URL. Unable to communicate with LLM: {e}",
                             TroubleSgltn.Severity.ERROR,
@@ -451,7 +478,8 @@ def _load_env_var_list() -> list:
     
     return envvar_list
 
-@PromptServer.instance.routes.get("/plush_for_comfy/envvar_list")
+
+@PromptServer.instance.routes.get("/plush_for_comfyui/envvar_list")
 async def handle_envvar_list_request(request):
 
     # Inactive Experimental Code
@@ -487,86 +515,6 @@ async def handle_envvar_list_request(request):
     # Return updated list
     vars_list = _load_env_var_list()
     return web.json_response(vars_list)
-
-class xCustomKeyVar:
-
-    #Inactive Experimental Code
-
-    def __init__(self):
-        self.cFig = cFigSingleton()
-        self.help_data = helpSgltn()
-        self.j_mngr = json_manager()
-        self.trbl = TroubleSgltn()
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "Environment_Variable": (_load_env_var_list(), {
-                    "default": "-New Env. Variable", 
-                    "tooltip": "Choose to enter a new Env. Variable below, or choose an existing one from the list"
-                }),
-                "New_Env_Variable": ("STRING", {
-                    "multiline": False, 
-                    "default": "Enter new Variable", 
-                    "tooltip": "Enter the name of a new Environment Variable that contains your API Key."
-                }),
-                "Push_to_Save": ("BOOLEAN", {
-                                "default": False,
-                                "label_on": "⟳ Pushing to save...", 
-                                "label_off": "⟳ Push to save entry",
-                                "plush.binding": [{
-                                    "source": "Push_to_Save",  # Watch for button press
-                                    "callback": [{
-                                        "type": "fetch",
-                                         "url": "/plush_for_comfy/envvar_list?new_var={$node.widgets.New_Env_Variable.text}&save_triggered=true",
-                                        "then": [{
-                                            "type": "set",
-                                            "target": "$node.widgets.Environment_Variable.options.text",
-                                            "value": "$result"
-                                        }]
-                                    }]
-                                }]
-                            }),
-                                },
-                                "hidden": {
-                                    "unique_id": "UNIQUE_ID",
-                                    "extra_pnginfo": "EXTRA_PNGINFO"
-                                },
-                            }
-
-    RETURN_TYPES = ("KEY", "STRING")
-    RETURN_NAMES = ("Custom_ApiKey", "troubleshooting")
-    FUNCTION = "gogo"
-    OUTPUT_NODE = False
-    CATEGORY = "Plush🧸/Prompt"
-
-    def gogo(self, Environment_Variable, New_Env_Variable, Push_to_Save, unique_id=None, extra_pnginfo=None)->tuple:
-        self.trbl.reset(f"Custom API Key, Node # {unique_id}")
-        env_var = ""
-        if Environment_Variable == "-New Env. Variable":
-            env_var = New_Env_Variable
-            if not New_Env_Variable:
-                self.j_mngr.log_events("You specified '-New Env Variable' but didn't provide one in the field.",
-                                     TroubleSgltn.Severity.ERROR,
-                                     True)
-        else:
-            env_var = Environment_Variable
-
-        key = os.getenv(env_var, "missing")
-        if key == "missing":
-            self.j_mngr.log_events(f"Environment Variable missing or misspelled: {env_var}",
-                TroubleSgltn.Severity.ERROR,
-                True)
-            return ("", self.trbl.get_troubles())
-        if not key:
-            self.j_mngr.log_events(f"Environment Variable not found: {env_var}",
-                TroubleSgltn.Severity.ERROR,
-                True)
-            return ("", self.trbl.get_troubles())
-        
-        self.j_mngr.log_events("API Key successfully retrieved.", is_trouble=True)
-        return (key, self.trbl.get_troubles())
 
 
 class CustomKeyVar:
@@ -670,6 +618,7 @@ class AI_Chooser:
             "ChatGPT": RequestMode.OPENAI,
             "Groq": RequestMode.GROQ,
             "Anthropic": RequestMode.CLAUDE,
+            "Gemini": RequestMode.GEMINI,
             "OpenAI API Connection (URL)": RequestMode.OPENSOURCE,
             "Direct Web Connection (URL)": RequestMode.OPENSOURCE,
             "LM_Studio (URL)": RequestMode.OPENSOURCE,
@@ -687,9 +636,10 @@ class AI_Chooser:
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
-                "AI_Service": (["ChatGPT", "Groq", "Anthropic"], {"default": "ChatGPT"}),
+                "AI_Service": (["ChatGPT", "Groq", "Gemini","Anthropic"], {"default": "ChatGPT"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
-                "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
+                "Groq_model": (cFig.get_groq_models().get_models(True), {"default": ""}), 
+                "Google_Gemini_model": (cFig.get_gemini_models().get_models(True), {"default": ""}),
                 "Anthropic_model": (cFig.get_claude_models().get_models(False, exclude_filter=("2.0", "2.1")), {"default": ""}),                                  
             },
             "hidden": {
@@ -706,15 +656,17 @@ class AI_Chooser:
 
     CATEGORY = "Plush🧸/Prompt"  
 
-    def gogo(self, unique_id, AI_Service, ChatGPT_model, Groq_model, Anthropic_model):  
+    def gogo(self, unique_id, AI_Service, ChatGPT_model, Groq_model, Google_Gemini_model, Anthropic_model):  
 
         ai_dict = {"service": AI_Chooser.select_request_mode(AI_Service), "model": None}
 
-        if ai_dict['service'] == RequestMode.OPENAI and ChatGPT_model != "none":
+        if ai_dict['service'] == RequestMode.OPENAI:
             ai_dict['model'] = ChatGPT_model
-        elif ai_dict['service'] == RequestMode.GROQ and Groq_model != "none":
+        elif ai_dict['service'] == RequestMode.GROQ :
             ai_dict['model'] = Groq_model
-        elif ai_dict['service'] == RequestMode.CLAUDE and Anthropic_model != "none":
+        elif ai_dict['service'] == RequestMode.GEMINI:
+            ai_dict['model'] = Google_Gemini_model
+        elif ai_dict['service'] == RequestMode.CLAUDE:
             ai_dict['model'] = Anthropic_model
 
         return (ai_dict,)
@@ -860,16 +812,11 @@ class Enhancer:
         prompt = self.undefined_to_none(prompt)
         #Translate any friendly model names    
 
-        #Convert PyTorch.tensor to B64encoded image
-        if isinstance(image, torch.Tensor):
-
-            image = DalleImage.tensor_to_base64(image)
-
         #build instruction based on user input
         mode = 0
-        if image and prompt:
+        if image is not None and prompt:
             mode = InputMode.IMAGE_PROMPT
-        elif image:
+        elif image is not None:
             mode = InputMode.IMAGE_ONLY
         elif prompt:
             mode = InputMode.PROMPT_ONLY
@@ -886,6 +833,9 @@ class Enhancer:
             self.cFig.lm_url = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
         elif AI_Selection['service'] == RequestMode.CLAUDE:
             self.ctx.request = rqst.claude_request()
+        elif AI_Selection['service'] == RequestMode.GEMINI:
+            self.ctx.request = rqst.oai_object_request()
+            self.cFig.lm_url = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
         if style_info:
             self.trbl.set_process_header("Art Style Info:")
@@ -1113,13 +1063,16 @@ class AdvPromptEnhancer:
         self.ctx = rqst.request_context()
         self.m_ttl = rqst.ollama_unload_request.ModelTTL #Enum
 
-    def get_model(self, GPT_model, Groq_model, Anthropic_model, Ollamm_model, Optional_model, connection_type)->str:
+    def get_model(self, GPT_model, Groq_model, Gemini_model, Anthropic_model, Ollamm_model, Optional_model, connection_type)->str:
         
         if connection_type == "ChatGPT":
             return GPT_model
         
         if connection_type == "Groq":
             return Groq_model
+        
+        if connection_type == "Gemini":
+            return Gemini_model
 
         if connection_type == "Anthropic":
             return Anthropic_model
@@ -1157,12 +1110,12 @@ class AdvPromptEnhancer:
 
         return {
             "required": {
-                "AI_service": (["ChatGPT", "Groq", "Anthropic", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type/service, connections ending with '(URL)' require a URL to be entered below"}),
+                "AI_service": (["ChatGPT", "Groq", "Anthropic","Gemini", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type/service, connections ending with '(URL)' require a URL to be entered below"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
-                "Groq_model": (cFig.get_groq_models(True), {"default": ""}), 
-                #"Google_Gemini_model": (cFig.get_gemini_models().get_models(), {"default": "none"}),
+                "Groq_model": (cFig.get_groq_models().get_models(True), {"default": ""}), 
+                "Google_Gemini_model": (cFig.get_gemini_models().get_models(True), {"default": ""}),
                 "Anthropic_model": (cFig.get_claude_models().get_models(False, exclude_filter=("2.0", "2.1")), {"default": ""}), 
-                "Ollama_model": (cFig.get_ollama_models(True), {"default": ""}), 
+                "Ollama_model": (cFig.get_ollama_models().get_models(True), {"default": ""}), 
                 "Ollama_model_unload": (["Unload After Run", "Keep Alive Indefinitely", "No Setting"], {"default": "No Setting", "tooltip": "Choose how long this model will stay loaded after completion"}),
                 "Optional_model": (cFig.get_optional_models(True), {"default": "", "tooltip": "Enter these in the text file: 'opt_models.txt' in the Plush directory"}),                
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7, "tooltip": "temperature"}),                  
@@ -1197,7 +1150,7 @@ class AdvPromptEnhancer:
 
     CATEGORY = "Plush🧸/Prompt"
 
-    def gogo(self, AI_service, ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Ollama_model_unload, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
+    def gogo(self, AI_service, ChatGPT_model, Groq_model, Google_Gemini_model, Anthropic_model, Ollama_model, Ollama_model_unload, Optional_model, creative_latitude, tokens, seed, examples_delimiter, 
               Number_of_Tries:str="", Add_Parameter=None, LLM_URL:str="", Instruction:str="", Prompt:str = "", Custom_ApiKey:str="", Examples_or_Context:str ="", image=None, unique_id=None):
 
         if unique_id:
@@ -1225,7 +1178,7 @@ class AdvPromptEnhancer:
                         TroubleSgltn.Severity.INFO,
                         True)
 
-        remote_model = self.get_model(ChatGPT_model, Groq_model, Anthropic_model, Ollama_model, Optional_model, AI_service)
+        remote_model = self.get_model(ChatGPT_model, Groq_model, Google_Gemini_model, Anthropic_model, Ollama_model, Optional_model, AI_service)
         model_ttl = self.model_ttl(Ollama_model_unload)
       
         if remote_model == "none":
@@ -1234,11 +1187,6 @@ class AdvPromptEnhancer:
                                    True)
 
         llm_result = "Unable to process request.  Make sure the local Open Source Server is running, and you've provided a valid URL.  If you're using a remote service (e.g.: ChaTGPT, Groq) make sure your key is valid, and a model is selected"
-
-
-        #Convert PyTorch.tensor to B64encoded image
-        if isinstance(image, torch.Tensor):
-            image = DalleImage.tensor_to_base64(image)
 
         #Create a list of dictionaries out of the user provided Examples_or_Context
         example_list = []    
@@ -1272,7 +1220,8 @@ class AdvPromptEnhancer:
 
         context_output = (Examples + ctx_delimiter if Examples else "") + Prompt + ctx_delimiter
 
-        if  AI_service == 'OpenAI API Connection (URL)' or AI_service == "Groq" or AI_service == "Ollama (URL)": 
+        if AI_service in ('OpenAI API Connection (URL)', 'Groq', 'Ollama (URL)', 'Gemini'):
+    # Your code here: 
             
             unload_ctx = None #Initialize Model Unload request for use if Ollama request
 
@@ -1283,6 +1232,9 @@ class AdvPromptEnhancer:
                 LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
             elif AI_service == "Ollama (URL)":
                 self.cFig.lm_request_mode = RequestMode.OLLAMA
+            elif AI_service == "Gemini":
+                self.cFig.lm_request_mode = RequestMode.GEMINI
+                LLM_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
                 if not LLM_URL:
                     LLM_URL = 'http://localhost:11434/v1'  #If URL unspecified
                 unload_ctx = rqst.request_context()
@@ -1330,7 +1282,7 @@ class AdvPromptEnhancer:
             return(claude_result, context_output, _help, self.trbl.get_troubles())
 
         
-        if AI_service == "Direct Web Connection (URL)" or AI_service == "LM_Studio (URL)":
+        if AI_service in ("Direct Web Connection (URL)", "LM_Studio (URL)"):
 
             if not LLM_URL:
                 if AI_service == "LM_Studio (URL)":
@@ -1415,122 +1367,7 @@ class DalleImage:
         self.trbl = TroubleSgltn()
         self.ctx = rqst.request_context()
 
-    @staticmethod    
-    def b64_to_tensor( b64_image: str) -> tuple[torch.Tensor,torch.Tensor]:
-
-        """
-        Converts a base64-encoded image to a torch.Tensor.
-
-        Note: ComfyUI expects the image tensor in the [N, H, W, C] format.  
-        For example with the shape torch.Size([1, 1024, 1024, 3])
-
-        Args:
-            b64_image (str): The b64 image to convert.
-
-        Returns:
-            torch.Tensor: an image Tensor.
-        """    
-        j_mngr = json_manager()
-        j_mngr.log_events("Converting b64 Image to Torch Tensor Image file",
-                          is_trouble=True)    
-        # Decode the base64 string
-        image_data = base64.b64decode(b64_image)
         
-        # Open the image with PIL and handle EXIF orientation
-        image = Image.open(BytesIO(image_data))
-        image = ImageOps.exif_transpose(image)
-        
-        # Convert to RGBA for potential alpha channel handling
-        # Dalle doesn't provide an alpha channel, but this is here for
-        # broad compatibility
-        image = image.convert("RGBA")
-        image_np = np.array(image).astype(np.float32) / 255.0  # Normalize
-
-        # Split the image into RGB and Alpha channels
-        rgb_np, alpha_np = image_np[..., :3], image_np[..., 3]
-        
-        # Convert RGB to PyTorch tensor and ensure it's in the [N, H, W, C] format
-        tensor_image = torch.from_numpy(rgb_np).unsqueeze(0)  # Adds N dimension
-
-        # Create mask based on the presence or absence of an alpha channel
-        if image.mode == 'RGBA':
-            mask = torch.from_numpy(alpha_np).unsqueeze(0).unsqueeze(0)  # Adds N and C dimensions
-        else:  # Fallback if no alpha channel is present
-            mask = torch.zeros((1, tensor_image.shape[2], tensor_image.shape[3]), dtype=torch.float32)  # [N, H, W]
-
-        # Move tensors to GPU if available
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        tensor_image = tensor_image.to(device)
-        mask = mask.to(device)
-
-        return tensor_image, mask
-    
-
-    @staticmethod
-    def tensor_to_base64(tensor: torch.Tensor) -> str:
-        """
-        Converts a PyTorch tensor to a base64-encoded image.
-
-        Note: ComfyUI provides the image tensor in the [N, H, W, C] format.  
-        For example with the shape torch.Size([1, 1024, 1024, 3])
-
-        Args:
-            tensor (torch.Tensor): The image tensor to convert.
-
-        Returns:
-            str: Base64-encoded image string.
-        """
-        j_mngr = json_manager()
-        j_mngr.log_events("Converting Torch Tensor image to b64 Image file",
-                          is_trouble=True)
-        
-        # Move tensor to CPU CUDA doesn't work with numpy and PIL
-        if tensor.is_cuda:
-            tensor = tensor.cpu()
-
-    # Convert tensor to PIL Image
-        if tensor.ndim == 4:
-            tensor = tensor.squeeze(0)  # Remove batch dimension if present
-        pil_image = Image.fromarray((tensor.numpy() * 255).astype('uint8'))
-
-        # Save PIL Image to a buffer
-        buffer = BytesIO()
-        pil_image.save(buffer, format="PNG")  # Can change to JPEG if preferred
-        buffer.seek(0)
-
-        # Encode buffer to base64
-        base64_image = base64.b64encode(buffer.read()).decode('utf-8')
-
-        return base64_image
-    
-    @staticmethod
-    def tensor_to_bytes(tensor: torch.Tensor) -> BytesIO:
-        """
-        Converts a PyTorch tensor to a bytes object.
-
-        Args:
-            tensor (torch.Tensor): The image tensor to convert.
-
-        Returns:
-            BytesIO: BytesIO object containing the image data.
-        """
-
-            # Move to CPU if needed
-        if tensor.is_cuda:
-            tensor = tensor.cpu()
-
-        # Convert tensor to PIL Image
-        if tensor.ndim == 4:
-            tensor = tensor.squeeze(0)  # Remove batch dimension if present
-        pil_image = Image.fromarray((tensor.numpy() * 255).astype('uint8'))
-
-        # Save PIL Image to a buffer
-        buffer = BytesIO()
-        pil_image.save(buffer, format="PNG")  # Can change to JPEG if preferred
-        buffer.seek(0)
-
-        return buffer
-    
     @classmethod
     def INPUT_TYPES(cls):
         #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
