@@ -556,7 +556,7 @@ class oai_object_request(Request):
             messages = self.utils.build_data_basic(prompt, example_list, instruction)
 
         # Handle empty input case
-        if not any([prompt, image, instruction, example_list]):
+        if not any([prompt, instruction, example_list]) and image is None:
             return "Photograph of a stained empty box with 'NOTHING' printed on its side in bold letters"
 
         params = {
@@ -634,7 +634,7 @@ class claude_request(Request):
         messages = self.utils.build_data_claude(prompt, example_list, image)
 
         # Handle empty input case
-        if not any([prompt, image, instruction, example_list]):
+        if not any([prompt, instruction, example_list]) and image is None:
             return "Empty request, no input provided"
 
         # Prepare request parameters
@@ -1392,30 +1392,6 @@ class request_utils:
         return None
 
 
-    def x_process_image(self, image: str, request_type:RequestMode=RequestMode.OPENAI) :
-        if not image:
-            return None
-        
-        if isinstance(image, str):
-            if request_type == self.mode.CLAUDE:
-                return {
-                "type": "image",
-                "source": {
-                "type": "base64",
-                "media_type": "image/png",
-                "data": image
-                }
-            }
-
-            return {"type": "image_url",
-                    "image_url": {
-                    "url": f"data:image/jpeg;base64,{image}"
-                    }                  
-                    }
-
-        self.j_mngr.log_events("Image file is invalid.", TroubleSgltn.Severity.WARNING, True)
-        return None
-    
     def build_web_header(self, key:str=""):
         if key:
             headers = {
