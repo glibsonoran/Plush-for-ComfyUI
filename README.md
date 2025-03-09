@@ -348,7 +348,7 @@ You can connect to remote AI services that are not preconfigured in **Advanced P
 
 4) Enter your model names:
    *    Open the text file: `.../ComfyUI/custom nodes/Plush-for-ComfyUI/opt_models.txt` Follow the instructions in the comment header and enter the names of the AI models you want to use.  Make sure you use the exact model names the service requires for their API, copy and paste them if possible. They should have a web page that shows these names, OpenRouter's is [here](https://openrouter.ai/models).  Save the text file.
-   *    You can also bulk load models based on filter criteria using the Plush `Load Remote Models` node with the Plush `Custom API Key` node.  Right now this only works with OpenRouter
+   *    You can also bulk load models based on filter criteria using the Plush `Load Remote Models` node with the Plush `Custom API Key` node.  Right now this only works with OpenRouter, APIpie and NanoGPT.
    *    Alternatively you can enter individual model names directly in ComfyUI by converting the APE *Optional Models* drop-down widget to an input and attaching the Plush `Text (Any)` node to it.
 
 6) Start ComfyUI.  In the APE node you can setup your connection to the service two different ways: 
