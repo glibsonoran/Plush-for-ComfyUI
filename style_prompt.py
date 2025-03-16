@@ -1232,13 +1232,14 @@ class AdvPromptEnhancer:
                 LLM_URL = "https://api.groq.com/openai/v1" # Ugh!  I've embedded a 'magic value' URL here for the OPENAI API Object because the GROQ API object looks flakey...
             elif AI_service == "Ollama (URL)":
                 self.cFig.lm_request_mode = RequestMode.OLLAMA
-            elif AI_service == "Gemini":
-                self.cFig.lm_request_mode = RequestMode.GEMINI
-                LLM_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
                 if not LLM_URL:
                     LLM_URL = 'http://localhost:11434/v1'  #If URL unspecified
                 unload_ctx = rqst.request_context()
-                unload_ctx.request = rqst.ollama_unload_request()
+                unload_ctx.request = rqst.ollama_unload_request()                
+            elif AI_service == "Gemini":
+                self.cFig.lm_request_mode = RequestMode.GEMINI
+                LLM_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+
 
 
             if not LLM_URL:
