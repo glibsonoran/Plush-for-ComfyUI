@@ -1,6 +1,8 @@
 [tool.poetry]
 
-version = "1.21.25"
+name = "Plush-for-ComfyUI"
+version = "1.21.26"
+
 description = "A suite of nodes that includes:  - Prompt enhancers/generators that employ remote AI services and local front-ends like: ChatGPT, Anthropic Claude, Groq, Gemini, LM Studio, Oobabooga, OpenRouter etc.  - An Image Generator that uses Dall_e 3.  - An image metadata extractor that extracts seed, prompt, cfg, size, denoise, etc from existing AI generated images and photo metadata (from exif data) from jpeg photographs.  A tagger that appends text (tags) to the beginning, end and/or middle of a text block.  Image and text multiplexer utilility.  A text block remover that removes text between two named tags."
 
 authors = ["glibsonoran", "email=glibsonoran@users.noreply.github.com"]
