@@ -1509,7 +1509,7 @@ class json_manager:
         return sorted_items
 
 
-    def prep_formatted_file(self, parsed_dict):
+    def prep_formatted_file(self, parsed_dict, show_heading:bool=True):
         formatted_file = ""
         bullet = '➤ '  # Using a bullet point for headings \u27a4
         sub_bullet = '    • '  # Adding indentation before the sub_bullet for items \u2022
@@ -1531,7 +1531,8 @@ class json_manager:
                 return ''  # Return an empty string for unsupported types or to skip processing
         
         for key, value in parsed_dict.items():
-            formatted_file += f"{newlines}{newlines}{bullet} {key}:"
+            if show_heading:
+                formatted_file += f"{newlines}{newlines}{bullet} {key}:"
             formatted_file += process_item(key,value)
 
         return formatted_file.strip()  # Remove trailing newlines for cleaner output

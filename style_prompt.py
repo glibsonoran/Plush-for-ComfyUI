@@ -1647,6 +1647,7 @@ class ImageInfoExtractor:
         files = [f for f in os.listdir(input_dir) if os.path.isfile(os.path.join(input_dir, f))]
         return {"required": {                    
                     "write_to_file" : ("BOOLEAN", {"default": False}),
+                    "Only_show_prompts": ("BOOLEAN", {"default": False}),
                     "file_prefix": ("STRING",{"default": "MetaData_"}),
                     "Min_prompt_len": ("INT", {"max": 2500, "min": 3, "step": 1, "default": 72, "display": "number"}),
                     "Alpha_Char_Pct": ("FLOAT", {"max": 1.001, "min": 0.01, "step": 0.01, "display": "number", "round": 0.01, "default": 0.90}), 
@@ -1668,7 +1669,7 @@ class ImageInfoExtractor:
 
     OUTPUT_NODE = True
 
-    def gogo(self, image, write_to_file, file_prefix, Min_prompt_len, Alpha_Char_Pct,Prompt_Filter_Term, unique_id=None):
+    def gogo(self, image, write_to_file, Only_show_prompts, file_prefix, Min_prompt_len, Alpha_Char_Pct,Prompt_Filter_Term, unique_id=None):
 
         if unique_id:
             self.trbl.reset('Exif Wrangler, Node# ' + unique_id) #Clears all trouble logs before a new run and passes the name of process to head the log lisiing
@@ -1679,6 +1680,7 @@ class ImageInfoExtractor:
         output = "Unable to process request"
         fatal = False
         exiv_comment = {}
+        Show_headings = not Only_show_prompts
 
         #Make sure the pyexiv2 supporting library was able to load.  Otherwise exit gogo
         if not self.cFig.pyexiv2:
@@ -1688,7 +1690,6 @@ class ImageInfoExtractor:
             return(output, _help, self.trbl.get_troubles())
         else:
             pyexiv2 = self.cFig.pyexiv2
-
 
         #Create path and dir for saved .txt files
         write_dir = ''
@@ -1855,28 +1856,35 @@ class ImageInfoExtractor:
             
 
         #Testing translated extraction
-        translate_keys = {'widgets_values': 'Possible Prompts',
-                        'text': 'Possible Prompts',
-                        'steps': 'Steps',
-                        'cfg': 'CFG',
-                        'seed': 'Seed',
-                        'noise_seed': 'Seed',
-                        'ckpt_name': 'Models',
-                        'resolution': 'Image Size',
-                        'sampler_name': 'Sampler',
-                        'scheduler': 'Scheduler',
-                        'lora': 'Lora',
-                        'denoise': 'Denoise',
-                        'GPTmodel': 'OpenAI Model',
-                        'image_size': 'Image Size',
-                        'image_quality': 'Dall-e Image Quality',
-                        'style': 'Style',
-                        'batch_size': 'Batch Size',
-                        'ew_file': 'Source File',
-                        'ew_id': 'Processing Application'
-                        }
+        if Only_show_prompts:
+            translate_keys = {'widgets_values': 'Possible Prompts',
+                            'text': 'Possible Prompts'
+                        }          
+        else:
+            translate_keys = {'widgets_values': 'Possible Prompts',
+                            'text': 'Possible Prompts',
+                            'steps': 'Steps',
+                            'cfg': 'CFG',
+                            'seed': 'Seed',
+                            'noise_seed': 'Seed',
+                            'ckpt_name': 'Models',
+                            'resolution': 'Image Size',
+                            'sampler_name': 'Sampler',
+                            'scheduler': 'Scheduler',
+                            'lora': 'Lora',
+                            'denoise': 'Denoise',
+                            'GPTmodel': 'OpenAI Model',
+                            'image_size': 'Image Size',
+                            'image_quality': 'Dall-e Image Quality',
+                            'style': 'Style',
+                            'batch_size': 'Batch Size',
+                            'ew_file': 'Source File',
+                            'ew_id': 'Processing Application'
+                            }
+        
         
         all_keys = {**exif_keys, **translate_keys}
+
         
     #End potential separate method get_data_objects returns(extract_values,discard_keys, translate_keys)
        
@@ -1885,7 +1893,7 @@ class ImageInfoExtractor:
         dedupe_keys =['Possible Prompts',]
         self.j_mngr.remove_duplicates_from_keys(working_dict, dedupe_keys)
 
-        output = self.j_mngr.prep_formatted_file(working_dict)
+        output = self.j_mngr.prep_formatted_file(working_dict, Show_headings)
 
         if output: 
             if write_to_file and write_dir:
