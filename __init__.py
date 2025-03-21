@@ -21,7 +21,7 @@ if jmanager.on_startup(False):
 else:
     jmanager.log_events("config.json was not updated")
 
-__version__ ="1.21.25"
+__version__ ="1.22.1"
 print('Plush - Version:', __version__)
 
 WEB_DIRECTORY = "./web"

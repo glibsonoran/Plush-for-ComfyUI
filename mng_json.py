@@ -147,6 +147,8 @@ class helpSgltn:
         self._add_params_help = ""
         self._extract_json_help = ""
         self._type_convert_help = ""
+        self._gemini_img_help = ""
+        self._imagen_img_help = ""
         # Empty help text is not a critical issue for the app
         if not help_data:
             j_mmgr.log_events('Help data file is empty or missing.',
@@ -162,6 +164,8 @@ class helpSgltn:
         self._add_params_help = help_data.get('add_params_help', '')
         self._extract_json_help = help_data.get('extract_json_help', '')
         self._type_convert_help = help_data.get('type_convert_help', '')
+        self._gemini_img_help = help_data.get('gemini_img_help', '')
+        self._imagen_img_help = help_data.get('imagen_img_help', '')
 
     @property
     def style_prompt_help(self)->str:
@@ -198,7 +202,15 @@ class helpSgltn:
     @property
     def type_convert_help (self)->str:
         return self._type_convert_help    
+    
+    @property
+    def gemini_img_help (self)->str:
+        return self._gemini_img_help
 
+    @property    
+    def imagen_img_help (self)->str:
+        return self._imagen_img_help
+    
 class json_manager:
 
     def __init__(self):
@@ -2193,7 +2205,7 @@ class json_manager:
         log_file = self.append_filename_to_path(self.log_dir,self.log_file_name + '.log')
         num_removed = self.remove_log_entries_by_age(log_file, max_log_age)
         if not num_removed is None:
-            self.log_events(f'{num_removed} old entries were removed from the log file: {self.log_file_name}')
+            self.log_events(f'*==={num_removed} old entries were removed from the log file: {self.log_file_name}===*')
         else:
             if os.path.exists(log_file):
                 os.remove(log_file)
