@@ -1,8 +1,9 @@
 numpy
-openai==1.55.3
+openai==1.12.0
 Pillow
 torch
 requests
 pyexiv2
 groq
 anthropic
+google-genai
