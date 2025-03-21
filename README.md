@@ -7,6 +7,13 @@
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 ****
 ### Updates:
+03/20/2025 @8:04pm PST *Version 1.22.1*
+*   **New Node: `Imagen Image`**: Imagen 3 is Google's most advanced text to image generation model.  You will need a paid Vertex/Google Cloud API Key to use it.  To obtain this key you must have or make a Google Cloud account and have an active project in it.  You must attach a Payment method to this account, then activate Vertex and active the Imagen model.  You can store this key in a custom Environment Variable and access that variable by attaching the `Custom API Key` node to the `Imagen Image` node.
+*   **New Node: `Gemini Image`:**  This node uses the latest **Gemimi-Flash** models that are capable of multimodal input (e.g. text and images) and multimodal output.  This node will allow you to output both text and images from a single prompt.  The node requires a standard Google Gemini API key which can be put either in `Gemini_API_KEY` Environment Variable, or a custom Environment variable.  Custom Environment Variables can be accessed by attaching the `Custom API Key` node.
+*   **A Note about these new Google models:**  These models are new and have fairly strict Safety limits on them.  I have tried to provide feedback for you in situations where your image generation might fail.  This will be shown in the `troubleshooting` output.  Typically as these models mature the provider will relax some of the Safety checks, but for now you'll have to be patient with these models.  In particular words that might connote children: young, child, boy, girl, baby will often trigger a failure on Safety check.
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*********************   
 03/05/2025 @2:09pm PST *Version 1.21.25*
 *   **The `Advanced Prompt Enhancer` and `AI Chooser` nodes have had their UI's modified.  After updating the suite make sure you use the ComfyUI Node popup menu and select `Reload Node` for any existing workflows that use these nodes so you don't get any errors.**
 *   **You can now input multiple images**: The image input of the `Advanced Prompt Enhancer` and `Style Prompt` nodes now accept multiple images.  To use this feature you'll have to first batch the images using the standard ComfyUI node: `Batch Images`.  This node is built-in to ComfyUI and doesn't require a download.  Just a warning this will increase your input tokens by a lot.  Some services and models can't accept more than one image.  Even with models that do accept more than one, I'd caution against sending more than two.  One use of this is to create a prompt that combine elements of both images.
