@@ -1113,8 +1113,8 @@ class AdvPromptEnhancer:
                 "AI_service": (["ChatGPT", "Groq", "Anthropic","Gemini", "LM_Studio (URL)", "Ollama (URL)","OpenAI API Connection (URL)", "Direct Web Connection (URL)", "Web Connection Simplified Data (URL)", "Oobabooga API (URL)"], {"default": "Groq", "tooltip": "Choose connection type/service, connections ending with '(URL)' require a URL to be entered below"}),
                 "ChatGPT_model": (cFig.get_chat_models(True,gptfilter), {"default": ""}),
                 "Groq_model": (cFig.get_groq_models().get_models(True), {"default": ""}), 
-                "Google_Gemini_model": (cFig.get_gemini_models().get_models(True), {"default": ""}),
-                "Anthropic_model": (cFig.get_claude_models().get_models(False, exclude_filter=("2.0", "2.1")), {"default": ""}), 
+                "Google_Gemini_model": (cFig.get_gemini_models().get_models(True, exclude_filter=("1.0","embedding","bison","imagen", "image-gen","learnlm","pro-vision", "aqa")), {"default": ""}),
+                "Anthropic_model": (cFig.get_claude_models().get_models(False, exclude_filter=("2.0", "2.1")), {"default": ""}),
                 "Ollama_model": (cFig.get_ollama_models().get_models(True), {"default": ""}), 
                 "Ollama_model_unload": (["Unload After Run", "Keep Alive Indefinitely", "No Setting"], {"default": "No Setting", "tooltip": "Choose how long this model will stay loaded after completion"}),
                 "Optional_model": (cFig.get_optional_models(True), {"default": "", "tooltip": "Enter these in the text file: 'opt_models.txt' in the Plush directory"}),                
@@ -1174,10 +1174,6 @@ class AdvPromptEnhancer:
         if not isinstance(Add_Parameter, list):
             Add_Parameter = []
 
-        self.j_mngr.log_events(f"Additional parameters input: {str(Add_Parameter)}",
-                        TroubleSgltn.Severity.INFO,
-                        True)
-
         remote_model = self.get_model(ChatGPT_model, Groq_model, Google_Gemini_model, Anthropic_model, Ollama_model, Optional_model, AI_service)
         model_ttl = self.model_ttl(Ollama_model_unload)
       
@@ -1216,7 +1212,10 @@ class AdvPromptEnhancer:
                 "tries": Number_of_Tries
         }
         context_output = ""
-        ctx_delimiter = "\n" + delimiter +"\n"
+        if delimiter == "\n\n":
+            ctx_delimiter = delimiter
+        else:
+            ctx_delimiter = "\n" + delimiter +"\n"
 
         context_output = (Examples + ctx_delimiter if Examples else "") + Prompt + ctx_delimiter
 
@@ -1239,8 +1238,6 @@ class AdvPromptEnhancer:
             elif AI_service == "Gemini":
                 self.cFig.lm_request_mode = RequestMode.GEMINI
                 LLM_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-
-
 
             if not LLM_URL:
                 self.j_mngr.log_events("'OpenAI API Connection (URL)' specified, but no URL provided or URL is invalid. Enter a valid URL",
@@ -1344,7 +1341,19 @@ class AdvPromptEnhancer:
 
             context_output += llm_result
 
-            return(llm_result, context_output,  _help, self.trbl.get_troubles())            
+            return(llm_result, context_output,  _help, self.trbl.get_troubles())   
+
+        """
+        if AI_service == "Gemini":
+            self.cFig.lm_request_mode = RequestMode.GEMINI
+            self.ctx.request = rqst.genaiRequest()
+            kwargs['completion_mode'] = self.ctx.request.CompletionMode.TEXT.value
+
+            llm_result = self.ctx.execute_request(**kwargs)      
+
+            context_output += llm_result
+            return(llm_result,context_output, _help, self.trbl.get_troubles()) 
+        """
 
 
         #OpenAI ChatGPT request
@@ -1422,6 +1431,176 @@ class DalleImage:
         batched_images, revised_prompt = self.ctx.execute_request(**kwargs)
 
         return (batched_images, revised_prompt, _help, self.trbl.get_troubles())
+    
+
+class ImagenImage:
+#Accept a user prompt and parameters to produce a Dall_e generated image
+
+    def __init__(self):
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+        self.ctx = rqst.request_context()
+
+
+    @classmethod
+    def INPUT_TYPES(cls):
+
+        cFig = cFigSingleton()
+
+        return {
+            "required": {
+                "Image_model": (cFig.get_gemini_models().get_models(True, include_filter=('imagen','Imagen')),{"default":"none"}),                 
+                "aspect_ratio" : (["1:1", "3:4", "4:3", "9:16", "16:9"], {"default": "1:1"}),
+                "number_of_images": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"}),                
+                "prompt": ("STRING",{"multiline": True, "forceInput": False}),                 
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                "Custom_ApiKey":("KEY",{"default": "", "forceInput": True}),                          
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            },
+        } 
+
+    RETURN_TYPES = ("IMAGE", "STRING","STRING" )
+    RETURN_NAMES = ("image", "help","troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush🧸/Image_Gen"
+
+    def gogo(self, Image_model, prompt, aspect_ratio, number_of_images, seed, Custom_ApiKey=None, unique_id=None):   
+
+
+        if unique_id:
+            self.trbl.reset('Imagen Image, Node #' + unique_id)
+        else:
+            self.trbl.reset('Imagen Image Node')
+
+        if Custom_ApiKey is None or Custom_ApiKey == "undefined":
+            Custom_ApiKey = ""  
+        self.cFig.custom_key = Custom_ApiKey 
+             
+
+        if Custom_ApiKey:
+            self.cFig.lm_request_mode = RequestMode.OPENSOURCE
+        else:
+            self.cFig.lm_request_mode = RequestMode.GEMINI         
+
+        _help = self.help_data.imagen_img_help
+
+        self.ctx.request = rqst.ImagenRequest()
+
+        kwargs = { "model": Image_model,
+                "prompt": prompt,
+                "aspect_ratio": aspect_ratio,
+                "number_of_images": number_of_images
+        }
+        batched_images = self.ctx.execute_request(**kwargs) 
+
+        return (batched_images, _help, self.trbl.get_troubles())
+    
+
+class GeminiImage:
+#Accept a user prompt and parameters to produce a Gemini generated image
+
+    def __init__(self):
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.trbl = TroubleSgltn()
+        self.ctx = rqst.request_context()
+
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
+        #                 "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"})
+        # Possible future implentation of batch_sizes greater than one.
+        #                "image" : ("IMAGE", {"forceInput": True}),
+        cFig = cFigSingleton()
+        return {
+            "required": {
+                "Image_model": (cFig.get_gemini_models().get_models(True, include_filter=("2.0",), exclude_filter=("lite","pro","thinking")), {"default": "gemini-2.0-flash-exp"}),
+                "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7, "tooltip": "temperature"}),                  
+                "tokens" : ("INT", {"max": 20000, "min": 20, "step": 10, "default": 800, "display": "number"}),
+                "prompt": ("STRING",{"multiline": True, "forceInput": False}),                 
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                "Custom_ApiKey":("KEY",{"default": "", "forceInput": True}), 
+                "Add_Parameter": ("LIST", {"default": None, "forceInput": True}),   
+                "image" : ("IMAGE", {"default": None})                               
+                            
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            },
+        } 
+
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING","STRING" )
+    RETURN_NAMES = ("image", "text", "help", "troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush🧸/Image_Gen"
+
+    def gogo(self, Image_model, prompt, creative_latitude, tokens, seed, Custom_ApiKey=None, Add_Parameter=None, image=None, unique_id=None):   
+
+
+        if unique_id:
+            self.trbl.reset('Gemini Image, Node #' + unique_id)
+        else:
+            self.trbl.reset('Gemini Image Node')
+
+        if Custom_ApiKey is None or Custom_ApiKey == "undefined":
+            Custom_ApiKey = ""  
+        self.cFig.custom_key = Custom_ApiKey 
+             
+
+        if Custom_ApiKey:
+            self.cFig.lm_request_mode = RequestMode.OPENSOURCE
+        else:
+            self.cFig.lm_request_mode = RequestMode.GEMINI        
+            
+        if not isinstance(Add_Parameter, list):
+            Add_Parameter = []
+
+        _help = self.help_data.gemini_img_help 
+
+        image = Enhancer.undefined_to_none(image)
+
+        self.ctx.request = rqst.genaiRequest()
+        image_tensor = rqst.genaiRequest.blank_tensor
+        text_out = ""
+
+        kwargs = { 
+            "model": Image_model,
+            "creative_latitude": creative_latitude,
+            "tokens": tokens,
+            "image": image,
+            "prompt": prompt,
+            "add_params": Add_Parameter,
+            "completion_mode": rqst.genaiRequest.CompletionMode.TEXT_IMAGE.value
+        }
+
+        llm_result = self.ctx.execute_request(**kwargs)      
+
+        if 'images' in llm_result and 'tensor' in llm_result['images']:
+            # Extract just the tensor and store it where needed
+            image_tensor = llm_result['images']['tensor']
+
+        if 'text' in llm_result and llm_result['text']:
+            text_out = llm_result['text']
+
+        return(image_tensor, text_out, _help, self.trbl.get_troubles())  
     
 
 class ImageInfoExtractor:
@@ -1732,7 +1911,9 @@ NODE_CLASS_MAPPINGS = {
     "DalleImage": DalleImage,
     "Plush-Exif Wrangler" :ImageInfoExtractor,
     "Add Parameters": addParameters,
-    "Custom API Key": CustomKeyVar
+    "Custom API Key": CustomKeyVar,
+    "Imagen Image": ImagenImage,
+    "Gemini Image": GeminiImage
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -1743,6 +1924,8 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "DalleImage": "OAI Dall_e Image🧸",
     "Plush-Exif Wrangler": "Exif Wrangler🧸",
     "Add Parameters": "Add Parameters🧸",
-    "Custom API Key": "Custom API Key🧸"
+    "Custom API Key": "Custom API Key🧸",
+    "Imagen Image": "Imagen Image🧸",
+    "Gemini Image": "Gemini Image🧸"
 }
 

@@ -13,6 +13,7 @@ import requests
 from requests.adapters import HTTPAdapter, Retry
 from PIL import Image, ImageOps
 import torch
+import torch.nn.functional as F
 import numpy as np
 
 # =======================
@@ -325,8 +326,13 @@ class ImageUtils:
         # Split the image into RGB and Alpha channels
         rgb_np = image_np[..., :3]  # Extract RGB channels
         
-        # Convert RGB NumPy array to PyTorch tensor
-        tensor_image = torch.from_numpy(rgb_np).unsqueeze(0)  # Add batch dimension [N, H, W, C]
+        # Convert NumPy array to PyTorch tensor and ensure it's on CPU
+        tensor_image = torch.from_numpy(rgb_np)
+        if tensor_image.is_cuda:
+            tensor_image = tensor_image.cpu()
+
+        # Add batch dimension [N, H, W, C]
+        tensor_image = tensor_image.unsqueeze(0)   
         
         return tensor_image
     
@@ -413,4 +419,88 @@ class ImageUtils:
             raise ValueError(f"Expected a 4D tensor [N, H, W, C], but got shape {tensor.shape}")
         
         return tensor.shape[0]  # Return batch size (N)
-           
+        
+    def pad_and_cat_images(self, image_list, dim=2, pad_value=0.0):
+        """
+        Pads image tensors (in [N, H, W, C] format) to the same height and width, then concatenates.
+
+        Args:
+            image_list (list of torch.Tensor): List of image tensors [N, H, W, C].
+            dim (int): Dimension along which to concatenate (1=vertical, 2=horizontal).
+            pad_value (float): Padding pixel value (default=0.0 for black padding).
+
+        Returns:
+            torch.Tensor: Concatenated image tensor.
+        """
+        # Ensure all images have the same batch size (N)
+        assert all(img.shape[0] == image_list[0].shape[0] for img in image_list), "All images must have the same batch size"
+
+        # Determine max height and width
+        max_height = max(img.shape[1] for img in image_list)
+        max_width = max(img.shape[2] for img in image_list)
+
+        # Pad each image to match the max dimensions
+        padded_images = []
+        for img in image_list:
+            _, h, w, _ = img.shape  # Ignore N and C dimensions
+            pad_h = max_height - h
+            pad_w = max_width - w
+
+            # Padding format: (left, right, top, bottom)
+            padded_img = F.pad(img, (0, 0, 0, pad_w, 0, pad_h), value=pad_value)
+            padded_images.append(padded_img)
+
+        return torch.cat(padded_images, dim=dim)
+    
+    def pad_images_to_batch(self, image_list, pad_value=0.0):
+        """
+        Pads a list of images ([N, H, W, C]) to match the largest image size, keeping batch format.
+        Logs the original image sizes before padding.
+
+        Args:
+            image_list (list of torch.Tensor): List of image tensors [N, H, W, C].
+            pad_value (float): Padding pixel value (default=0.0 for black padding).
+
+        Returns:
+            torch.Tensor: A properly padded batch tensor [N, max_H, max_W, C].
+        """
+        # Ensure batch size (N) is consistent
+        assert all(img.shape[0] == image_list[0].shape[0] for img in image_list), "All images must have the same batch size"
+
+        # Move images to CPU if needed
+        image_list = [img.cpu() if img.is_cuda else img for img in image_list]        
+
+        # Capture original sizes for logging
+        image_size_list = [(img.shape[1], img.shape[2]) for img in image_list]  # [(H, W), ...]
+        self.j_mngr.log_events(f"Padding and batching images of sizes: {image_size_list}", is_trouble=True)
+
+        # Determine max height and width
+        max_height = max(h for h, _ in image_size_list)
+        max_width = max(w for _, w in image_size_list)
+
+        # Pad each image to the max dimensions
+        padded_images = []
+        for img in image_list:
+            _, h, w, _ = img.shape  # Ignore N and C dimensions
+            pad_h = max_height - h
+            pad_w = max_width - w
+
+            # Corrected padding order
+            padded_img = F.pad(img, (0, 0, 0, pad_w, 0, pad_h), value=pad_value)
+
+            # **Check if the padded image has an unexpected shape**
+            if padded_img.shape[1] == 1:
+                self.j_mngr.log_events(f"WARNING: Padded image has unexpected shape {padded_img.shape}, squeezing!", is_trouble=True)
+                padded_img = padded_img.squeeze(1)  # Remove any accidental extra dimension
+
+            padded_images.append(padded_img)
+
+
+        # Use torch.cat() instead of torch.stack()
+        batch_tensor = torch.cat(padded_images, dim=0)  # Shape: [N, max_H, max_W, C]
+
+        # Debugging: Log final batch shape before returning
+        self.j_mngr.log_events(f"Final batch shape after cat: {batch_tensor.shape}", is_trouble=True)
+
+        return batch_tensor
+                
