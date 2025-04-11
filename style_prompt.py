@@ -55,6 +55,7 @@ class cFigSingleton:
             cls._lm_client = None
             cls._anthropic_client = None
             cls._gemini_client = None
+            cls._oai_client = None
             cls._lm_url = ""
             cls._lm_request_mode = None
             cls._lm_key = ""
@@ -142,7 +143,7 @@ class cFigSingleton:
         
         if self._fig_key:
             try:
-                self.figOAIClient = OpenAI(api_key= self._fig_key)
+                self._oai_client = OpenAI(api_key= self._fig_key)
             except Exception as e:
                 self.j_mngr.log_events(f"Invalid or missing OpenAI API key.  Please note, keys must now be kept in an environment variable (see: ReadMe) {e}",
                                   severity=TroubleSgltn.Severity.ERROR)
@@ -449,7 +450,7 @@ class cFigSingleton:
     @property
     def openaiClient(self)-> Optional[object]:
         if self._fig_key:
-            return self.figOAIClient
+            return self._oai_client
         return None
 
 #********************End Singleton*********************
