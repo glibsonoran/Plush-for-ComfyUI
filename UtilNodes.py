@@ -721,6 +721,43 @@ class ImgTextSwitch:
             raise Exception ("Missing text and image input, check selction")
 
         return (ret_text, ret_img)
+    
+
+class ModelClipSwitch:
+    def __init__(self):
+        pass
+        
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "Model": ("MODEL", {"forceInput": True}),
+                "CLIP": ("CLIP", {"default": None}),                              
+                "active_output": ("INT", {"max": 3, "min": 1, "step": 1, "default": 1, "display": "number"})
+            },
+        }
+   
+    RETURN_TYPES = ("MODEL", "CLIP", "MODEL", "CLIP", "MODEL", "CLIP")
+    RETURN_NAMES = ("Model_1", "CLIP_1", "Model_2", "CLIP_2", "Model_3", "CLIP_3")
+    FUNCTION = "gogo"
+    OUTPUT_NODE = False
+    CATEGORY = "Plush🧸/Utils"
+    
+    def gogo(self, Model, CLIP, active_output):
+
+        out_list = [None, None, None, None, None, None]
+        if active_output == 1:
+            out_list[0] = Model
+            out_list[1] = CLIP
+        elif active_output == 2:
+            out_list[2] = Model
+            out_list[3] = CLIP
+        elif active_output == 3:
+            out_list[4] = Model
+            out_list[5] = CLIP
+
+        return tuple(out_list)
+
 
 class jsonParse:
     def __init__(self)-> None:
@@ -859,7 +896,8 @@ NODE_CLASS_MAPPINGS = {
     "Random Image Output": randomImgOut,
     "Load Remote Models": OpenRouterModels,
     "Text (Any)": TextAny,
-    "Remove Text": removeText
+    "Remove Text": removeText,
+    "Model-CLIP Output Switch": ModelClipSwitch
 
 
 }
@@ -876,6 +914,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 "Random Image Output": "Random Image Output🧸",
 "Load Remote Models": "Load Remote Models🧸",
 "Text (Any)": "Text (Any input)🧸",
-"Remove Text": "Remove Text Block🧸"
+"Remove Text": "Remove Text Block🧸",
+"Model-CLIP Output Switch": "Model-CLIP Output Switch🧸"
 
 }
