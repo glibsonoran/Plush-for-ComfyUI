@@ -6,4 +6,4 @@ requests
 pyexiv2
 groq
 anthropic
-google-genai
+google-genai==1.5.0
