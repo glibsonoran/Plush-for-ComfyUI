@@ -5,6 +5,8 @@
 *   [**Click here if you need to setup your API key or an optional Open-source key in an Plush compatible evironment variable**](#requirements)
 
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
+
+*   [Fix for google.genai import error and/or httpx: *unexpected keyword argument ‘proxies’* error](https://github.com/glibsonoran/Plush-for-ComfyUI/issues/210)
 ****
 ### Updates:
 03/20/2025 @8:04pm PST *Version 1.22.1*
