@@ -13,7 +13,11 @@ import requests
 import openai
 import anthropic
 #import google.generativeai as genai
-from google import genai
+try:
+    from google import genai
+except ImportError:
+    import google.generativeai as genai
+
 from google.genai import types
 #from google.generativeai.types import GenerationConfig
 
