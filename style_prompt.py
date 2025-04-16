@@ -633,7 +633,7 @@ class AI_Chooser:
     @classmethod
     def INPUT_TYPES(cls):
         cFig=cFigSingleton()
-        gptfilter = ("gpt","o1","o3")
+        gptfilter = ("gpt","o1","o3","o4")
         #Floats have a problem, they go over the max value even when round and step are set, and the node fails.  So I set max a little over the expected input value
         return {
             "required": {
@@ -1101,13 +1101,12 @@ class AdvPromptEnhancer:
             return self.m_ttl.INDEF
         
         return self.m_ttl.NOSET
-
     
 
     @classmethod
     def INPUT_TYPES(cls):
         cFig = cFigSingleton()
-        gptfilter = ("gpt","o1", "o3")
+        gptfilter = ("gpt","o1", "o3","o4")
 
         return {
             "required": {
