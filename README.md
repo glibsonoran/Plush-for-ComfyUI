@@ -10,7 +10,7 @@
 ****
 ### Updates:
 05/11/2025 @5:24pm PST *Version 1.22.2*
-*   **New Node: `GPT Image`**: GPT Image uses the *gpt-image-1* model which is OpenAI's most advanced text to image generation model. It's also their most advanced image editing model (at this point it only outputs image(s)).  You will need a paid OpenAI API Key to use it and the account the key is associated with will need to have been [**ID Verified**](https://help.openai.com/en/articles/10910291-api-organization-verification).  Store this key in the OpenAI Environment Variable (*OPENAI_API_KEY*). 
+*   **New Node: `GPT Image`**: GPT Image uses the *gpt-image-1* model which is OpenAI's most advanced text to image generation model. It's also their most advanced image editing model (at this point it only outputs image(s)).  You will need a paid OpenAI API Key to use it and the account the key is associated with will need to be [**ID Verified**](https://help.openai.com/en/articles/10910291-api-organization-verification).  Store this key in the OpenAI Environment Variable (*OPENAI_API_KEY*). 
 *   **Help.json**
     *   Updated to reflect changes detailed above.
 *********************   
