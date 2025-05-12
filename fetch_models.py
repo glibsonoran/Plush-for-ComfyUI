@@ -37,6 +37,8 @@ class RequestMode(Enum):
     DALLE = 10
     OPENROUTER = 11
     REMOTE = 12
+    GPTIMAGEEDIT = 13
+    GPTIMAGEGEN = 14
 
 class ModelFetchStrategy(ABC):
  

@@ -1433,6 +1433,98 @@ class DalleImage:
         return (batched_images, revised_prompt, _help, self.trbl.get_troubles())
     
 
+class GPTImage:
+#Accept a user prompt and parameters to produce a GPT generated image
+
+    def __init__(self):
+        self.cFig = cFigSingleton()
+        self.help_data = helpSgltn()
+        self.j_mngr = json_manager()
+        self.Ehc = Enhancer()
+        self.trbl = TroubleSgltn()
+        self.ctx = rqst.request_context()
+        
+    @classmethod
+    def INPUT_TYPES(cls):
+        #dall-e-2 API requires differnt input parameters as compared to dall-e-3, at this point I'll just use dall-e-3
+        #                 "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"})
+        # Possible future implentation of batch_sizes greater than one.
+        #                "image" : ("IMAGE", {"forceInput": True}),
+        return {
+            "required": {
+                "GPTmodel": (["gpt-image-1"], ),
+                "image_size": (["1024x1024","1536x1024","1024x1536"], {"default": "1024x1024"} ),              
+                "image_quality": (["low","medium","high"], {"default": "high"} ),
+                "batch_size": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "Number_of_Tries": (["1","2","3","4","5","default"], {"default": "default"})
+            },
+            "optional": {
+                "image": ("IMAGE", {"default": None, "forceInput": True}), #Image to be edited
+                "mask": ("MASK", {"default": None, "forceInput": True}), #Mask to be used for editing
+                "prompt": ("STRING",{"multiline": True, "forceInput": True})                 
+            },
+            "hidden": {
+                "unique_id": "UNIQUE_ID",
+            },
+        } 
+
+    RETURN_TYPES = ("IMAGE", "STRING","STRING")
+    RETURN_NAMES = ("image","help","troubleshooting")
+
+    FUNCTION = "gogo"
+
+    OUTPUT_NODE = False
+
+    CATEGORY = "Plush🧸/Image_Gen"
+
+    def gogo(self, GPTmodel, image_size, image_quality, batch_size, seed, Number_of_Tries:str, prompt="", image=None, mask=None, unique_id=None):
+
+        if unique_id:
+            self.trbl.reset('GPT Image, Node #' + unique_id)
+        else:
+            self.trbl.reset('GPT Image Node')
+
+        _help = self.help_data.gpt_img_help
+
+
+        if not prompt:
+            self.j_mngr.log_events("No prompt provided.  Unable to process request.",
+                                   TroubleSgltn.Severity.WARNING,
+                                   True)
+            return (rqst.gpt_image_request.blank_tensor, _help, self.trbl.get_troubles())
+        
+        image = Enhancer.undefined_to_none(image)
+        mask = Enhancer.undefined_to_none(mask)
+
+        kwargs = { "model": GPTmodel,
+                "prompt": prompt,
+                "image_size": image_size,
+                "image_quality": image_quality,
+                "batch_size": batch_size,
+                "tries": Number_of_Tries
+        }
+
+        #These will be tensors, must be converted to PIL images of the same type with alpha channel, before being passed to the request
+        if image is not None: 
+            kwargs['image'] = image
+            # If an image is provided, use Edit mode
+            self.cFig.lm_request_mode = RequestMode.GPTIMAGEEDIT
+            self.j_mngr.log_events("Image detected - using Edit mode", is_trouble=True)
+            if mask is not None: #Don't allow mask if there's no image
+                kwargs['mask'] = mask            
+        else:
+            # If no image is provided, use Generate mode
+            self.cFig.lm_request_mode = RequestMode.GPTIMAGEGEN
+            self.j_mngr.log_events("No image detected - using Generate mode", is_trouble=True)
+            
+        self.ctx.request = rqst.gpt_image_request()
+        
+        batched_images = self.ctx.execute_request(**kwargs)
+
+        return (batched_images, _help, self.trbl.get_troubles())    
+    
+
 class ImagenImage:
 #Accept a user prompt and parameters to produce a Dall_e generated image
 
@@ -1921,7 +2013,8 @@ NODE_CLASS_MAPPINGS = {
     "Add Parameters": addParameters,
     "Custom API Key": CustomKeyVar,
     "Imagen Image": ImagenImage,
-    "Gemini Image": GeminiImage
+    "Gemini Image": GeminiImage,
+    "GPT Image": GPTImage
 }
 
 # A dictionary that contains the friendly/humanly readable titles for the nodes
@@ -1934,6 +2027,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "Add Parameters": "Add Parameters🧸",
     "Custom API Key": "Custom API Key🧸",
     "Imagen Image": "Imagen Image🧸",
-    "Gemini Image": "Gemini Image🧸"
+    "Gemini Image": "Gemini Image🧸",
+    "GPT Image": "GPT Image🧸"
 }
-

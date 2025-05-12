@@ -25,11 +25,11 @@ from google.genai import types
 try:
     from .mng_json import json_manager, TroubleSgltn
     from .fetch_models import RequestMode
-    from .utils import ImageUtils, CommUtils
+    from .utils import ImageUtils
 except ImportError:
     from mng_json import json_manager, TroubleSgltn
     from fetch_models import RequestMode
-    from utils import ImageUtils, CommUtils
+    from utils import ImageUtils
 
 
 class ImportedSgltn:
@@ -384,6 +384,19 @@ class RetryConfigFactory:
                     openai.APIStatusError
                 ]
             ),
+
+            RequestMode.GPTIMAGEGEN or RequestMode.GPTIMAGEEDIT: RetryConfig(
+                max_retries=3,
+                base_delay=2.0,
+                max_delay=15.0,
+                retryable_http_status_codes=[400,429],
+                retryable_exceptions=[
+                    openai.APIConnectionError,
+                    openai.RateLimitError,
+                    openai.APIStatusError
+                ]
+            ),
+
             RequestMode.GEMINI: RetryConfig(
                 max_retries=2,  # As recommended in the docs ("retrying no more than two times")
                 base_delay=1.0,  # "The minimum delay is one second"
@@ -411,8 +424,10 @@ class Request(ABC):
     class RequestType(Enum):
         COMPLETION = "completion"
         POST = "post"
-        IMAGE = "image"
+        GENERATE = "generate"
+        EDIT = "edit_image"
         ANTHROPIC = "claude"
+        GEMINI = "genai"
 
     def __init__(self):
         self.imps = ImportedSgltn()
@@ -425,6 +440,10 @@ class Request(ABC):
         # Initialize retry configuration and handler
         retry_config = RetryConfigFactory.create_config(self.cFig.lm_request_mode)
         self.retry_handler = RetryHandler(retry_config, self.j_mngr)
+
+    @property
+    def blank_tensor(self):
+        return torch.zeros(1, 64, 64, 3, dtype=torch.float32)
 
     def _initialize_retry_handler(self, **kwargs):
         """Initialize retry handler with optional override from kwargs"""
@@ -449,14 +468,28 @@ class Request(ABC):
             client, params = args
             return client.messages.create(**params)
         
+        elif request_type == self.RequestType.GEMINI:
+            client, model, content, content_config = args
+            response = client.models.generate_content(
+                model=model,
+                contents=content,
+                config=content_config
+            )
+            # Adapt the response to OpenAI format before processing by execute_with_retry          
+            return self.utils.adapt_gemini_to_openai_format(response, model)        
+        
         elif request_type == self.RequestType.POST:
             url, headers, params = args
             return requests.post(url, headers=headers, json=params, timeout=(12, 120))
         
-        elif request_type == self.RequestType.IMAGE:
+        elif request_type == self.RequestType.GENERATE:
             client, params = args
             return client.images.generate(**params)
         
+        elif request_type == self.RequestType.EDIT:
+            client, params = args
+            return client.images.edit(**params)
+                    
         else:
             raise ValueError(f"Unsupported request type: {request_type}")        
 
@@ -722,8 +755,6 @@ class claude_request(Request):
     
 class genaiRequest(Request):
 
-
-
     class CompletionMode(Enum):
         TEXT = ['text',]             # Standard text completion
         TEXT_IMAGE = ['text','image',]   # Multimodal completion that can return text and/or images
@@ -731,139 +762,7 @@ class genaiRequest(Request):
     class CompletionAction(Enum):
         CLIENT = 1
         POST = 2
-
-
-    @property
-    def blank_tensor(self):
-        return torch.zeros(1, 1024, 1024, 3, dtype=torch.float32)
-        
-
-    def adapt_gemini_to_openai_format(self, gemini_response, model="gemini-pro"):
-        """
-        Adapts a Google Gemini API response to match the structure of an OpenAI API response.
-        This allows existing OpenAI-compatible methods to work with Gemini responses.
-        
-        Args:
-            gemini_response: The response object from the Google Generative AI client
-            model: The model name used in the request (fallback if not in response)
-                
-        Returns:
-            A dictionary structured like an OpenAI response
-        """
-
-        # Create a base structure that mimics OpenAI response format
-        openai_format = {
-            "id": getattr(gemini_response, "response_id", "unknown"),
-            "object": "chat.completion",
-            "created": int(time.time()),
-            "model": getattr(gemini_response, "model_version", model),
-            "choices": [],
-            "usage": {
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "total_tokens": 0
-            },
-            "images": []  # Add images array for multimodal responses
-        }
-        
-        image_tensors = []
-        message_content =""
-        # Extract text content and images from candidates
-        if hasattr(gemini_response, "candidates") and gemini_response.candidates:
-            for i, candidate in enumerate(gemini_response.candidates):
-                if hasattr(candidate, "content") and candidate.content:
-                    # Extract text from content parts
-                    if hasattr(candidate.content, "parts"):
-                        for part in candidate.content.parts:
-                            if hasattr(part, "text") and part.text:
-                                message_content += part.text
-                            # Check for image data
-                            elif hasattr(part, "inline_data") and part.inline_data:
-                                inline_data = part.inline_data
-                                if (hasattr(inline_data, "data") and inline_data.data
-                                    and isinstance(inline_data.data, bytes)):
-                                    image_tensor = self.img_u.bytes_to_tensor(inline_data.data)
-                                    image_tensors.append(image_tensor)
-                    
-                # Create a choice object in OpenAI format
-                finish_reason = getattr(candidate, "finish_reason", None) if hasattr(candidate, "finish_reason") else None
-                choice = {
-                    "index": getattr(candidate, "index", i) if hasattr(candidate, "index") else i,
-                    "message": {
-                        "role": "assistant",
-                        "content": message_content
-                    },
-                    "finish_reason": self.translate_finish_reason(finish_reason)
-                }
-                openai_format["choices"].append(choice)
-        else:
-            # For simple responses with just .text property
-            if hasattr(gemini_response, "text"):
-                choice = {
-                    "index": 0,
-                    "message": {
-                        "role": "assistant",
-                        "content": gemini_response.text
-                    },
-                    "finish_reason": "stop"
-                }
-                openai_format["choices"].append(choice)
-
-        # Add combined image tensors to the OpenAI proxy object        
-        if image_tensors:
-            cat_tensor = self.img_u.pad_images_to_batch(image_tensors)
-            openai_format['images'] = {
-                "tensor": cat_tensor,
-                "count": len(image_tensors)
-            }
-            self.j_mngr.log_events(
-                f"{len(image_tensors)} image(s) generated by Gemini and converted from binary to tensor.",
-                is_trouble=True
-            )
-        
-        # Extract usage information
-        if hasattr(gemini_response, "usage_metadata"):
-            usage_metadata = gemini_response.usage_metadata
-            if hasattr(usage_metadata, "prompt_token_count"):
-                openai_format["usage"]["prompt_tokens"] = usage_metadata.prompt_token_count
-            if hasattr(usage_metadata, "candidates_token_count"):
-                openai_format["usage"]["completion_tokens"] = usage_metadata.candidates_token_count
-            if hasattr(usage_metadata, "total_token_count"):
-                openai_format["usage"]["total_tokens"] = usage_metadata.total_token_count
-        
-        # Handle errors - directly include the native error structure
-        if hasattr(gemini_response, "error"):
-            openai_format["gemini_error"] = gemini_response.error
-        
-        # Check if there was a safety block - include native format
-        if hasattr(gemini_response, "prompt_feedback") and hasattr(gemini_response.prompt_feedback, "block_reason") and gemini_response.prompt_feedback.block_reason:
-            openai_format["gemini_safety_block"] = {
-                "block_reason": gemini_response.prompt_feedback.block_reason,
-                "block_reason_message": getattr(gemini_response.prompt_feedback, "block_reason_message", ""),
-                "safety_ratings": getattr(gemini_response.prompt_feedback, "safety_ratings", [])
-            }
-        
-        return openai_format
-        
-
-
-    def translate_finish_reason(self, gemini_finish_reason):
-        """Extracts the finish reason from Gemini API response"""
-        if not gemini_finish_reason:
-            return "Uknown"  # Default value
-        
-        # Extract string value if it's an enum
-        if hasattr(gemini_finish_reason, 'value'):
-            finish_reason = gemini_finish_reason.value
-            if finish_reason.lower() == "stop":
-                finish_reason = "Normal Completion"
-            else:
-                finish_reason = f"Warning, there were problems with this inference: {finish_reason}"
-            return finish_reason
-
-        # If it's already a string, return it directly
-        return gemini_finish_reason
-    
+            
     def request_completion(self, **kwargs):
         model = kwargs.get('model', 'gemini-pro')
         prompt = kwargs.get('prompt', '')
@@ -909,14 +808,15 @@ class genaiRequest(Request):
             # Set up client
             client = genai.Client(api_key=key)
 
-            response = client.models.generate_content(
-                model=model,
-                contents=content,
-                config=content_config
-            )
-
-
-            openai_format_response = self.adapt_gemini_to_openai_format(response, model)
+            # Call execute_with_retry
+            openai_format_response = self.retry_handler.execute_with_retry(
+                self._make_request,
+                self.RequestType.GEMINI,
+                client,
+                model,
+                content,
+                content_config
+                )
             
             # Log metrics using the adapted format
             self._log_completion_metrics(openai_format_response, "json")
@@ -1229,7 +1129,7 @@ class dall_e_request(Request):
         batch_size = kwargs.get('batch_size', 1)
 
         self.trbl.set_process_header('Dall-e Request')
-        batched_images = torch.zeros(1, 1024, 1024, 3, dtype=torch.float32)
+        batched_images = self.blank_tensor
         revised_prompt = "Image and mask could not be created"
 
         client = self.cFig.openaiClient
@@ -1265,7 +1165,7 @@ class dall_e_request(Request):
             try:
                 response = self.retry_handler.execute_with_retry(
                     self._make_request,
-                    self.RequestType.IMAGE,
+                    self.RequestType.GENERATE,
                     client,
                     params
                 )
@@ -1311,6 +1211,150 @@ class dall_e_request(Request):
         return batched_images, revised_prompt
     
 
+class gpt_image_request(Request):
+    """Concrete class for gpt-image-1 image generation requests"""
+
+    def __init__(self):
+        super().__init__()
+        self.trbl = TroubleSgltn()
+        #self.iu = ImageUtils()
+        # Override with DALL-E specific retry config
+        retry_config = RetryConfigFactory.create_config(self.cFig.lm_request_mode)
+        self.retry_handler = RetryHandler(retry_config, self.j_mngr)
+
+
+    def request_completion(self, **kwargs) -> Tuple[torch.Tensor, str]:
+        GPTmodel = kwargs.get('model')
+        prompt = kwargs.get('prompt',"")
+        image_size = kwargs.get('image_size')
+        image_quality = kwargs.get('image_quality')
+        batch_size = kwargs.get('batch_size', 1)
+        tries = kwargs.get('tries', 1) #pylint: disable=unused-variable
+        image = kwargs.get('image', None)
+        mask = kwargs.get('mask', None)
+
+        self._initialize_retry_handler(**kwargs) #tries is used in this function, so ignore unused variable warning
+
+        #self.trbl.set_process_header('GPT Image Request')
+        batched_images = self.blank_tensor
+
+        client = self.cFig.openaiClient
+
+        if not client:
+            self.j_mngr.log_events(
+                "OpenAI API key is missing or invalid. Key must be stored in an environment variable.",
+                TroubleSgltn.Severity.WARNING,
+                True
+            )
+            return batched_images
+        
+
+        self.j_mngr.log_events(
+            f"Talking to GPT model: {GPTmodel}",
+            is_trouble=True
+        )
+
+        images_list = []
+        request_type = self.RequestType.GENERATE #initialize to a default value
+        #many parameters appear in the documentation but fail in use.  These are commented out.
+        params = { "model": GPTmodel,
+            "prompt": prompt,
+            "size": image_size,
+            "n": 1
+        }    
+        #moderation: "auto", "low"
+        #response_format: "b64_json"
+        #output_format: "png","jpeg","webp"   
+        #background: "auto", "transparent"     
+
+        ## Handle image and mask if provided.  Neither Image tensor nor maks can be batched.
+        ## Both are forced to have alpha channels.
+        if self.cFig.lm_request_mode == RequestMode.GPTIMAGEEDIT:
+
+            if image is not None:
+                request_type = self.RequestType.EDIT
+                # Seems only one image can be processed, no batches
+                if image.ndim == 4 and image.size(0) == 1:
+                    params['image'] = self.img_u.tensor_to_bytes(image,True)
+
+                elif image.ndim == 4 and image.size(0) > 1:
+                    self.j_mngr.log_events(f"{image.size(0)} input images detected. Only one image can be input at a time.  The first image is the only one that will be processed.",
+                                            TroubleSgltn.Severity.WARNING,
+                                            True)
+                    params['image'] = self.img_u.tensor_to_bytes(image[0],True)
+
+            if mask is not None:  #Only one mask allowed at this point, no batches.
+
+                if mask.ndim == 4 and mask.size(0) == 1:
+                    params['mask'] = self.img_u.tensor_to_bytes(mask, True, 'mask.png')
+
+                elif mask.ndim == 4 and mask.size(0) > 1:
+                    self.j_mngr.log_events(f"{mask.size(0)} masks detected. Only one mask can be input at a time.  The mask(s) will be ignored.",
+                                            TroubleSgltn.Severity.WARNING,
+                                            True)
+                    
+        #Quality only works with the image generation request type, not with Edit
+        if request_type == self.RequestType.GENERATE:
+            params['quality'] = image_quality
+
+        response = None                            
+
+        for i in range(batch_size):
+            self.j_mngr.log_events(f"Processing batch image #{i+1}", is_trouble=True)  
+
+            try:
+                response = self.retry_handler.execute_with_retry(
+                    self._make_request,
+                    request_type,
+                    client,
+                    params
+                )
+
+                #response_json = response.json()
+
+                if response and 'error' not in response:
+  
+                    b64Json = response.data[0].b64_json
+                    #Convert the image to a tensor
+                    if b64Json:
+                        png_image, _ = self.img_u.b64_to_tensor(b64Json)
+                        images_list.append(png_image)
+                    else:
+                        self.j_mngr.log_events(
+                            f"GPT_image could not process an image in your batch of: {batch_size}",
+                            TroubleSgltn.Severity.WARNING,
+                            True
+                        )
+
+            except Exception as e:
+                self.j_mngr.log_events(
+                    f"Failed to generate image {_ + 1}/{batch_size}: {str(e)}",
+                    TroubleSgltn.Severity.ERROR,
+                    True
+                )
+        if batch_size == 1:
+            if response and 'error' not in response:
+                self._log_completion_metrics(response)
+
+        if images_list:
+            count = len(images_list)
+            self.j_mngr.log_events(
+                f'{count} images were processed successfully in your batch of: {batch_size}',
+                is_trouble=True
+            )
+            batched_images = torch.cat(images_list, dim=0)
+        else:
+            self.j_mngr.log_events(
+                f'No images were processed in your batch of: {batch_size}',
+                TroubleSgltn.Severity.WARNING,
+                is_trouble=True
+            )
+
+        #self.trbl.pop_header()
+
+        return batched_images 
+    
+
 class ImagenRequest(Request):
     """Concrete class for Google Imagen image generation requests"""
 
@@ -1328,8 +1372,7 @@ class ImagenRequest(Request):
         aspect_ratio = kwargs.get('aspect_ratio', "1:1")
 
 
-        batched_images = torch.zeros(1, 256, 256, 3, dtype=torch.float32)
-        response = None
+        batched_images = self.blank_tensor
         image_list = []
         key = self.cFig.custom_key or self.cFig.gemini_key
         client = genai.Client(api_key=key)
@@ -1346,7 +1389,7 @@ class ImagenRequest(Request):
                 prompt=prompt,
                 config=types.GenerateImagesConfig(**params)
             )
-            self.j_mngr.log_events(f"Processing images using model: {model}")
+            self.j_mngr.log_events(f"Processing images using model: {model}", is_trouble=True)
         except Exception as e:
             self.j_mngr.log_events(
                     f"Failed to generate Imagen image, Error: {e}",
@@ -1354,8 +1397,13 @@ class ImagenRequest(Request):
                     True
                 )
             
-        if response and  'error' not in response:          
-
+        if response and  'error' not in response:  #Google has stripped the imagen response object of anything except the image data.             
+            if not response.generated_images:  
+                self.j_mngr.log_events("No images were generated.  Check the prompt and try again.  This may be due to safety issues",
+                                        TroubleSgltn.Severity.WARNING,
+                                        True)
+                return batched_images
+            
             for gen_image in response.generated_images:
                 tensor = self.img_u.bytes_to_tensor(gen_image.image.image_bytes)
                 image_list.append(tensor)
@@ -1835,6 +1883,32 @@ class request_utils:
         return None
 
 
+    def convert_tensor_batch_to_iterable(self, tensor_batch: torch.Tensor, ensure_alpha:bool=False, iterable_type:str ="list") -> list|tuple: 
+        """
+        Converts a batch of image tensors into a list of .png files.
+
+        Args:
+            tensor_batch (torch.Tensor): A batch of image tensors in [N, H, W, C] format.
+
+        Returns:
+            list: A list of BytesIO objects containing .png images.
+        """
+        if tensor_batch.ndim != 4:
+            raise ValueError("Expected tensor batch in [N, H, W, C] format.")
+
+        png_list = []
+        for i in range(tensor_batch.size(0)):  # Iterate over the batch dimension
+            single_tensor = tensor_batch[i]
+            file_name = f"image_{i}.png"  # Generate a unique file name for each image
+            png_image = self.img_u.tensor_to_bytes(single_tensor, ensure_alpha=ensure_alpha, file_name=file_name)  # Convert to .png
+            png_list.append(png_image)
+
+        if iterable_type == 'tuple': #Can expand if other iterable types are needed
+            return tuple(png_list)
+
+        return png_list
+    
+
     def build_web_header(self, key:str="", request_type:RequestMode=None):
         if key:
 
@@ -1921,3 +1995,129 @@ class request_utils:
             return e.message
         else:
             return str(e)
+        
+    def adapt_gemini_to_openai_format(self, gemini_response, model="gemini-pro"):
+        """
+        Adapts a Google Gemini API response to match the structure of an OpenAI API response.
+        This allows existing OpenAI-compatible methods to work with Gemini responses.
+        
+        Args:
+            gemini_response: The response object from the Google Generative AI client
+            model: The model name used in the request (fallback if not in response)
+                
+        Returns:
+            A dictionary structured like an OpenAI response
+        """
+
+        # Create a base structure that mimics OpenAI response format
+        openai_format = {
+            "id": getattr(gemini_response, "response_id", "unknown"),
+            "object": "chat.completion",
+            "created": int(time.time()),
+            "model": getattr(gemini_response, "model_version", model),
+            "choices": [],
+            "usage": {
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "total_tokens": 0
+            },
+            "images": []  # Add images array for multimodal responses
+        }
+        
+        image_tensors = []
+        message_content =""
+        # Extract text content and images from candidates
+        if hasattr(gemini_response, "candidates") and gemini_response.candidates:
+            for i, candidate in enumerate(gemini_response.candidates):
+                if hasattr(candidate, "content") and candidate.content:
+                    # Extract text from content parts
+                    if hasattr(candidate.content, "parts"):
+                        for part in candidate.content.parts:
+                            if hasattr(part, "text") and part.text:
+                                message_content += part.text
+                            # Check for image data
+                            elif hasattr(part, "inline_data") and part.inline_data:
+                                inline_data = part.inline_data
+                                if (hasattr(inline_data, "data") and inline_data.data
+                                    and isinstance(inline_data.data, bytes)):
+                                    image_tensor = self.img_u.bytes_to_tensor(inline_data.data)
+                                    image_tensors.append(image_tensor)
+                    
+                # Create a choice object in OpenAI format
+                finish_reason = getattr(candidate, "finish_reason", None) if hasattr(candidate, "finish_reason") else None
+                choice = {
+                    "index": getattr(candidate, "index", i) if hasattr(candidate, "index") else i,
+                    "message": {
+                        "role": "assistant",
+                        "content": message_content
+                    },
+                    "finish_reason": self.translate_finish_reason(finish_reason)
+                }
+                openai_format["choices"].append(choice)
+        else:
+            # For simple responses with just .text property
+            if hasattr(gemini_response, "text"):
+                choice = {
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": gemini_response.text
+                    },
+                    "finish_reason": "stop"
+                }
+                openai_format["choices"].append(choice)
+
+        # Add combined image tensors to the OpenAI proxy object        
+        if image_tensors:
+            cat_tensor = self.img_u.pad_images_to_batch(image_tensors)
+            openai_format['images'] = {
+                "tensor": cat_tensor,
+                "count": len(image_tensors)
+            }
+            self.j_mngr.log_events(
+                f"{len(image_tensors)} image(s) generated by Gemini and converted from binary to tensor.",
+                is_trouble=True
+            )
+        
+        # Extract usage information
+        if hasattr(gemini_response, "usage_metadata"):
+            usage_metadata = gemini_response.usage_metadata
+            if hasattr(usage_metadata, "prompt_token_count"):
+                openai_format["usage"]["prompt_tokens"] = usage_metadata.prompt_token_count
+            if hasattr(usage_metadata, "candidates_token_count"):
+                openai_format["usage"]["completion_tokens"] = usage_metadata.candidates_token_count
+            if hasattr(usage_metadata, "total_token_count"):
+                openai_format["usage"]["total_tokens"] = usage_metadata.total_token_count
+        
+        # Handle errors - directly include the native error structure
+        if hasattr(gemini_response, "error"):
+            openai_format["gemini_error"] = gemini_response.error
+        
+        # Check if there was a safety block - include native format
+        if hasattr(gemini_response, "prompt_feedback") and hasattr(gemini_response.prompt_feedback, "block_reason") and gemini_response.prompt_feedback.block_reason:
+            openai_format["gemini_safety_block"] = {
+                "block_reason": gemini_response.prompt_feedback.block_reason,
+                "block_reason_message": getattr(gemini_response.prompt_feedback, "block_reason_message", ""),
+                "safety_ratings": getattr(gemini_response.prompt_feedback, "safety_ratings", [])
+            }
+        
+        return openai_format
+        
+
+
+    def translate_finish_reason(self, gemini_finish_reason):
+        """Extracts the finish reason from Gemini API response"""
+        if not gemini_finish_reason:
+            return "Uknown"  # Default value
+        
+        # Extract string value if it's an enum
+        if hasattr(gemini_finish_reason, 'value'):
+            finish_reason = gemini_finish_reason.value
+            if finish_reason.lower() == "stop":
+                finish_reason = "Normal Completion"
+            else:
+                finish_reason = f"Warning, there were problems with this inference: {finish_reason}"
+            return finish_reason
+
+        # If it's already a string, return it directly
+        return gemini_finish_reason
