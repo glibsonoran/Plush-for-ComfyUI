@@ -276,12 +276,14 @@ class ImageUtils:
         return base64_image
     
 
-    def tensor_to_bytes(self, tensor: torch.Tensor) -> BytesIO:
+    def tensor_to_bytes(self, tensor: torch.Tensor, ensure_alpha: bool = False, file_name:str ='image.png') -> BytesIO:
         """
         Converts a PyTorch tensor to a bytes object.
 
         Args:
             tensor (torch.Tensor): The image tensor to convert.
+            ensure_alpha (bool): If True, ensures the image is in RGBA format.
+            file_name (str): The name attribute of the byte file (for identification purposes).
 
         Returns:
             BytesIO: BytesIO object containing the image data.
@@ -293,12 +295,30 @@ class ImageUtils:
         # Convert tensor to PIL Image
         if tensor.ndim == 4:
             tensor = tensor.squeeze(0)  # Remove batch dimension if present
-        pil_image = Image.fromarray((tensor.numpy() * 255).astype('uint8'))
+
+        # Convert tensor to numpy array and scale values properly
+        if tensor.dtype == torch.float32 or tensor.dtype == torch.float64:
+            # Assume values are in [0, 1] range
+            img_array = (tensor.numpy() * 255).astype('uint8')
+        else:
+            # Already in uint8 format
+            img_array = tensor.numpy()
+        
+        pil_image = Image.fromarray(img_array)
+
+        if ensure_alpha:
+            # Ensure RGBA format
+            if pil_image.mode == "L":  # If grayscale, use the grayscale values as alpha
+                pil_image = pil_image.convert("RGBA")
+                pil_image.putalpha(pil_image)  # Use the grayscale values as the alpha channel
+            else:
+                pil_image = pil_image.convert("RGBA")  # Convert to RGBA if not already
 
         # Save PIL Image to a buffer
         buffer = BytesIO()
         pil_image.save(buffer, format="PNG")  # Can change to JPEG if preferred
         buffer.seek(0)
+        buffer.name = file_name  # Set the name of the byte file for easier identification
 
         return buffer   
      

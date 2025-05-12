@@ -86,7 +86,7 @@ class TroubleSgltn:
             severity (str): The severity level of the message.
         """
         # Example implementation; customize as needed
-        trouble_message = f"{self._bullet} {severity.name}: {message}{self._new_line}"
+        trouble_message = f"  {self._bullet} {severity.name}: {message}{self._new_line}"
         self._troubles += trouble_message
 
     def reset(self, process_head:str='') -> None:
@@ -149,6 +149,7 @@ class helpSgltn:
         self._type_convert_help = ""
         self._gemini_img_help = ""
         self._imagen_img_help = ""
+        self._gpt_img_help = ""
         # Empty help text is not a critical issue for the app
         if not help_data:
             j_mmgr.log_events('Help data file is empty or missing.',
@@ -166,6 +167,7 @@ class helpSgltn:
         self._type_convert_help = help_data.get('type_convert_help', '')
         self._gemini_img_help = help_data.get('gemini_img_help', '')
         self._imagen_img_help = help_data.get('imagen_img_help', '')
+        self._gpt_img_help = help_data.get('gpt_img_help', '')
 
     @property
     def style_prompt_help(self)->str:
@@ -210,6 +212,9 @@ class helpSgltn:
     @property    
     def imagen_img_help (self)->str:
         return self._imagen_img_help
+    @property
+    def gpt_img_help (self)->str:
+        return self._gpt_img_help
     
 class json_manager:
 
