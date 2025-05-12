@@ -1328,7 +1328,7 @@ class gpt_image_request(Request):
 
             except Exception as e:
                 self.j_mngr.log_events(
-                    f"Failed to generate image {_ + 1}/{batch_size}: {str(e)}",
+                    f"Failed to generate image {i + 1}/{batch_size}: {str(e)}",
                     TroubleSgltn.Severity.ERROR,
                     True
                 )
