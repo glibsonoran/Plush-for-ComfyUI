@@ -1300,7 +1300,7 @@ class gpt_image_request(Request):
         response = None                            
 
         for i in range(batch_size):
-            self.j_mngr.log_events(f"Processing batch image #{i+1}", is_trouble=True)  
+            self.j_mngr.log_events(f"Processing batch image {i + 1}/{batch_size}", is_trouble=True, indent_level=(2,TroubleSgltn.ApplyLevel.NEXT))  
 
             try:
                 response = self.retry_handler.execute_with_retry(
@@ -1326,15 +1326,20 @@ class gpt_image_request(Request):
                             True
                         )
 
+                if response and 'error' not in response:
+                    self._log_completion_metrics(response)      
+                
+                self.j_mngr.log_events(f"Batch image #{i+1} complete.",is_trouble=True, indent_level=(1,TroubleSgltn.ApplyLevel.NEXT))
+
             except Exception as e:
                 self.j_mngr.log_events(
                     f"Failed to generate image {i + 1}/{batch_size}: {str(e)}",
                     TroubleSgltn.Severity.ERROR,
-                    True
+                    True,
+                    indent_level=(1,TroubleSgltn.ApplyLevel.NEXT)
                 )
-        if batch_size == 1:
-            if response and 'error' not in response:
-                self._log_completion_metrics(response)
+
+
 
         if images_list:
             count = len(images_list)
