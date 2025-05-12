@@ -9,6 +9,11 @@
 *   [Fix for google.genai import error and/or httpx: *unexpected keyword argument ‘proxies’* error](https://github.com/glibsonoran/Plush-for-ComfyUI/issues/215)
 ****
 ### Updates:
+05/11/2025 @5:24pm PST *Version 1.22.2*
+*   **New Node: `GPT Image`**: GPT Image uses the *gpt-image-1* model which is OpenAI's most advanced text to image generation model. it's most their most advanced image editing model (at this point it only outputs image(s)).  You will need a paid OpenAI API Key to use it and the account the key is associated with will need to have been [**ID Verified**](https://help.openai.com/en/articles/10910291-api-organization-verification).  Store this key in the OpenAI custom Environment Variable (*OPENAI_API_KEY*). 
+*   **Help.json**
+    *   Updated to reflect changes detailed above.
+*********************   
 03/20/2025 @8:04pm PST *Version 1.22.1*
 *   **New Node: `Imagen Image`**: Imagen 3 is Google's most advanced text to image generation model (at this time it only accepts textual input and only outputs an image).  You will need a paid Vertex/Google Cloud API Key to use it.  To obtain this key you must have or make a [Google Cloud](https://console.cloud.google.com) account and make or have an active project in it.  You must attach a Payment method to this account, then activate [Vertex](https://cloud.google.com/generative-ai-studio?hl=en) and active the Imagen model.  You can store this key in a custom Environment Variable (for example: *VERTEX_API_KEY*) and access that variable by attaching the `Custom API Key` node to the `Imagen Image` node.
 *   **New Node: `Gemini Image`:**  This node uses the latest **Gemimi-Flash** models that are capable of multimodal input (e.g. text and images) and multimodal output.  This node will allow you to output both text and images from a single prompt.  The node requires a standard Google Gemini API key which can be put either in `GEMINI_API_KEY` Environment Variable, or a custom Environment variable.  Custom Environment Variables can be accessed by attaching the `Custom API Key` node.
