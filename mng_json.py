@@ -39,6 +39,11 @@ class TroubleSgltn:
         WARNING = 2
         ERROR = 3
 
+    class ApplyLevel(Enum):
+        CURRENT = 1
+        NEXT = 2
+        NONE = 3
+
     def __new__(cls):
         if cls._instance is None:
             try:
@@ -51,6 +56,8 @@ class TroubleSgltn:
             cls._section_bullet = "\n\u27a4"
             cls._bullet = "\u2726"
             cls._new_line = "\n"
+            cls._wrk_indent = "  "
+            cls._indent_unit = "  "
             cls._header_stack = []
             cls.j_mngr = json_manager()
             cls.c_util = CommUtils()
@@ -75,19 +82,45 @@ class TroubleSgltn:
         
         return is_popped
            
-
+    """
     def log_trouble(self, message: str, severity: Severity) -> None:
-        """
+        
         Logs a trouble message with a specified severity, 
         and formats it for display.
 
         Args:
             message (str): The trouble message to log.
             severity (str): The severity level of the message.
-        """
+        
         # Example implementation; customize as needed
         trouble_message = f"  {self._bullet} {severity.name}: {message}{self._new_line}"
         self._troubles += trouble_message
+    """
+
+    def log_trouble(self, message: str, severity: Severity, indent: tuple = (0, ApplyLevel.NONE)) -> None:
+        """
+        Logs a trouble message with a specified severity, 
+        and formats it for display.
+        Args:
+            message (str): The trouble message to log.
+            severity (str): The severity level of the message.
+            indent (tuple): A tuple containing + or - number indicating how many indent_units to increase
+                or decrease the wk_indent by, and a letter "a", "b" or "x" indicating if this will be applied 
+                before or after the current entry.
+        """
+        ch_indent, timing = indent
+        
+        # Apply indent change before message 
+        if timing == self.ApplyLevel.CURRENT:
+            self.adjust_indent(ch_indent)
+            
+        # Format and add the trouble message
+        trouble_message = f"{self._wrk_indent}{self._bullet} {severity.name}: {message}{self._new_line}"
+        self._troubles += trouble_message
+        
+        # Apply indent change after message 
+        if timing == self.ApplyLevel.NEXT:
+            self.adjust_indent(ch_indent)        
 
     def reset(self, process_head:str='') -> None:
         """
@@ -121,6 +154,18 @@ class TroubleSgltn:
             str: The accumulated trouble messages.
         """
         return self._troubles if self._troubles else "No Troubles"
+    
+    def adjust_indent(self, ch_indent: int) -> None:
+        """
+        Sets the working indentation or nesting level based on a predefined unit of indentation.
+        
+        Args:
+            ch_indent (int): The absolute indentation level (0 = no indent,
+                            1 = one unit, 2 = two units, etc.)
+        """
+        # Ensure indentation level is not negative
+        level = max(0, ch_indent)
+        self._wrk_indent = self._indent_unit * level
 
 
 class helpSgltn:
@@ -248,7 +293,7 @@ class json_manager:
 
 
     def log_events(self, event: str, severity: TroubleSgltn.Severity = TroubleSgltn.Severity.INFO, is_trouble: bool = False,  
-                   file_name: Union[str,None] = None, is_critical: bool=False) -> bool:    
+                   file_name: Union[str,None] = None, is_critical: bool=False, indent_level: tuple = (0,TroubleSgltn.ApplyLevel.NONE)) -> bool:    
         """
         Appends events with prepended timestamp to a text log file.
         Each event is written in a key/value pair format.
@@ -266,7 +311,7 @@ class json_manager:
             file_name = self.log_file_name
 
         if is_trouble:
-            self.trbl.log_trouble(event, severity)
+            self.trbl.log_trouble(event, severity, indent_level)
 
         date_time = datetime.now()
         timestamp = date_time.strftime("%Y-%m-%d %I:%M:%S %p") #YYYY/MM/DD, 12 hour AM/PM
@@ -288,6 +333,8 @@ class json_manager:
         success = self.append_to_file(log_event_json, log_file_path, is_critical, is_logger=True)
 
         return success
+    
+              
     
     def get_timezone_offset(self):
         # Get local time with system's time zone (making it offset-aware)
