@@ -1618,7 +1618,7 @@ class GeminiImage:
         cFig = cFigSingleton()
         return {
             "required": {
-                "Image_model": (cFig.get_gemini_models().get_models(True, include_filter=("2.0",), exclude_filter=("lite","pro","thinking")), {"default": "gemini-2.0-flash-exp"}),
+                "Image_model": (cFig.get_gemini_models().get_models(True, include_filter=("2.0","flash"), exclude_filter=("lite","pro","thinking","1.5")), {"default": "gemini-2.0-flash-exp"}),
                 "creative_latitude" : ("FLOAT", {"max": 1.901, "min": 0.1, "step": 0.1, "display": "number", "round": 0.1, "default": 0.7, "tooltip": "temperature"}),                  
                 "tokens" : ("INT", {"max": 20000, "min": 20, "step": 10, "default": 800, "display": "number"}),
                 "prompt": ("STRING",{"multiline": True, "forceInput": False}),                 
