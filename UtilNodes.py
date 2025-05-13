@@ -431,7 +431,7 @@ class typeConvert:
             }
         } 
     
-    RETURN_TYPES = ("STRING","FLOAT","INT","BOOLEAN","LIST","DICTIONARY", "STRING", "STRING")
+    RETURN_TYPES = (any_type,any_type,any_type,any_type,any_type,any_type, "STRING", "STRING")
     RETURN_NAMES = ("Text", "Float","Integer","Boolean","List", "JSON/Dict", "help","Troubleshooting")
 
     FUNCTION = "gogo"
