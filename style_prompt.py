@@ -1539,11 +1539,11 @@ class ImagenImage:
     @classmethod
     def INPUT_TYPES(cls):
 
-        cFig = cFigSingleton()
 
         return {
             "required": {
-                "Image_model": (cFig.get_gemini_models().get_models(True, include_filter=('imagen','Imagen')),{"default":"none"}),                 
+                #"Image_model": (cFig.get_gemini_models().get_models(True, include_filter=('imagen','Imagen')),{"default":"none"}),                 
+                "Image_model": (["imagen-3.0-generate-002", "none"],{"default": "none"}),
                 "aspect_ratio" : (["1:1", "3:4", "4:3", "9:16", "16:9"], {"default": "1:1"}),
                 "number_of_images": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"}),                
                 "prompt": ("STRING",{"multiline": True, "forceInput": False}),                 
