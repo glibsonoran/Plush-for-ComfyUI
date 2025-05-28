@@ -6,7 +6,6 @@
 
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 
-*   [Fix for google.genai import error and/or httpx: *unexpected keyword argument ‘proxies’* error](https://github.com/glibsonoran/Plush-for-ComfyUI/issues/215)
 ****
 ### Updates:
 05/11/2025 @5:24pm PST *Version 1.22.2*
