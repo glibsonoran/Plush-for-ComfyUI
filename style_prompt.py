@@ -27,10 +27,12 @@ try:
     from .mng_json import json_manager, helpSgltn, TroubleSgltn
     from . import api_requests as rqst
     from .fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
+    from .utils import PythonUtils
 except ImportError:
     from mng_json import json_manager, helpSgltn, TroubleSgltn
     import api_requests as rqst
     from fetch_models import FetchModels, ModelUtils, RequestMode, ModelContainer
+    from utils import PythonUtils
 
 
 #pip install pillow
@@ -75,6 +77,7 @@ class cFigSingleton:
             cls.j_mngr = json_manager()
             cls._model_fetch = FetchModels()
             cls._model_prep = ModelUtils()
+            cls._PythonUtils = PythonUtils()
             cls._pyexiv2 = None
             cls._instance.get_file()
 
@@ -147,6 +150,13 @@ class cFigSingleton:
             except Exception as e:
                 self.j_mngr.log_events(f"Invalid or missing OpenAI API key.  Please note, keys must now be kept in an environment variable (see: ReadMe) {e}",
                                   severity=TroubleSgltn.Severity.ERROR)
+                if "proxies" in str(e).lower():
+                    commands = [
+                    ["pip", "install", "--force-reinstall", "-v", "anthropic==0.51.0"],
+                    ["pip", "install", "--force-reinstall", "-v", "openai==1.77.0"]       
+                    ]
+                    self._PythonUtils.run_python_module_commands(commands, "API Updates")
+                    
                 
         if self._claude_key:
             try:
@@ -155,15 +165,21 @@ class cFigSingleton:
                 self.j_mngr.log_events(f"Invalid or missing Anthropic API key. Please note, keys must be kept in an environment variable.{e}",                                       
                                        severity=TroubleSgltn.Severity.ERROR)    
                 
+                if "proxies" in str(e).lower():
+                    commands = [
+                    ["pip", "install", "--force-reinstall", "-v", "anthropic==0.51.0"],
+                    ["pip", "install", "--force-reinstall", "-v", "openai==1.77.0"]      
+                    ]
+                    self._PythonUtils.run_python_module_commands(commands, "API Updates")                    
+                
         if not self._gemini_key:
             try:
                 #genai.configure(api_key=self._gemini_key)
                 self._gemini_key = ""  #Placeholder until gemini api is ready
             except Exception as e:
                 self.j_mngr.log_events(f"Invalid or missing Gemini API key. Please note, keys must be kept in an environment variable.{e}",                                       
-                                       severity=TroubleSgltn.Severity.ERROR)    
-                
-                
+                                       severity=TroubleSgltn.Severity.ERROR)              
+                              
                 
         self._fig_gpt_models = self._model_fetch.fetch_models(RequestMode.OPENAI, self._fig_key)
         self._groq_models = self._model_fetch.fetch_models(RequestMode.GROQ, self._groq_key)
@@ -265,6 +281,13 @@ class cFigSingleton:
             self.j_mngr.log_events(f"Unable to create LLM client object using URL. Unable to communicate with LLM: {e}",
                             TroubleSgltn.Severity.ERROR,
                             True)
+            
+            if "proxies" in str(e).lower():
+                commands = [
+                ["pip", "install", "--force-reinstall", "-v", "anthropic==0.51.0"],
+                ["pip", "install", "--force-reinstall", "-v", "openai==1.77.0"]   
+                ]
+                self._PythonUtils.run_python_module_commands(commands, "API Updates")
             return False
 
         return True
@@ -1542,8 +1565,8 @@ class ImagenImage:
 
         return {
             "required": {
-                #"Image_model": (cFig.get_gemini_models().get_models(True, include_filter=('imagen','Imagen')),{"default":"none"}),                 
-                "Image_model": (["imagen-3.0-generate-002", "none"],{"default": "none"}),
+                #"Image_model": (cFig.get_gemini_models().get_models(True),{"default":"none"}), 
+                "Image_model": (["imagen-3.0-generate-002", "none"],{"default": "none"}),                
                 "aspect_ratio" : (["1:1", "3:4", "4:3", "9:16", "16:9"], {"default": "1:1"}),
                 "number_of_images": ("INT", {"max": 8, "min": 1, "step": 1, "default": 1, "display": "number"}),                
                 "prompt": ("STRING",{"multiline": True, "forceInput": False}),                 

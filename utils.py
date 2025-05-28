@@ -2,9 +2,13 @@
 #  Standard Libraries
 # =======================
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Sequence
 from io import BytesIO
 import base64
+import subprocess
+import sys
+import importlib
+import importlib.metadata
 
 # =======================
 #  Third-Party Libraries
@@ -524,3 +528,76 @@ class ImageUtils:
 
         return batch_tensor
                 
+
+class PythonUtils:
+
+    def __init__(self)->None:
+        self.j_mngr = json_manager() 
+
+
+    def get_library_version(self, library_name: str) -> str:
+        """
+        Returns the version number of the specified library in the current active Python environment if installed,
+        and logs the result.
+
+        Args:
+            library_name (str): The name of the library to check.
+
+        Returns:
+            str: Version number if found, or a message indicating not installed.
+        """
+        try:
+            version = importlib.metadata.version(library_name)
+            self.j_mngr.log_events(
+                f"[LibVersion] {library_name} version found: {version}",
+                severity="INFO",
+                is_trouble=False
+            )
+            return version
+
+        except importlib.metadata.PackageNotFoundError:
+            self.j_mngr.log_events(
+                f"[LibVersion] {library_name} is not installed.",
+                severity="WARNING",
+                is_trouble=False
+            )
+
+        except Exception as e:
+            self.j_mngr.log_events(
+                f"[LibVersion] Error checking version for {library_name}: {e}",
+                severity="ERROR",
+                is_trouble=False
+            )
+        return ""       
+
+
+    def run_python_module_commands(self, command_lists: list[Sequence[str]], label: str = "ScriptBatch"):
+        """
+        Runs one or more module commands using the current Python environment's interpreter.
+
+        Args:
+            command_lists (list[Sequence[str]]): A list of argument lists or tuples. Each will be run as:
+                [sys.executable, "-m", *args]
+            label (str): A string label to prefix log messages.
+        """
+        for args in command_lists:
+            full_cmd = [sys.executable, "-m"] + args
+            try:
+                subprocess.run(full_cmd, check=True)
+                self.j_mngr.log_events(
+                    f"[{label}] Successfully ran: {' '.join(full_cmd)}",
+                    TroubleSgltn.Severity.INFO,
+                    False
+                )
+            except subprocess.CalledProcessError as e:
+                self.j_mngr.log_events(
+                    f"[{label}] Failed command: {' '.join(full_cmd)}\nError: {e}",
+                    TroubleSgltn.Severity.WARNING,
+                    False
+                )
+            except Exception as e:
+                self.j_mngr.log_events(
+                    f"[{label}] Unexpected error running: {' '.join(full_cmd)}\n{type(e).__name__}: {e}",
+                    TroubleSgltn.Severity.WARNING,
+                    False
+                )
