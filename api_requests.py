@@ -2,7 +2,6 @@
 from abc import ABC, abstractmethod
 import time
 import json
-import re
 from enum import Enum
 from typing import Callable, Any, Optional, Type, List, Tuple
 from urllib.parse import urlparse, urlunparse
@@ -1967,7 +1966,11 @@ class request_utils:
     
     def clean_response_text(self, text: str)-> str:
         # Replace multiple newlines or carriage returns with a single one
-        cleaned_text = re.sub(r'\n+', '\n', text).strip()
+        #cleaned_text = re.sub(r'\n+', '\n', text).strip()
+
+        #I used to need more extensive cleanup back when these models first came out.
+        #Now model output is much less problematic, so a simplifed cleaner.
+        cleaned_text = text.strip()
         return cleaned_text
     
     @staticmethod
