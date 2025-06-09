@@ -1166,6 +1166,7 @@ class json_manager:
         exceptions that may occur during conversion attempts and gracefully continues to the next conversion step.
         """
 
+        print(f"DEBUGGING: The exact representation of the value is: {repr(value)}")
         # Directly return if it's already a complex type
         if isinstance(value, (dict, list, tuple)):
             self.log_events(f"Value inferred as data type: {type(value)}", is_trouble=True)
@@ -1179,14 +1180,23 @@ class json_manager:
                 self.log_events(f"Value inferred as data type: {type(evaluated_value)}", is_trouble=True)
                 return evaluated_value
             except (ValueError, SyntaxError):
+                # If it fails and starts with an "{" try to evaluate as a JSON
+                if value.startswith('{'):
+                    try:
+                        evaluated_value = self.convert_from_json_string(value, True)
+                        self.log_events(f"Value inferred as data type: JSON. Converted to type: {type(evaluated_value)}", is_trouble=True)
+                        return evaluated_value
+                    except Exception: 
+                        pass
                 # If it fails, try evaluating the title-cased version
+                """
                 try:
                     second_test_value = ast.literal_eval(value.title())
                     self.log_events(f"Value inferred as data type: {type(second_test_value)}", is_trouble=True)
                     return second_test_value
                 except (ValueError, SyntaxError):
                     pass  # Continue if both evaluations fail
-
+                """
         # If all else fails, return as a string
         self.log_events("Value inferred as data type: str", is_trouble=True)
         return value
@@ -2206,8 +2216,8 @@ class json_manager:
             data = json.loads(json_string)
             return data
         except json.JSONDecodeError as e:
-            self.log_events(f"Plush - Error converting JSON string to Python object: {e}", 
-                            TroubleSgltn.Severity.WARNING,                           
+            self.log_events(f"[JSON Converter]: Not a valid JSON: {e}", 
+                            TroubleSgltn.Severity.INFO,                           
                             True)
 
             if is_critical:
