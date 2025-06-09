@@ -925,7 +925,7 @@ class oai_web_request(Request):
         headers = self.utils.build_web_header(key, request_type)
 
         # Build message structure
-        if request_type == self.mode.OSSIMPLE or not image:
+        if request_type == self.mode.OSSIMPLE or image is None:
             messages = self.utils.build_data_basic(prompt, example_list, instruction)
             self.j_mngr.log_events(
                 "Using Basic data structure",
