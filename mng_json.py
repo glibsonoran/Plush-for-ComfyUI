@@ -1184,19 +1184,11 @@ class json_manager:
                 if value.startswith('{'):
                     try:
                         evaluated_value = self.convert_from_json_string(value, True)
-                        self.log_events(f"Value inferred as data type: JSON. Converted to type: {type(evaluated_value)}", is_trouble=True)
+                        self.log_events("Value inferred as data type: JSON. Converted to type: Dictionary", is_trouble=True)
                         return evaluated_value
                     except Exception: 
                         pass
-                # If it fails, try evaluating the title-cased version
-                """
-                try:
-                    second_test_value = ast.literal_eval(value.title())
-                    self.log_events(f"Value inferred as data type: {type(second_test_value)}", is_trouble=True)
-                    return second_test_value
-                except (ValueError, SyntaxError):
-                    pass  # Continue if both evaluations fail
-                """
+
         # If all else fails, return as a string
         self.log_events("Value inferred as data type: str", is_trouble=True)
         return value

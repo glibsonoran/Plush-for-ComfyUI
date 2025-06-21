@@ -263,13 +263,20 @@ class cFigSingleton:
                     TroubleSgltn.Severity.ERROR,
                     True
                 )
-
-        else:
+        elif request_type == RequestMode.GROQ:
             key = self._groq_key
             self.j_mngr.log_events(
                 "Setting Openai client with URL and Groq key.",
                 is_trouble=True
-    )
+                )
+
+
+        else:
+            self.j_mngr.log_events(
+                "Setting Connection with URL and no key.",
+                is_trouble=True
+
+            )
 
 
         
