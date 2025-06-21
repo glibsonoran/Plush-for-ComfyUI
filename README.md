@@ -8,6 +8,9 @@
 
 ****
 ### Updates:
+06/21/2025 @5:24pm PST *No version change*
+*   **Fixed *Connection Error* bug when using Ollama.**
+*********************   
 05/11/2025 @5:24pm PST *Version 1.22.2*
 *   **New Node: `GPT Image`**: GPT Image uses the *gpt-image-1* model which is OpenAI's most advanced text to image generation model. It's also their most advanced image editing model (at this point it only outputs image(s)).  You will need a paid OpenAI API Key to use it and your OpenAI account will need to be [**ID Verified**](https://help.openai.com/en/articles/10910291-api-organization-verification).  Store this key in the OpenAI Environment Variable (*OPENAI_API_KEY*). 
 *   **Help.json**
