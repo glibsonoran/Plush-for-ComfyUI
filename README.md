@@ -310,6 +310,7 @@ Run the following in the cmd prompt, replacing <yourkey> with your API key:
 You can validate that this variable has been set by opening a new cmd prompt window and typing in 
 
 `echo %OAI_KEY%`
+
 **You many have to reboot your machine in order for you env var to be recognized**
 
 **Option 2**: Set your ‘OAI_KEY’ Environment Variable through the Control Panel
@@ -323,7 +324,7 @@ You can validate that this variable has been set by opening a new cmd prompt win
 Variable name: OAI_KEY
 Variable value: (yourkey)
 
-In either case if you're having trouble and getting an invalid key response, per the instructions above, please try rebooting your machine.
+In either case if you're having trouble and getting an invalid key response, per the instructions above, **please try rebooting your machine**.
 
 
 ##  Linux / MacOS Set-up
