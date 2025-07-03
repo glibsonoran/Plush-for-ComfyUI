@@ -310,6 +310,7 @@ Run the following in the cmd prompt, replacing <yourkey> with your API key:
 You can validate that this variable has been set by opening a new cmd prompt window and typing in 
 
 `echo %OAI_KEY%`
+**You many have to reboot your machine in order for you env var to be recognized**
 
 **Option 2**: Set your ‘OAI_KEY’ Environment Variable through the Control Panel
 
@@ -341,12 +342,16 @@ In either case if you're having trouble and getting an invalid key response, per
 
 `echo $OAI_KEY`
 
+**You many have to reboot your machine in order for you env var to be recognized**
+
 The value of your API key will be the resulting output.
 
 
 **Option 2**: Set your ‘OAI_KEY’ Environment Variable using bash
 
 Follow the directions in Option 1, replacing .zshrc with .bash_profile.
+
+**You many have to reboot your machine in order for you env var to be recognized**
 
  You’re all set! Now Plush can load your key when you startup ComfyUI.
 
