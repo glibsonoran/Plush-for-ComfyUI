@@ -6,6 +6,8 @@
 
 *   [**Prompt and Image examples from the Style_Prompt and Style_Prompt + OAI Dall-e3 node(s)**](#examples)
 
+*   [**General ComfyUI Manual**](https://plugin.aix.ink)
+
 ****
 ### Updates:
 06/21/2025 @5:24pm PST *No version change*
